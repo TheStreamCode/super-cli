@@ -1,5 +1,6 @@
 .github/**
 .vscode/**
+media/screenshots/**
 .vscode-test/**
 .vsce/**
 src/**

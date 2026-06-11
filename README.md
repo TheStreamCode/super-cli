@@ -15,6 +15,8 @@ Windsurf).
 This extension is unofficial and is not affiliated with, endorsed by, or sponsored by Anthropic,
 OpenAI, GitHub, Google, or any other vendor.
 
+![Super CLI — the Coding Agents sidebar listing the built-in presets](https://raw.githubusercontent.com/TheStreamCode/super-cli/main/media/screenshots/sidebar.png)
+
 ## Install
 
 Install **Super CLI** from the
@@ -91,6 +93,8 @@ an untrusted repository cannot inject commands.
 
 Run **Super CLI: Open Settings** from the sidebar or the command palette to jump straight to these
 settings.
+
+![Super CLI settings: agents, terminal location, and built-in presets](https://raw.githubusercontent.com/TheStreamCode/super-cli/main/media/screenshots/settings.png)
 
 ## Troubleshooting
 
