@@ -84,6 +84,8 @@ reuses a built-in `id` — overrides that built-in (for example to point at a cu
   only when missing, existing keys untouched). For example, opt out of a CLI's companion
   editor-extension auto-install via its own config: `{ "file": "~/.commandcode/config.json",
   "defaults": { "autoInstallExtension": false } }`.
+- `env` — optional environment variables set for the agent's terminal, e.g. to opt out of a CLI's
+  IDE-extension auto-install via its own variable: `{ "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1" }`.
 
 Only the user (global) value of `superCli.agents` is used; workspace overrides are ignored so that
 an untrusted repository cannot inject commands.
@@ -108,10 +110,12 @@ settings.
   directory.
 - **Nothing happens on launch.** Make sure the workspace is trusted — the launcher is disabled in
   untrusted workspaces because it runs terminal commands.
-- **Command Code's companion extension.** Super CLI keeps your editor free of per-CLI companion
-  extensions: when you launch Command Code it sets `autoInstallExtension: false` in
-  `~/.commandcode/config.json` (Command Code's own official opt-out), so it stops auto-installing its
-  editor extension. To keep that extension, set the value back to `true` there.
+- **Companion editor extensions (Command Code, Claude Code).** Super CLI keeps your editor free of
+  per-CLI companion extensions. It launches **Command Code** with `autoInstallExtension: false` in
+  `~/.commandcode/config.json`, and **Claude Code** with the `CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=1`
+  environment variable — both official opt-outs — so they stop auto-installing their editor
+  extensions. Install those extensions yourself if you want them (for Command Code set the value back
+  to `true`).
 
 ## Support
 

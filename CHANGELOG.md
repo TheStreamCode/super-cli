@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.4.1]
+
+- Claude Code no longer auto-installs its companion IDE extension when launched from Super CLI. The
+  launcher sets Claude Code's official `CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL` environment variable on the
+  agent's terminal — in keeping with Super CLI's "one extension for every CLI" philosophy.
+- New optional agent field `env` to set environment variables for an agent's terminal.
+
 ## [0.4.0]
 
 - Added **Cursor CLI** (`cursor-agent`), **Droid CLI** (`droid`), **Crush** (`crush`), **Hermes**

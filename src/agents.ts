@@ -16,6 +16,7 @@ export interface Agent {
   installCommand?: InstallCommand;
   autoInstall?: boolean;
   ensureConfig?: EnsureConfig;
+  env?: Record<string, string>;
 }
 
 /** Built-in agent presets shipped with the extension. Users override them by reusing an id. */
@@ -27,6 +28,9 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     icon: 'sparkle',
     installCommand: 'npm install -g @anthropic-ai/claude-code',
     autoInstall: true,
+    // Super CLI is one extension for every CLI, so skip Claude Code's IDE extension
+    // auto-install using its own official environment variable.
+    env: { CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL: '1' },
   },
   {
     id: 'codex',

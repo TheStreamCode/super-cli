@@ -229,6 +229,7 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
     name: buildTerminalName(agent.label, sequence, agent.label),
     location: location === 'panel' ? vscode.TerminalLocation.Panel : { viewColumn: vscode.ViewColumn.Beside },
     cwd,
+    env: agent.env,
   });
   terminal.show();
   watchForMissingAgent(terminal, agent, context);

@@ -53,6 +53,11 @@ test('OpenCode ships as a built-in preset', () => {
   assert.equal(opencode.installCommand, 'npm install -g opencode-ai');
 });
 
+test('Claude Code skips its IDE extension auto-install via env', () => {
+  const claude = BUILTIN_AGENTS.find((a) => a.id === 'claude');
+  assert.equal(claude.env.CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL, '1');
+});
+
 test('Command Code opts out of its companion editor-extension auto-install', () => {
   const cc = BUILTIN_AGENTS.find((a) => a.id === 'command-code');
   assert.ok(cc);
