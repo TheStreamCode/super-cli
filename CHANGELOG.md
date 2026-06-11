@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.1]
+
+- **Kilo** now installs from its official npm package (`@kilocode/cli`), so it joins the guided-install
+  flow. Grok and Antigravity are distributed as standalone binaries (no official npm package), so they
+  keep launching without an auto-install offer.
+
 ## [0.2.0]
 
 - Added **OpenCode** to the built-in agent presets.

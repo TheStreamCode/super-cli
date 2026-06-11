@@ -54,7 +54,7 @@ test('OpenCode ships as a built-in preset', () => {
 });
 
 test('npm-installable built-ins offer a guided install with their official command', () => {
-  for (const id of ['claude', 'codex', 'copilot', 'gemini', 'opencode']) {
+  for (const id of ['claude', 'codex', 'copilot', 'gemini', 'kilo', 'opencode']) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
     assert.ok(agent, `expected built-in ${id}`);
     assert.match(agent.installCommand, /^npm install -g /);

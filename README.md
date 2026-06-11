@@ -36,8 +36,8 @@ You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsu
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
 - **Guided install.** If a built-in CLI that installs from npm (Claude Code, Codex, Copilot, Gemini,
-  OpenCode) isn't found, Super CLI offers to install it with its official command — after explicit
-  confirmation.
+  Kilo, OpenCode) isn't found, Super CLI offers to install it with its official command — after
+  explicit confirmation.
 - **Native integrated terminal.** Each agent runs in a real VS Code terminal, inheriting your
   shell, `PATH`, and environment. No bundled emulator, no runtime dependencies.
 

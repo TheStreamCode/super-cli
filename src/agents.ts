@@ -53,6 +53,8 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Kilo CLI',
     command: 'kilo',
     icon: 'terminal',
+    installCommand: 'npm install -g @kilocode/cli',
+    autoInstall: true,
   },
   {
     id: 'antigravity',
