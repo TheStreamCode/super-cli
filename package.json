@@ -16,6 +16,9 @@
     "url": "https://github.com/TheStreamCode/super-cli/issues"
   },
   "homepage": "https://mikesoft.it",
+  "sponsor": {
+    "url": "https://github.com/sponsors/TheStreamCode"
+  },
   "license": "MIT",
   "icon": "media/icon.png",
   "galleryBanner": {
@@ -48,7 +51,9 @@
     "claude",
     "codex",
     "copilot",
-    "gemini"
+    "antigravity",
+    "grok",
+    "opencode"
   ],
   "main": "./out/extension.js",
   "activationEvents": [

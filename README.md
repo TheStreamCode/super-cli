@@ -3,6 +3,7 @@
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mikesoft.vscode-super-cli?label=Marketplace&color=6366F1)](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli)
 [![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/mikesoft.vscode-super-cli?color=0EA5E9)](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli)
 [![CI](https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml)
+[![Sponsor](https://img.shields.io/badge/Sponsor-TheStreamCode-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/TheStreamCode)
 
 One VS Code extension to launch any coding agent CLI — **Claude Code, Codex, GitHub Copilot CLI,
 Grok, Kilo, Antigravity, OpenCode, Command Code, and your own** — from a single sidebar and a side
@@ -72,8 +73,10 @@ reuses a built-in `id` — overrides that built-in (for example to point at a cu
   spaces.
 - `icon` — optional [ThemeIcon](https://code.visualstudio.com/api/references/icons-in-labels) id,
   e.g. `sparkle` or `rocket`.
-- `installCommand` / `autoInstall` — optional; when the command is missing and `autoInstall` is
-  `true`, the launcher offers a guided install after explicit confirmation.
+- `installCommand` / `autoInstall` — optional. `installCommand` is either a cross-platform string
+  (e.g. an npm command) or an object with `unix` and `windows` keys for OS-specific installers. When
+  the command is missing and `autoInstall` is `true`, the launcher offers a guided install after
+  explicit confirmation.
 
 Only the user (global) value of `superCli.agents` is used; workspace overrides are ignored so that
 an untrusted repository cannot inject commands.
@@ -96,6 +99,12 @@ settings.
   directory.
 - **Nothing happens on launch.** Make sure the workspace is trusted — the launcher is disabled in
   untrusted workspaces because it runs terminal commands.
+
+## Support
+
+If Super CLI is useful to you, consider [sponsoring its development](https://github.com/sponsors/TheStreamCode).
+Bug reports, feature requests, and contributions are welcome on
+[GitHub](https://github.com/TheStreamCode/super-cli).
 
 ## Privacy
 
