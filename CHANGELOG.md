@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.3.2]
+
+- Added a GitHub Sponsors link on the repository and the Marketplace listing.
+- Added sidebar and settings screenshots to the README.
+- Tidied documentation and metadata: keywords aligned to the built-in agents, and the per-OS
+  `installCommand` form is now documented.
+
 ## [0.3.1]
 
 - **Command Code** now launches with the `command-code` command instead of `cmd`, which Windows
