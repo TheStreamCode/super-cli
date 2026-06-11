@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.0]
+
+- Added **OpenCode** to the built-in agent presets.
+- Built-in CLIs that install from npm (Claude Code, Codex, Copilot, Gemini, OpenCode) now offer a
+  guided install with their official command when the command is not found. Grok, Kilo, and
+  Antigravity use OS-specific shell installers and are not auto-offered; add a custom `installCommand`
+  for your platform if you want one.
+
 ## [0.1.0]
 
 - Initial release.

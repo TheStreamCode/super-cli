@@ -45,3 +45,19 @@ test('resolveAgents skips entries without a usable id or command', () => {
 
   assert.deepEqual(agents.map((agent) => agent.id), ['good']);
 });
+
+test('OpenCode ships as a built-in preset', () => {
+  const opencode = BUILTIN_AGENTS.find((agent) => agent.id === 'opencode');
+  assert.ok(opencode);
+  assert.equal(opencode.command, 'opencode');
+  assert.equal(opencode.installCommand, 'npm install -g opencode-ai');
+});
+
+test('npm-installable built-ins offer a guided install with their official command', () => {
+  for (const id of ['claude', 'codex', 'copilot', 'gemini', 'opencode']) {
+    const agent = BUILTIN_AGENTS.find((a) => a.id === id);
+    assert.ok(agent, `expected built-in ${id}`);
+    assert.match(agent.installCommand, /^npm install -g /);
+    assert.equal(agent.autoInstall, true);
+  }
+});

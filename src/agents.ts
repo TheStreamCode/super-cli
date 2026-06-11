@@ -16,12 +16,15 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     command: 'claude',
     icon: 'sparkle',
     installCommand: 'npm install -g @anthropic-ai/claude-code',
+    autoInstall: true,
   },
   {
     id: 'codex',
     label: 'Codex CLI',
     command: 'codex',
     icon: 'rocket',
+    installCommand: 'npm install -g @openai/codex',
+    autoInstall: true,
   },
   {
     id: 'copilot',
@@ -29,12 +32,15 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     command: 'copilot',
     icon: 'github',
     installCommand: 'npm install -g @github/copilot',
+    autoInstall: true,
   },
   {
     id: 'gemini',
     label: 'Gemini CLI',
     command: 'gemini',
     icon: 'star-full',
+    installCommand: 'npm install -g @google/gemini-cli',
+    autoInstall: true,
   },
   {
     id: 'grok',
@@ -53,6 +59,14 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Antigravity CLI',
     command: 'agy',
     icon: 'globe',
+  },
+  {
+    id: 'opencode',
+    label: 'OpenCode',
+    command: 'opencode',
+    icon: 'code',
+    installCommand: 'npm install -g opencode-ai',
+    autoInstall: true,
   },
 ];
 

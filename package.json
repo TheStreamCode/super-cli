@@ -3,7 +3,7 @@
   "displayName": "Super CLI",
   "description": "One VS Code extension to launch any coding agent CLI (Claude Code, Codex, Copilot, Gemini, and your own) from a single side terminal.",
   "publisher": "mikesoft",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -156,7 +156,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, gemini, grok, kilo, antigravity) to override that built-in."
+                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, gemini, grok, kilo, antigravity, opencode) to override that built-in."
               },
               "label": {
                 "type": "string",
@@ -186,7 +186,7 @@
           "type": "boolean",
           "scope": "machine",
           "default": true,
-          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Gemini, Grok, Kilo, Antigravity) in the launcher."
+          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Gemini, Grok, Kilo, Antigravity, OpenCode) in the launcher."
         },
         "superCli.terminalLocation": {
           "type": "string",
