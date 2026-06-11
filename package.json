@@ -1,0 +1,225 @@
+{
+  "name": "vscode-super-cli",
+  "displayName": "Super CLI",
+  "description": "One VS Code extension to launch any coding agent CLI (Claude Code, Codex, Copilot, Gemini, and your own) from a single side terminal.",
+  "publisher": "mikesoft",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheStreamCode/super-cli.git"
+  },
+  "author": {
+    "name": "Michael Gasperini",
+    "url": "https://mikesoft.it"
+  },
+  "bugs": {
+    "url": "https://github.com/TheStreamCode/super-cli/issues"
+  },
+  "homepage": "https://mikesoft.it",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#0F172A",
+    "theme": "dark"
+  },
+  "pricing": "Free",
+  "engines": {
+    "vscode": "^1.86.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Launching a coding agent runs terminal commands in the current workspace. The launcher is disabled until the workspace is trusted.",
+      "restrictedConfigurations": [
+        "superCli.agents"
+      ]
+    }
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "vscode",
+    "cli",
+    "terminal",
+    "launcher",
+    "ai",
+    "agent",
+    "claude",
+    "codex",
+    "copilot",
+    "gemini"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "superCli",
+          "title": "Super CLI",
+          "icon": "media/sidebar-mark.svg"
+        }
+      ]
+    },
+    "views": {
+      "superCli": [
+        {
+          "id": "superCli.agents",
+          "name": "Coding Agents"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "superCli.launch",
+        "title": "Launch Coding Agent",
+        "category": "Super CLI",
+        "icon": {
+          "light": "./media/toolbar-mark.svg",
+          "dark": "./media/toolbar-mark.svg"
+        }
+      },
+      {
+        "command": "superCli.launchAgent",
+        "title": "Launch Agent",
+        "category": "Super CLI",
+        "icon": "$(play)"
+      },
+      {
+        "command": "superCli.refresh",
+        "title": "Refresh Agents",
+        "category": "Super CLI",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "superCli.openSettings",
+        "title": "Open Settings",
+        "category": "Super CLI",
+        "icon": "$(gear)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "superCli.launch",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "superCli.refresh",
+          "when": "view == superCli.agents",
+          "group": "navigation"
+        },
+        {
+          "command": "superCli.openSettings",
+          "when": "view == superCli.agents",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "superCli.launchAgent",
+          "when": "view == superCli.agents && viewItem == agent",
+          "group": "inline"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "superCli.launchAgent",
+          "when": "false"
+        },
+        {
+          "command": "superCli.refresh",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Super CLI",
+      "properties": {
+        "superCli.agents": {
+          "type": "array",
+          "scope": "machine",
+          "default": [],
+          "markdownDescription": "Coding agent CLIs to make available in the launcher. Each entry adds a new agent or, when it reuses a built-in `id`, overrides that built-in. Only the user (global) value is read; workspace overrides are ignored for security.\n\nExample:\n```json\n\"superCli.agents\": [\n  { \"id\": \"my-agent\", \"label\": \"My Agent\", \"command\": \"my-agent\" }\n]\n```",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "label",
+              "command"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, gemini, grok, kilo, antigravity) to override that built-in."
+              },
+              "label": {
+                "type": "string",
+                "description": "Display name shown in the sidebar and the launcher."
+              },
+              "command": {
+                "type": "string",
+                "description": "Command that starts the CLI. On Windows, quote executable paths that contain spaces."
+              },
+              "icon": {
+                "type": "string",
+                "description": "Optional VS Code ThemeIcon id, for example sparkle or rocket. Defaults to a terminal icon."
+              },
+              "installCommand": {
+                "type": "string",
+                "description": "Optional command used to install the CLI when it is missing."
+              },
+              "autoInstall": {
+                "type": "boolean",
+                "default": false,
+                "description": "Offer a guided install when the command is not found. Installation only starts after explicit confirmation."
+              }
+            }
+          }
+        },
+        "superCli.useBuiltins": {
+          "type": "boolean",
+          "scope": "machine",
+          "default": true,
+          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Gemini, Grok, Kilo, Antigravity) in the launcher."
+        },
+        "superCli.terminalLocation": {
+          "type": "string",
+          "enum": [
+            "beside",
+            "panel"
+          ],
+          "enumDescriptions": [
+            "Open the agent in a terminal beside the active editor.",
+            "Open the agent in the bottom panel."
+          ],
+          "default": "beside",
+          "scope": "window",
+          "description": "Where to open the terminal that runs the coding agent."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "node ./node_modules/typescript/bin/tsc -p . --pretty false",
+    "watch": "node ./node_modules/typescript/bin/tsc --watch -p . --pretty false",
+    "test": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node --test test/*.test.js && node ./test/integration/runTest.js",
+    "test:unit": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node --test test/*.test.js",
+    "test:integration": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node ./test/integration/runTest.js",
+    "vscode:prepublish": "node ./node_modules/typescript/bin/tsc -p . --pretty false",
+    "package": "node ./node_modules/@vscode/vsce/vsce package",
+    "check": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node --test test/*.test.js && node ./test/integration/runTest.js && node ./node_modules/@vscode/vsce/vsce ls"
+  },
+  "devDependencies": {
+    "@vscode/test-electron": "^2.5.2",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.86.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}
