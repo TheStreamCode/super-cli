@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { type Agent, resolveInstallCommand } from './agents.js';
 import {
   buildExtensionSettingsQuery,
+  buildLaunchCommand,
   buildTerminalName,
   mergeMissingDefaults,
   resolveHomePath,
@@ -148,10 +149,15 @@ async function handleMissingAgent(agent: Agent, context: vscode.ExtensionContext
   }
 }
 
-function watchForMissingAgent(terminal: vscode.Terminal, agent: Agent, context: vscode.ExtensionContext): void {
+function watchForMissingAgent(
+  terminal: vscode.Terminal,
+  agent: Agent,
+  context: vscode.ExtensionContext,
+  runCommand: string,
+): void {
   executeCommandWithOptionalShellIntegration(
     terminal,
-    agent.command,
+    runCommand,
     context,
     async (endEvent, output) => {
       if (shouldPromptToInstall(agent.command, endEvent.exitCode, output)) {
@@ -222,7 +228,11 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
 
   applyEnsureConfig(agent);
 
-  const location = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<string>('terminalLocation', 'beside');
+  const configuration = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE);
+  const location = configuration.get<string>('terminalLocation', 'beside');
+  const autoUpdate = configuration.get<boolean>('autoUpdate', true);
+  const updateCommand = autoUpdate ? resolveInstallCommand(agent.installCommand, process.platform) : undefined;
+  const launchCommand = buildLaunchCommand(command, updateCommand);
   const cwd = resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace);
 
   const terminal = vscode.window.createTerminal({
@@ -232,6 +242,6 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
     env: agent.env,
   });
   terminal.show();
-  watchForMissingAgent(terminal, agent, context);
+  watchForMissingAgent(terminal, agent, context, launchCommand);
   void vscode.window.setStatusBarMessage(`Started ${agent.label}`, 2500);
 }

@@ -10,6 +10,7 @@ const {
   shouldPromptToInstall,
   resolveHomePath,
   mergeMissingDefaults,
+  buildLaunchCommand,
 } = require('../out/command-utils.js');
 
 // normalizeTerminalName
@@ -143,4 +144,13 @@ test('mergeMissingDefaults never overwrites an existing key', () => {
 test('mergeMissingDefaults reports no change when all keys are already present', () => {
   const { changed } = mergeMissingDefaults({ a: 1, b: 2 }, { a: 9 });
   assert.equal(changed, false);
+});
+
+// buildLaunchCommand
+test('buildLaunchCommand prepends the update command before the launch command', () => {
+  assert.equal(buildLaunchCommand('claude', 'npm install -g x'), 'npm install -g x ; claude');
+});
+
+test('buildLaunchCommand returns the command unchanged without an update command', () => {
+  assert.equal(buildLaunchCommand('claude', undefined), 'claude');
 });

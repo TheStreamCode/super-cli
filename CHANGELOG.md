@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.0]
+
+- New `superCli.autoUpdate` setting (default on): each coding agent CLI is updated to its latest
+  version on launch — `npm install -g` for npm CLIs, or the official installer script for the others —
+  before it starts. Turn it off to launch without updating.
+
 ## [0.4.1]
 
 - Claude Code no longer auto-installs its companion IDE extension when launched from Super CLI. The

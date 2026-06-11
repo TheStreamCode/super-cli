@@ -109,6 +109,11 @@ export function resolveHomePath(p: string, homedir: string): string {
   return p;
 }
 
+/** Prepends an optional update command so the CLI updates before it runs (no-op without one). */
+export function buildLaunchCommand(command: string, updateCommand: string | undefined): string {
+  return updateCommand ? `${updateCommand} ; ${command}` : command;
+}
+
 /** Adds only the keys from `defaults` that are absent in `existing`; reports whether anything changed. */
 export function mergeMissingDefaults(
   existing: Record<string, unknown>,

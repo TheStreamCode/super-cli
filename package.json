@@ -3,7 +3,7 @@
   "displayName": "Super CLI",
   "description": "One VS Code extension to launch any coding agent CLI (Claude Code, Codex, Copilot, Antigravity, and your own) from a single side terminal.",
   "publisher": "mikesoft",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -253,6 +253,12 @@
           "default": "beside",
           "scope": "window",
           "description": "Where to open the terminal that runs the coding agent."
+        },
+        "superCli.autoUpdate": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "Update each coding agent CLI to its latest version on launch, using its install command (npm reinstall, or the official installer script). Disable to launch without updating."
         }
       }
     }

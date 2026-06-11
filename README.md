@@ -97,6 +97,7 @@ an untrusted repository cannot inject commands.
 | `superCli.agents` | `[]` | Your agents (added to or overriding the built-ins). |
 | `superCli.useBuiltins` | `true` | Include the built-in agent presets. |
 | `superCli.terminalLocation` | `beside` | Open the terminal `beside` the editor or in the `panel`. |
+| `superCli.autoUpdate` | `true` | Update each CLI to its latest version on launch (npm reinstall or the official installer script). |
 
 Run **Super CLI: Open Settings** from the sidebar or the command palette to jump straight to these
 settings.
