@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.4.0]
+
+- Added **Cursor CLI** (`cursor-agent`), **Droid CLI** (`droid`), **Crush** (`crush`), **Hermes**
+  (`hermes`), and **MiMo Code** (`mimo`) to the built-in agent presets.
+- Command Code no longer installs its companion editor extension when launched from Super CLI.
+  In keeping with Super CLI's "one extension for every CLI" philosophy, the launcher sets
+  `autoInstallExtension: false` in `~/.commandcode/config.json` (Command Code's own official opt-out)
+  before launching it — added only if you have not set the value yourself.
+- New optional agent field `ensureConfig` to ensure a CLI's JSON config contains certain keys before
+  launch (existing keys are never overwritten).
+
 ## [0.3.2]
 
 - Added a GitHub Sponsors link on the repository and the Marketplace listing.

@@ -8,6 +8,8 @@ const {
   resolveTerminalCwd,
   extractExecutable,
   shouldPromptToInstall,
+  resolveHomePath,
+  mergeMissingDefaults,
 } = require('../out/command-utils.js');
 
 // normalizeTerminalName
@@ -109,4 +111,36 @@ test('resolveTerminalCwd returns undefined when no workspace is open', () => {
   };
 
   assert.equal(resolveTerminalCwd(undefined, workspace), undefined);
+});
+
+// resolveHomePath
+test('resolveHomePath expands a bare ~ to the home directory', () => {
+  assert.equal(resolveHomePath('~', '/home/mike'), '/home/mike');
+});
+
+test('resolveHomePath expands a leading ~/ segment', () => {
+  assert.equal(resolveHomePath('~/.commandcode/config.json', '/home/mike'), '/home/mike/.commandcode/config.json');
+});
+
+test('resolveHomePath leaves absolute and other paths unchanged', () => {
+  assert.equal(resolveHomePath('/etc/x', '/home/mike'), '/etc/x');
+  assert.equal(resolveHomePath('relative/x', '/home/mike'), 'relative/x');
+});
+
+// mergeMissingDefaults
+test('mergeMissingDefaults adds missing keys and reports a change', () => {
+  const { merged, changed } = mergeMissingDefaults({ provider: 'cc', installed: true }, { autoInstallExtension: false });
+  assert.deepEqual(merged, { provider: 'cc', installed: true, autoInstallExtension: false });
+  assert.equal(changed, true);
+});
+
+test('mergeMissingDefaults never overwrites an existing key', () => {
+  const { merged, changed } = mergeMissingDefaults({ autoInstallExtension: true }, { autoInstallExtension: false });
+  assert.equal(merged.autoInstallExtension, true);
+  assert.equal(changed, false);
+});
+
+test('mergeMissingDefaults reports no change when all keys are already present', () => {
+  const { changed } = mergeMissingDefaults({ a: 1, b: 2 }, { a: 9 });
+  assert.equal(changed, false);
 });

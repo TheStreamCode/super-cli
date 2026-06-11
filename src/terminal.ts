@@ -1,8 +1,13 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { type Agent, resolveInstallCommand } from './agents.js';
 import {
   buildExtensionSettingsQuery,
   buildTerminalName,
+  mergeMissingDefaults,
+  resolveHomePath,
   resolveTerminalCwd,
   shouldPromptToInstall,
 } from './command-utils.js';
@@ -156,6 +161,41 @@ function watchForMissingAgent(terminal: vscode.Terminal, agent: Agent, context: 
   );
 }
 
+/**
+ * Ensures the agent's declared config file contains the required keys, adding only the missing ones.
+ * Super CLI is one extension for every CLI, so this is how an agent's companion editor-extension
+ * auto-install is opted out of (via that CLI's own config switch). Never blocks a launch on failure.
+ */
+function applyEnsureConfig(agent: Agent): void {
+  const ensure = agent.ensureConfig;
+  if (!ensure) {
+    return;
+  }
+
+  try {
+    const file = resolveHomePath(ensure.file, os.homedir());
+    let existing: Record<string, unknown> = {};
+
+    if (fs.existsSync(file)) {
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return;
+      }
+      existing = parsed as Record<string, unknown>;
+    }
+
+    const { merged, changed } = mergeMissingDefaults(existing, ensure.defaults);
+    if (!changed) {
+      return;
+    }
+
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `${JSON.stringify(merged, null, 2)}\n`, 'utf8');
+  } catch {
+    // Never block a launch because of config seeding.
+  }
+}
+
 /** Opens a side terminal and launches the given agent, watching for a missing CLI. */
 export async function launchAgent(agent: Agent, context: vscode.ExtensionContext, sequence: number): Promise<void> {
   if (!vscode.workspace.isTrusted) {
@@ -179,6 +219,8 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
     void vscode.window.showErrorMessage(`Agent "${agent.label}" has no command configured.`);
     return;
   }
+
+  applyEnsureConfig(agent);
 
   const location = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<string>('terminalLocation', 'beside');
   const cwd = resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace);

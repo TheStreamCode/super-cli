@@ -53,8 +53,16 @@ test('OpenCode ships as a built-in preset', () => {
   assert.equal(opencode.installCommand, 'npm install -g opencode-ai');
 });
 
+test('Command Code opts out of its companion editor-extension auto-install', () => {
+  const cc = BUILTIN_AGENTS.find((a) => a.id === 'command-code');
+  assert.ok(cc);
+  assert.equal(cc.command, 'command-code');
+  assert.equal(cc.ensureConfig.file, '~/.commandcode/config.json');
+  assert.equal(cc.ensureConfig.defaults.autoInstallExtension, false);
+});
+
 test('npm-installable built-ins offer a guided install with their official command', () => {
-  for (const id of ['claude', 'codex', 'copilot', 'kilo', 'opencode', 'command-code']) {
+  for (const id of ['claude', 'codex', 'copilot', 'kilo', 'opencode', 'command-code', 'droid', 'crush', 'mimo']) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
     assert.ok(agent, `expected built-in ${id}`);
     assert.equal(typeof agent.installCommand, 'string');
@@ -80,6 +88,18 @@ test('Grok uses the official xAI shell installer on Unix only', () => {
   const grok = BUILTIN_AGENTS.find((a) => a.id === 'grok');
   assert.match(grok.installCommand.unix, /x\.ai\/cli\/install\.sh/);
   assert.equal(grok.installCommand.windows, undefined);
+});
+
+test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () => {
+  const byId = Object.fromEntries(BUILTIN_AGENTS.map((a) => [a.id, a]));
+  assert.equal(byId.cursor.command, 'cursor-agent');
+  assert.equal(byId.droid.command, 'droid');
+  assert.equal(byId.crush.installCommand, 'npm install -g @charmland/crush');
+  assert.equal(byId.mimo.installCommand, 'npm install -g @mimo-ai/cli');
+  // Shell installers are Unix-only objects.
+  assert.equal(byId.cursor.installCommand.windows, undefined);
+  assert.match(byId.cursor.installCommand.unix, /cursor\.com\/install/);
+  assert.match(byId.hermes.installCommand.unix, /hermes-agent\.nousresearch\.com/);
 });
 
 test('resolveInstallCommand returns cross-platform strings unchanged', () => {

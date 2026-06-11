@@ -6,8 +6,8 @@
 [![Sponsor](https://img.shields.io/badge/Sponsor-TheStreamCode-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/TheStreamCode)
 
 One VS Code extension to launch any coding agent CLI — **Claude Code, Codex, GitHub Copilot CLI,
-Grok, Kilo, Antigravity, OpenCode, Command Code, and your own** — from a single sidebar and a side
-terminal.
+Cursor, Droid, Grok, Kilo, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, and your
+own** — from a single sidebar and a side terminal.
 
 Works on Windows, macOS, and Linux, and across the VS Code family (VS Code, Cursor, Antigravity,
 Windsurf).
@@ -35,14 +35,15 @@ You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsu
 - **One launcher for every agent.** A **Super CLI** view in the activity bar lists all configured
   agents; click one to open it in a terminal beside your editor. A toolbar button and the
   **Super CLI: Launch Coding Agent** command open a quick pick of the same list.
-- **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Antigravity, OpenCode, and
-  Command Code are available out of the box. (Gemini CLI was retired by Google and replaced by
-  Antigravity.)
+- **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Cursor, Droid, Grok, Kilo, Antigravity,
+  OpenCode, Command Code, Crush, Hermes, and MiMo Code are available out of the box. (Gemini CLI was
+  retired by Google and replaced by Antigravity.)
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
 - **Guided install.** If a built-in CLI isn't found, Super CLI offers to install it with its official
-  command after explicit confirmation — npm for Claude Code, Codex, Copilot, Kilo, OpenCode and
-  Command Code, and the official OS-specific installer script for Grok and Antigravity.
+  command after explicit confirmation — npm for Claude Code, Codex, Copilot, Kilo, OpenCode, Command
+  Code, Droid, Crush and MiMo Code, and the official installer script for Grok, Antigravity, Cursor
+  and Hermes.
 - **Native integrated terminal.** Each agent runs in a real VS Code terminal, inheriting your
   shell, `PATH`, and environment. No bundled emulator, no runtime dependencies.
 
@@ -79,6 +80,10 @@ reuses a built-in `id` — overrides that built-in (for example to point at a cu
   (e.g. an npm command) or an object with `unix` and `windows` keys for OS-specific installers. When
   the command is missing and `autoInstall` is `true`, the launcher offers a guided install after
   explicit confirmation.
+- `ensureConfig` — optional; ensure a JSON config file contains certain keys before launch (added
+  only when missing, existing keys untouched). For example, opt out of a CLI's companion
+  editor-extension auto-install via its own config: `{ "file": "~/.commandcode/config.json",
+  "defaults": { "autoInstallExtension": false } }`.
 
 Only the user (global) value of `superCli.agents` is used; workspace overrides are ignored so that
 an untrusted repository cannot inject commands.
@@ -103,6 +108,10 @@ settings.
   directory.
 - **Nothing happens on launch.** Make sure the workspace is trusted — the launcher is disabled in
   untrusted workspaces because it runs terminal commands.
+- **Command Code's companion extension.** Super CLI keeps your editor free of per-CLI companion
+  extensions: when you launch Command Code it sets `autoInstallExtension: false` in
+  `~/.commandcode/config.json` (Command Code's own official opt-out), so it stops auto-installing its
+  editor extension. To keep that extension, set the value back to `true` there.
 
 ## Support
 

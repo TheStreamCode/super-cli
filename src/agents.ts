@@ -1,6 +1,12 @@
 /** A command used to install a CLI: a cross-platform string, or per-OS variants. */
 export type InstallCommand = string | { unix?: string; windows?: string };
 
+/** Ensures a JSON config file contains certain keys before the agent launches. */
+export interface EnsureConfig {
+  file: string;
+  defaults: Record<string, unknown>;
+}
+
 /** A coding agent CLI that the launcher can start. */
 export interface Agent {
   id: string;
@@ -9,6 +15,7 @@ export interface Agent {
   icon?: string;
   installCommand?: InstallCommand;
   autoInstall?: boolean;
+  ensureConfig?: EnsureConfig;
 }
 
 /** Built-in agent presets shipped with the extension. Users override them by reusing an id. */
@@ -83,6 +90,54 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     command: 'command-code',
     icon: 'terminal',
     installCommand: 'npm install -g command-code',
+    autoInstall: true,
+    // Super CLI is one extension for every CLI, so opt out of Command Code's companion
+    // editor-extension auto-install using its own official config switch.
+    ensureConfig: {
+      file: '~/.commandcode/config.json',
+      defaults: { autoInstallExtension: false },
+    },
+  },
+  {
+    id: 'cursor',
+    label: 'Cursor CLI',
+    command: 'cursor-agent',
+    icon: 'edit',
+    // Official shell installer (no npm package). On Windows it runs under WSL.
+    installCommand: { unix: 'curl https://cursor.com/install -fsS | bash' },
+    autoInstall: true,
+  },
+  {
+    id: 'droid',
+    label: 'Droid CLI',
+    command: 'droid',
+    icon: 'circuit-board',
+    installCommand: 'npm install -g droid',
+    autoInstall: true,
+  },
+  {
+    id: 'crush',
+    label: 'Crush',
+    command: 'crush',
+    icon: 'flame',
+    installCommand: 'npm install -g @charmland/crush',
+    autoInstall: true,
+  },
+  {
+    id: 'hermes',
+    label: 'Hermes',
+    command: 'hermes',
+    icon: 'send',
+    // Official shell installer (no npm package).
+    installCommand: { unix: 'curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash' },
+    autoInstall: true,
+  },
+  {
+    id: 'mimo',
+    label: 'MiMo Code',
+    command: 'mimo',
+    icon: 'beaker',
+    installCommand: 'npm install -g @mimo-ai/cli',
     autoInstall: true,
   },
 ];

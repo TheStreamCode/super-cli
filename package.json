@@ -3,7 +3,7 @@
   "displayName": "Super CLI",
   "description": "One VS Code extension to launch any coding agent CLI (Claude Code, Codex, Copilot, Antigravity, and your own) from a single side terminal.",
   "publisher": "mikesoft",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -53,7 +53,12 @@
     "copilot",
     "antigravity",
     "grok",
-    "opencode"
+    "opencode",
+    "cursor",
+    "droid",
+    "crush",
+    "hermes",
+    "mimo"
   ],
   "main": "./out/extension.js",
   "activationEvents": [
@@ -161,7 +166,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, antigravity, opencode, command-code) to override that built-in."
+                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, antigravity, opencode, command-code, cursor, droid, crush, hermes, mimo) to override that built-in."
               },
               "label": {
                 "type": "string",
@@ -200,6 +205,24 @@
                 "type": "boolean",
                 "default": false,
                 "description": "Offer a guided install when the command is not found. Installation only starts after explicit confirmation."
+              },
+              "ensureConfig": {
+                "type": "object",
+                "description": "Optional. Before launching, ensure a JSON config file contains certain keys (added only when missing). Useful to opt out of a CLI's companion editor-extension auto-install via its own config switch.",
+                "required": [
+                  "file",
+                  "defaults"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "Path to the JSON config file. A leading ~ expands to the home directory."
+                  },
+                  "defaults": {
+                    "type": "object",
+                    "description": "Keys to ensure are present in the file. Existing keys are never overwritten."
+                  }
+                }
               }
             }
           }
@@ -208,7 +231,7 @@
           "type": "boolean",
           "scope": "machine",
           "default": true,
-          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Grok, Kilo, Antigravity, OpenCode, Command Code) in the launcher."
+          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Grok, Kilo, Antigravity, OpenCode, Command Code, Cursor, Droid, Crush, Hermes, MiMo Code) in the launcher."
         },
         "superCli.terminalLocation": {
           "type": "string",

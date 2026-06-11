@@ -95,3 +95,34 @@ export function resolveTerminalCwd<T>(
   const activeWorkspaceFolder = activeEditor ? workspace.getWorkspaceFolder(activeEditor.document.uri) : undefined;
   return activeWorkspaceFolder?.uri ?? workspace.workspaceFolders?.[0]?.uri;
 }
+
+/** Expands a leading `~` (or `~/`, `~\`) in a path to the given home directory; other paths are unchanged. */
+export function resolveHomePath(p: string, homedir: string): string {
+  if (p === '~') {
+    return homedir;
+  }
+
+  if (p.startsWith('~/') || p.startsWith('~\\')) {
+    return homedir + p.slice(1);
+  }
+
+  return p;
+}
+
+/** Adds only the keys from `defaults` that are absent in `existing`; reports whether anything changed. */
+export function mergeMissingDefaults(
+  existing: Record<string, unknown>,
+  defaults: Record<string, unknown>,
+): { merged: Record<string, unknown>; changed: boolean } {
+  const merged: Record<string, unknown> = { ...existing };
+  let changed = false;
+
+  for (const [key, value] of Object.entries(defaults)) {
+    if (!(key in merged)) {
+      merged[key] = value;
+      changed = true;
+    }
+  }
+
+  return { merged, changed };
+}
