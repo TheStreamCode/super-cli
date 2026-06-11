@@ -78,7 +78,9 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
   {
     id: 'command-code',
     label: 'Command Code',
-    command: 'cmd',
+    // Use the `command-code` alias, not `cmd`: on Windows `cmd` is intercepted as the Command Prompt.
+    // `command-code` works on Windows, macOS, Linux, and WSL without that conflict.
+    command: 'command-code',
     icon: 'terminal',
     installCommand: 'npm install -g command-code',
     autoInstall: true,

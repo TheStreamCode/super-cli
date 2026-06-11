@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.3.1]
+
+- **Command Code** now launches with the `command-code` command instead of `cmd`, which Windows
+  intercepts as the built-in Command Prompt. The new command works on Windows, macOS, Linux, and WSL.
+
 ## [0.3.0]
 
 - Added **Command Code** (`cmd`, npm `command-code`) to the built-in presets.
