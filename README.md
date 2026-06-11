@@ -5,7 +5,8 @@
 [![CI](https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml)
 
 One VS Code extension to launch any coding agent CLI — **Claude Code, Codex, GitHub Copilot CLI,
-Gemini, Grok, Kilo, Antigravity, OpenCode, and your own** — from a single sidebar and a side terminal.
+Grok, Kilo, Antigravity, OpenCode, Command Code, and your own** — from a single sidebar and a side
+terminal.
 
 Works on Windows, macOS, and Linux, and across the VS Code family (VS Code, Cursor, Antigravity,
 Windsurf).
@@ -31,13 +32,14 @@ You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsu
 - **One launcher for every agent.** A **Super CLI** view in the activity bar lists all configured
   agents; click one to open it in a terminal beside your editor. A toolbar button and the
   **Super CLI: Launch Coding Agent** command open a quick pick of the same list.
-- **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Gemini, Grok, Kilo, Antigravity, and
-  OpenCode are available out of the box.
+- **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Antigravity, OpenCode, and
+  Command Code are available out of the box. (Gemini CLI was retired by Google and replaced by
+  Antigravity.)
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
-- **Guided install.** If a built-in CLI that installs from npm (Claude Code, Codex, Copilot, Gemini,
-  Kilo, OpenCode) isn't found, Super CLI offers to install it with its official command — after
-  explicit confirmation.
+- **Guided install.** If a built-in CLI isn't found, Super CLI offers to install it with its official
+  command after explicit confirmation — npm for Claude Code, Codex, Copilot, Kilo, OpenCode and
+  Command Code, and the official OS-specific installer script for Grok and Antigravity.
 - **Native integrated terminal.** Each agent runs in a real VS Code terminal, inheriting your
   shell, `PATH`, and environment. No bundled emulator, no runtime dependencies.
 

@@ -1,8 +1,5 @@
-import * as fs from 'node:fs';
-import * as os from 'node:os';
-import * as path from 'node:path';
 import * as vscode from 'vscode';
-import type { Agent } from './agents.js';
+import { type Agent, resolveInstallCommand } from './agents.js';
 import {
   buildExtensionSettingsQuery,
   buildTerminalName,
@@ -104,67 +101,30 @@ export async function openExtensionSettings(context: vscode.ExtensionContext): P
   await vscode.commands.executeCommand('workbench.action.openSettings', buildExtensionSettingsQuery(context.extension.id));
 }
 
-function buildQuotedCommandPath(commandPath: string): string {
-  return `"${commandPath.replace(/"/g, '\\"')}"`;
-}
-
-/** Returns the Node installer script executed inside a visible terminal after user consent. */
-function buildInstallPromptScript(installCommand: string, label: string): string {
-  const message = JSON.stringify(`${label} was not found.`);
-  const prompt = JSON.stringify(`Install ${label} now? (y/N): `);
-  const command = JSON.stringify(installCommand);
-
-  return String.raw`const cp = require('node:child_process');
-const readline = require('node:readline');
-
-const installCommand = ${command};
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-
-console.log(${message});
-rl.question(${prompt}, (answer) => {
-  rl.close();
-  const normalized = answer.trim().toLowerCase();
-  if (normalized === 'y' || normalized === 'yes') {
-    const child = cp.spawn(installCommand, [], { stdio: 'inherit', shell: true });
-    child.on('exit', (code) => process.exit(code === null ? 1 : code));
-    child.on('error', () => process.exit(1));
-    return;
-  }
-
-  process.exit(0);
-});
-`;
-}
-
-function writeInstallPromptScript(agent: Agent): string {
-  const scriptPath = path.join(os.tmpdir(), `super-cli-install-${agent.id}-${process.pid}-${Date.now()}.js`);
-  fs.writeFileSync(scriptPath, buildInstallPromptScript(agent.installCommand ?? '', agent.label), 'utf8');
-
-  return scriptPath;
-}
-
-function startGuidedInstall(agent: Agent, context: vscode.ExtensionContext): void {
+/** Runs the resolved install command in a dedicated terminal. The modal dialog is the confirmation. */
+function startGuidedInstall(agent: Agent, installCommand: string): void {
   const installTerminal = vscode.window.createTerminal({
     name: `Install ${agent.label}`,
     location: vscode.TerminalLocation.Panel,
   });
-  const installCommand = `node ${buildQuotedCommandPath(writeInstallPromptScript(agent))}`;
 
   installTerminal.show();
-  executeCommandWithOptionalShellIntegration(installTerminal, installCommand, context);
+  installTerminal.sendText(installCommand, true);
 }
 
 async function handleMissingAgent(agent: Agent, context: vscode.ExtensionContext): Promise<void> {
-  if (agent.installCommand && agent.autoInstall) {
+  const installCommand = resolveInstallCommand(agent.installCommand, process.platform);
+
+  if (installCommand && agent.autoInstall) {
     const selection = await vscode.window.showWarningMessage(
       `${agent.label} was not found. Install it now?`,
-      { modal: true },
+      { modal: true, detail: `This will run: ${installCommand}` },
       'Install',
       'Open Settings',
     );
 
     if (selection === 'Install') {
-      startGuidedInstall(agent, context);
+      startGuidedInstall(agent, installCommand);
     } else if (selection === 'Open Settings') {
       await openExtensionSettings(context);
     }
@@ -172,7 +132,7 @@ async function handleMissingAgent(agent: Agent, context: vscode.ExtensionContext
     return;
   }
 
-  const installHint = agent.installCommand ? ` You can install it with: ${agent.installCommand}` : '';
+  const installHint = installCommand ? ` You can install it with: ${installCommand}` : '';
   const selection = await vscode.window.showWarningMessage(
     `${agent.label} could not be started. Check its command in settings.${installHint}`,
     'Open Settings',

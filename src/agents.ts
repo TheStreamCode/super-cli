@@ -1,10 +1,13 @@
+/** A command used to install a CLI: a cross-platform string, or per-OS variants. */
+export type InstallCommand = string | { unix?: string; windows?: string };
+
 /** A coding agent CLI that the launcher can start. */
 export interface Agent {
   id: string;
   label: string;
   command: string;
   icon?: string;
-  installCommand?: string;
+  installCommand?: InstallCommand;
   autoInstall?: boolean;
 }
 
@@ -35,18 +38,13 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     autoInstall: true,
   },
   {
-    id: 'gemini',
-    label: 'Gemini CLI',
-    command: 'gemini',
-    icon: 'star-full',
-    installCommand: 'npm install -g @google/gemini-cli',
-    autoInstall: true,
-  },
-  {
     id: 'grok',
     label: 'Grok CLI',
     command: 'grok',
     icon: 'zap',
+    // xAI ships a standalone binary via an official shell installer (no npm package).
+    installCommand: { unix: 'curl -fsSL https://x.ai/cli/install.sh | bash' },
+    autoInstall: true,
   },
   {
     id: 'kilo',
@@ -60,7 +58,14 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     id: 'antigravity',
     label: 'Antigravity CLI',
     command: 'agy',
-    icon: 'globe',
+    // Inherits the icon of the retired Gemini CLI, which Antigravity replaces.
+    icon: 'star-full',
+    // Google ships a standalone Go binary via official OS-specific installers (no npm package).
+    installCommand: {
+      unix: 'curl -fsSL https://antigravity.google/cli/install.sh | bash',
+      windows: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://antigravity.google/cli/install.ps1 | iex"',
+    },
+    autoInstall: true,
   },
   {
     id: 'opencode',
@@ -68,6 +73,14 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     command: 'opencode',
     icon: 'code',
     installCommand: 'npm install -g opencode-ai',
+    autoInstall: true,
+  },
+  {
+    id: 'command-code',
+    label: 'Command Code',
+    command: 'cmd',
+    icon: 'terminal',
+    installCommand: 'npm install -g command-code',
     autoInstall: true,
   },
 ];
@@ -85,6 +98,22 @@ function isValidAgent(value: unknown): value is Agent {
     typeof candidate.command === 'string' &&
     candidate.command.trim().length > 0
   );
+}
+
+/** Resolves the install command for a platform: strings are cross-platform, objects select unix/windows. */
+export function resolveInstallCommand(
+  installCommand: InstallCommand | undefined,
+  platform: string,
+): string | undefined {
+  if (!installCommand) {
+    return undefined;
+  }
+
+  if (typeof installCommand === 'string') {
+    return installCommand;
+  }
+
+  return platform === 'win32' ? installCommand.windows : installCommand.unix;
 }
 
 /**

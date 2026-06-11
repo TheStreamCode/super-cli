@@ -1,9 +1,9 @@
 {
   "name": "vscode-super-cli",
   "displayName": "Super CLI",
-  "description": "One VS Code extension to launch any coding agent CLI (Claude Code, Codex, Copilot, Gemini, and your own) from a single side terminal.",
+  "description": "One VS Code extension to launch any coding agent CLI (Claude Code, Codex, Copilot, Antigravity, and your own) from a single side terminal.",
   "publisher": "mikesoft",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -156,7 +156,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, gemini, grok, kilo, antigravity, opencode) to override that built-in."
+                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, antigravity, opencode, command-code) to override that built-in."
               },
               "label": {
                 "type": "string",
@@ -171,8 +171,25 @@
                 "description": "Optional VS Code ThemeIcon id, for example sparkle or rocket. Defaults to a terminal icon."
               },
               "installCommand": {
-                "type": "string",
-                "description": "Optional command used to install the CLI when it is missing."
+                "description": "Optional command used to install the CLI when it is missing. Use a string for a cross-platform command (e.g. npm), or an object with \"unix\" and \"windows\" keys for OS-specific installers.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "unix": {
+                        "type": "string",
+                        "description": "Install command for macOS and Linux."
+                      },
+                      "windows": {
+                        "type": "string",
+                        "description": "Install command for Windows."
+                      }
+                    }
+                  }
+                ]
               },
               "autoInstall": {
                 "type": "boolean",
@@ -186,7 +203,7 @@
           "type": "boolean",
           "scope": "machine",
           "default": true,
-          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Gemini, Grok, Kilo, Antigravity, OpenCode) in the launcher."
+          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Grok, Kilo, Antigravity, OpenCode, Command Code) in the launcher."
         },
         "superCli.terminalLocation": {
           "type": "string",

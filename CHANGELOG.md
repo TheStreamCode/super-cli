@@ -3,6 +3,16 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.3.0]
+
+- Added **Command Code** (`cmd`, npm `command-code`) to the built-in presets.
+- **Removed Gemini CLI**: Google retired it on June 18, 2026 in favor of **Antigravity CLI**, which is
+  already included. Antigravity now uses Gemini's former icon.
+- **Grok** and **Antigravity** now offer a guided install using their official installer scripts.
+- `installCommand` can now be OS-specific: it accepts either a string (cross-platform, e.g. npm) or an
+  object with `unix` and `windows` keys. The guided install runs the resolved command directly in a
+  terminal after the confirmation dialog.
+
 ## [0.2.1]
 
 - **Kilo** now installs from its official npm package (`@kilocode/cli`), so it joins the guided-install

@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { BUILTIN_AGENTS, resolveAgents } = require('../out/agents.js');
+const { BUILTIN_AGENTS, resolveAgents, resolveInstallCommand } = require('../out/agents.js');
 
 test('resolveAgents returns the built-ins when no user agents are configured', () => {
   const agents = resolveAgents(BUILTIN_AGENTS, undefined, true);
@@ -54,10 +54,47 @@ test('OpenCode ships as a built-in preset', () => {
 });
 
 test('npm-installable built-ins offer a guided install with their official command', () => {
-  for (const id of ['claude', 'codex', 'copilot', 'gemini', 'kilo', 'opencode']) {
+  for (const id of ['claude', 'codex', 'copilot', 'kilo', 'opencode', 'command-code']) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
     assert.ok(agent, `expected built-in ${id}`);
+    assert.equal(typeof agent.installCommand, 'string');
     assert.match(agent.installCommand, /^npm install -g /);
     assert.equal(agent.autoInstall, true);
   }
+});
+
+test('Gemini CLI is no longer a built-in preset', () => {
+  assert.equal(BUILTIN_AGENTS.find((a) => a.id === 'gemini'), undefined);
+});
+
+test("Antigravity inherits Gemini's icon and uses the official OS-specific installer", () => {
+  const agy = BUILTIN_AGENTS.find((a) => a.id === 'antigravity');
+  assert.ok(agy);
+  assert.equal(agy.icon, 'star-full');
+  assert.match(agy.installCommand.unix, /antigravity\.google\/cli\/install\.sh/);
+  assert.match(agy.installCommand.windows, /install\.ps1/);
+  assert.equal(agy.autoInstall, true);
+});
+
+test('Grok uses the official xAI shell installer on Unix only', () => {
+  const grok = BUILTIN_AGENTS.find((a) => a.id === 'grok');
+  assert.match(grok.installCommand.unix, /x\.ai\/cli\/install\.sh/);
+  assert.equal(grok.installCommand.windows, undefined);
+});
+
+test('resolveInstallCommand returns cross-platform strings unchanged', () => {
+  assert.equal(resolveInstallCommand('npm install -g x', 'linux'), 'npm install -g x');
+  assert.equal(resolveInstallCommand('npm install -g x', 'win32'), 'npm install -g x');
+});
+
+test('resolveInstallCommand selects the per-OS variant', () => {
+  const cmd = { unix: 'curl | bash', windows: 'powershell ...' };
+  assert.equal(resolveInstallCommand(cmd, 'darwin'), 'curl | bash');
+  assert.equal(resolveInstallCommand(cmd, 'linux'), 'curl | bash');
+  assert.equal(resolveInstallCommand(cmd, 'win32'), 'powershell ...');
+});
+
+test('resolveInstallCommand returns undefined when the platform has no variant', () => {
+  assert.equal(resolveInstallCommand({ unix: 'x' }, 'win32'), undefined);
+  assert.equal(resolveInstallCommand(undefined, 'linux'), undefined);
 });
