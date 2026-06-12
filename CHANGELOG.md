@@ -3,6 +3,16 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.0]
+
+- **Favorite agent.** Mark an agent as your favorite with the star (★) button next to it in the
+  sidebar, and launch it from anywhere with **`Ctrl+Alt+A`** (`Cmd+Alt+A` on macOS; remappable in
+  Keyboard Shortcuts). When no favorite is set, the shortcut opens the picker and offers to remember
+  your choice. Stored in the new `superCli.favoriteAgent` setting.
+- **Install-status indicator.** Agents whose CLI isn't found on your `PATH` are shown dimmed and
+  marked *not installed* (best-effort, no process spawned). Not shown under `superCli.useWsl`, since
+  the Windows `PATH` doesn't reflect what's installed inside WSL.
+
 ## [0.6.2]
 
 - Added an **Open VSX** badge to the README (Super CLI is published on Open VSX for Cursor, Windsurf, VSCodium, and Gitpod users).

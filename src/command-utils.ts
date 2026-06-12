@@ -109,6 +109,53 @@ export function resolveHomePath(p: string, homedir: string): string {
   return p;
 }
 
+const DEFAULT_PATHEXT = '.COM;.EXE;.BAT;.CMD';
+
+/** Returns the executable extensions to try on Windows (the bare name plus each PATHEXT entry). */
+function resolveWindowsExtensions(pathExt: string | undefined): string[] {
+  const entries = (pathExt && pathExt.trim() ? pathExt : DEFAULT_PATHEXT)
+    .split(';')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return ['', ...entries];
+}
+
+/**
+ * Best-effort check that a command's executable resolves on PATH, without spawning a process.
+ * On Windows the bare name is also tried with each PATHEXT extension. `fileExists` is injected so
+ * the logic stays pure and testable; production passes `fs.existsSync`.
+ */
+export function executableExistsOnPath(
+  command: string,
+  env: Record<string, string | undefined>,
+  platform: string,
+  fileExists: (filePath: string) => boolean,
+): boolean {
+  const executable = extractExecutable(command);
+  if (!executable) {
+    return false;
+  }
+
+  const isWindows = platform === 'win32';
+  const extensions = isWindows ? resolveWindowsExtensions(env.PATHEXT) : [''];
+  const existsWithExt = (base: string): boolean => extensions.some((ext) => fileExists(base + ext));
+
+  // A path-qualified command is checked directly, not searched on PATH.
+  if (/[\\/]/.test(executable)) {
+    return existsWithExt(executable);
+  }
+
+  const pathValue = env.PATH ?? env.Path ?? '';
+  const delimiter = isWindows ? ';' : ':';
+  const separator = isWindows ? '\\' : '/';
+
+  return pathValue
+    .split(delimiter)
+    .filter((dir) => dir.length > 0)
+    .some((dir) => existsWithExt(dir.replace(/[\\/]+$/, '') + separator + executable));
+}
+
 /** Adds only the keys from `defaults` that are absent in `existing`; reports whether anything changed. */
 export function mergeMissingDefaults(
   existing: Record<string, unknown>,

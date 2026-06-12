@@ -45,10 +45,24 @@ test('package declares the launcher commands', () => {
   assert.deepEqual(commands, [
     'superCli.launch',
     'superCli.launchAgent',
+    'superCli.launchFavorite',
+    'superCli.setFavorite',
+    'superCli.unsetFavorite',
     'superCli.updateAgent',
     'superCli.refresh',
     'superCli.openSettings',
   ]);
+});
+
+test('package binds Launch Favorite Agent to Ctrl+Alt+A', () => {
+  const packageJson = readPackageJson();
+  const binding = packageJson.contributes.keybindings.find(
+    (entry) => entry.command === 'superCli.launchFavorite',
+  );
+
+  assert.ok(binding);
+  assert.equal(binding.key, 'ctrl+alt+a');
+  assert.equal(binding.mac, 'cmd+alt+a');
 });
 
 test('package contributes the sidebar view and agents tree', () => {
@@ -65,6 +79,8 @@ test('agents setting is machine-scoped and security restricted', () => {
   assert.equal(properties['superCli.agents'].type, 'array');
   assert.equal(properties['superCli.agents'].scope, 'machine');
   assert.equal(properties['superCli.useBuiltins'].default, true);
+  assert.equal(properties['superCli.favoriteAgent'].type, 'string');
+  assert.equal(properties['superCli.favoriteAgent'].scope, 'machine');
   assert.deepEqual(properties['superCli.agents'].items.required, ['id', 'label', 'command']);
   assert.deepEqual(packageJson.capabilities.untrustedWorkspaces.restrictedConfigurations, ['superCli.agents']);
 });

@@ -36,6 +36,11 @@ You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsu
 - **One launcher for every agent.** A **Super CLI** view in the activity bar lists all configured
   agents; click one to open it in a terminal beside your editor. A toolbar button and the
   **Super CLI: Launch Coding Agent** command open a quick pick of the same list.
+- **Favorite agent, one keystroke.** Click the star (★) next to an agent to mark it as your favorite,
+  then launch it anywhere with **`Ctrl+Alt+A`** (`Cmd+Alt+A` on macOS; remap it in Keyboard
+  Shortcuts). With no favorite set the shortcut opens the picker and offers to remember your choice.
+- **Install status at a glance.** Agents whose CLI isn't on your `PATH` are shown dimmed and marked
+  *not installed*, so you know what to install before launching.
 - **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Cursor, Droid, Grok, Kilo, Antigravity,
   OpenCode, Command Code, Crush, Hermes, and MiMo Code are available out of the box. (Gemini CLI was
   retired by Google and replaced by Antigravity.)
@@ -103,6 +108,7 @@ an untrusted repository cannot inject commands.
 | --- | --- | --- |
 | `superCli.agents` | `[]` | Your agents (added to or overriding the built-ins). |
 | `superCli.useBuiltins` | `true` | Include the built-in agent presets. |
+| `superCli.favoriteAgent` | `""` | Id of the agent launched by `Ctrl+Alt+A`. Set it with the ★ button in the sidebar rather than by hand. |
 | `superCli.terminalLocation` | `beside` | Open the terminal `beside` the editor or in the `panel`. |
 | `superCli.useWsl` | `false` | On Windows, open agents in a WSL terminal instead of the default shell. Ignored on macOS/Linux. |
 
@@ -118,6 +124,9 @@ settings.
   directory.
 - **Nothing happens on launch.** Make sure the workspace is trusted — the launcher is disabled in
   untrusted workspaces because it runs terminal commands.
+- **"Not installed" looks wrong.** The indicator is a best-effort check of your `PATH` and doesn't
+  spawn the CLI. It isn't shown when `superCli.useWsl` is on, because the Windows `PATH` doesn't
+  reflect what's installed inside WSL. Use **Refresh Agents** after installing a CLI.
 - **Companion editor extensions (Command Code, Claude Code).** Super CLI keeps your editor free of
   per-CLI companion extensions. It launches **Command Code** with `autoInstallExtension: false` in
   `~/.commandcode/config.json`, and **Claude Code** with the `CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=1`

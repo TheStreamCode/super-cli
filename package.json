@@ -3,7 +3,7 @@
   "displayName": "Super CLI — AI Coding Agent Launcher (Claude Code, Codex, Copilot)",
   "description": "Launch any AI coding-agent CLI — Claude Code, Codex, GitHub Copilot, Cursor, Crush, OpenCode and more — from one sidebar and side terminal. Works in VS Code, Cursor, Antigravity & Windsurf on Windows, macOS & Linux.",
   "publisher": "mikesoft",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -103,6 +103,23 @@
         "icon": "$(play)"
       },
       {
+        "command": "superCli.launchFavorite",
+        "title": "Launch Favorite Agent",
+        "category": "Super CLI"
+      },
+      {
+        "command": "superCli.setFavorite",
+        "title": "Set as Favorite",
+        "category": "Super CLI",
+        "icon": "$(star-empty)"
+      },
+      {
+        "command": "superCli.unsetFavorite",
+        "title": "Remove Favorite",
+        "category": "Super CLI",
+        "icon": "$(star-full)"
+      },
+      {
         "command": "superCli.updateAgent",
         "title": "Update Agent",
         "category": "Super CLI",
@@ -147,14 +164,32 @@
           "group": "inline@1"
         },
         {
-          "command": "superCli.updateAgent",
-          "when": "view == superCli.agents && viewItem == agent-updatable",
+          "command": "superCli.setFavorite",
+          "when": "view == superCli.agents && viewItem =~ /^agent(?!.*favorite)/",
           "group": "inline@2"
+        },
+        {
+          "command": "superCli.unsetFavorite",
+          "when": "view == superCli.agents && viewItem =~ /favorite/",
+          "group": "inline@2"
+        },
+        {
+          "command": "superCli.updateAgent",
+          "when": "view == superCli.agents && viewItem =~ /updatable/",
+          "group": "inline@3"
         }
       ],
       "commandPalette": [
         {
           "command": "superCli.launchAgent",
+          "when": "false"
+        },
+        {
+          "command": "superCli.setFavorite",
+          "when": "false"
+        },
+        {
+          "command": "superCli.unsetFavorite",
           "when": "false"
         },
         {
@@ -167,6 +202,13 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "superCli.launchFavorite",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a"
+      }
+    ],
     "configuration": {
       "title": "Super CLI",
       "properties": {
@@ -279,6 +321,12 @@
           "scope": "machine",
           "default": true,
           "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Grok, Kilo, Antigravity, OpenCode, Command Code, Cursor, Droid, Crush, Hermes, MiMo Code) in the launcher."
+        },
+        "superCli.favoriteAgent": {
+          "type": "string",
+          "scope": "machine",
+          "default": "",
+          "markdownDescription": "Id of the favorite agent launched by the `Launch Favorite Agent` command (default keybinding `Ctrl+Alt+A`, `Cmd+Alt+A` on macOS; remap it from Keyboard Shortcuts). Set this with the star (★) button next to an agent in the sidebar rather than editing it by hand."
         },
         "superCli.terminalLocation": {
           "type": "string",

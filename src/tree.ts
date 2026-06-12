@@ -19,19 +19,30 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<Agent> {
   private readonly changeEmitter = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this.changeEmitter.event;
 
-  constructor(private readonly getAgents: () => Agent[]) {}
+  constructor(
+    private readonly getAgents: () => Agent[],
+    private readonly getFavoriteId: () => string,
+    private readonly getInstallStatus: (id: string) => boolean | undefined,
+  ) {}
 
   refresh(): void {
     this.changeEmitter.fire();
   }
 
   getTreeItem(agent: Agent): vscode.TreeItem {
+    const isFavorite = agent.id === this.getFavoriteId();
+    const installStatus = this.getInstallStatus(agent.id);
+    const isMissing = installStatus === false;
+
     const item = new vscode.TreeItem(agent.label, vscode.TreeItemCollapsibleState.None);
     item.id = agent.id;
-    item.description = agent.command;
-    item.tooltip = `Launch ${agent.label} (${agent.command})`;
-    item.contextValue = agent.updateCommand ? 'agent-updatable' : 'agent';
-    item.iconPath = new vscode.ThemeIcon(normalizeIconId(agent.icon) ?? 'terminal');
+    item.description = isMissing ? `${agent.command} — not installed` : agent.command;
+    item.tooltip = `Launch ${agent.label} (${agent.command})`
+      + (isFavorite ? ' · Favorite (Ctrl+Alt+A)' : '')
+      + (isMissing ? ' · not found on PATH' : '');
+    item.contextValue = `agent${agent.updateCommand ? '-updatable' : ''}${isFavorite ? '-favorite' : ''}`;
+    const iconColor = isMissing ? new vscode.ThemeColor('disabledForeground') : undefined;
+    item.iconPath = new vscode.ThemeIcon(normalizeIconId(agent.icon) ?? 'terminal', iconColor);
     item.command = {
       command: 'superCli.launchAgent',
       title: 'Launch',

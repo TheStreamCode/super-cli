@@ -10,7 +10,14 @@ const {
   shouldPromptToInstall,
   resolveHomePath,
   mergeMissingDefaults,
+  executableExistsOnPath,
 } = require('../out/command-utils.js');
+
+/** Builds a fileExists predicate that returns true only for the given set of paths. */
+function existsIn(paths) {
+  const set = new Set(paths);
+  return (filePath) => set.has(filePath);
+}
 
 // normalizeTerminalName
 test('normalizeTerminalName trims configured values', () => {
@@ -143,4 +150,38 @@ test('mergeMissingDefaults never overwrites an existing key', () => {
 test('mergeMissingDefaults reports no change when all keys are already present', () => {
   const { changed } = mergeMissingDefaults({ a: 1, b: 2 }, { a: 9 });
   assert.equal(changed, false);
+});
+
+// executableExistsOnPath
+test('executableExistsOnPath finds a command on a POSIX PATH', () => {
+  const env = { PATH: '/usr/bin:/usr/local/bin' };
+  const exists = existsIn(['/usr/local/bin/claude']);
+  assert.equal(executableExistsOnPath('claude', env, 'linux', exists), true);
+});
+
+test('executableExistsOnPath returns false when the command is not on PATH', () => {
+  const env = { PATH: '/usr/bin:/usr/local/bin' };
+  assert.equal(executableExistsOnPath('claude', env, 'linux', existsIn([])), false);
+});
+
+test('executableExistsOnPath resolves a bare name via PATHEXT on Windows', () => {
+  const env = { Path: 'C:\\tools', PATHEXT: '.COM;.EXE;.BAT;.CMD' };
+  // npm global shims are .cmd files; the bare name must still resolve.
+  const exists = existsIn(['C:\\tools\\claude.CMD']);
+  assert.equal(executableExistsOnPath('claude', env, 'win32', exists), true);
+});
+
+test('executableExistsOnPath checks a path-qualified command directly', () => {
+  const exists = existsIn(['/opt/agents/my-agent']);
+  assert.equal(executableExistsOnPath('/opt/agents/my-agent --flag', { PATH: '' }, 'linux', exists), true);
+});
+
+test('executableExistsOnPath uses the quoted Windows executable path', () => {
+  const exists = existsIn(['C:\\Program Files\\Claude\\claude.exe']);
+  const command = '"C:\\Program Files\\Claude\\claude.exe" --help';
+  assert.equal(executableExistsOnPath(command, { PATHEXT: '.EXE' }, 'win32', exists), true);
+});
+
+test('executableExistsOnPath returns false for an empty command', () => {
+  assert.equal(executableExistsOnPath('   ', { PATH: '/usr/bin' }, 'linux', existsIn(['/usr/bin'])), false);
 });
