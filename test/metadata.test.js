@@ -30,7 +30,7 @@ test('package metadata uses Super CLI branding', () => {
   const packageJson = readPackageJson();
 
   assert.equal(packageJson.name, 'vscode-super-cli');
-  assert.equal(packageJson.displayName, 'Super CLI');
+  assert.match(packageJson.displayName, /^Super CLI/);
   assert.equal(packageJson.publisher, 'mikesoft');
   assert.equal(packageJson.icon, 'media/icon.png');
   assert.equal(packageJson.main, './out/extension.js');

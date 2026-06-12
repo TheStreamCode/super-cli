@@ -124,6 +124,24 @@ settings.
   extensions. Install those extensions yourself if you want them (for Command Code set the value back
   to `true`).
 
+## FAQ
+
+**How do I run Claude Code (or Codex, Copilot, Cursor, …) in VS Code?**
+Install Super CLI, open the **Super CLI** view in the activity bar, and click the agent — it opens in
+a terminal beside your editor. The toolbar button and the **Super CLI: Launch Coding Agent** command
+do the same. It also works in Cursor, Antigravity, and Windsurf.
+
+**Which AI coding agents are supported?**
+Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Antigravity, OpenCode, Command Code, Cursor,
+Droid, Crush, Hermes, and MiMo Code out of the box — plus any CLI you add in `settings.json`.
+
+**Does it work on Windows, macOS, and Linux?**
+Yes. On Windows you can also launch agents inside WSL with `superCli.useWsl`.
+
+**Is it free? Does it collect data?**
+Free and open-source (MIT), with no telemetry. It only runs the commands you configure, in your own
+integrated terminal.
+
 ## Support
 
 If Super CLI is useful to you, consider [sponsoring its development](https://github.com/sponsors/TheStreamCode).

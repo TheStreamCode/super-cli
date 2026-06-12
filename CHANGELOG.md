@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.6.1]
+
+- Marketplace discoverability: added the **AI** and **Chat** categories, a more descriptive title and
+  summary, reordered keywords, and a **FAQ** in the README. No functional changes.
+
 ## [0.6.0]
 
 - **Per-agent Update button.** Each sidebar agent that has a known update command now shows an update
