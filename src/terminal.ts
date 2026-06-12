@@ -118,8 +118,8 @@ function startGuidedInstall(agent: Agent, installCommand: string): void {
   installTerminal.sendText(installCommand, true);
 }
 
-async function handleMissingAgent(agent: Agent, context: vscode.ExtensionContext): Promise<void> {
-  const installCommand = resolveInstallCommand(agent.installCommand, process.platform);
+async function handleMissingAgent(agent: Agent, context: vscode.ExtensionContext, platform: string): Promise<void> {
+  const installCommand = resolveInstallCommand(agent.installCommand, platform);
 
   if (installCommand && agent.autoInstall) {
     const selection = await vscode.window.showWarningMessage(
@@ -154,6 +154,7 @@ function watchForMissingAgent(
   agent: Agent,
   context: vscode.ExtensionContext,
   runCommand: string,
+  platform: string,
 ): void {
   executeCommandWithOptionalShellIntegration(
     terminal,
@@ -161,7 +162,7 @@ function watchForMissingAgent(
     context,
     async (endEvent, output) => {
       if (shouldPromptToInstall(agent.command, endEvent.exitCode, output)) {
-        await handleMissingAgent(agent, context);
+        await handleMissingAgent(agent, context, platform);
       }
     },
   );
@@ -230,8 +231,11 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
 
   const configuration = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE);
   const location = configuration.get<string>('terminalLocation', 'beside');
-  const autoUpdate = configuration.get<boolean>('autoUpdate', true);
-  const updateCommand = autoUpdate ? resolveInstallCommand(agent.installCommand, process.platform) : undefined;
+  // WSL only applies on Windows; under WSL the agents use their Unix install/update commands.
+  const useWsl = configuration.get<boolean>('useWsl', false) && process.platform === 'win32';
+  const platform = useWsl ? 'linux' : process.platform;
+  const autoUpdate = configuration.get<boolean>('autoUpdate', false);
+  const updateCommand = autoUpdate ? resolveInstallCommand(agent.updateCommand, platform) : undefined;
   const launchCommand = buildLaunchCommand(command, updateCommand);
   const cwd = resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace);
 
@@ -240,8 +244,46 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
     location: location === 'panel' ? vscode.TerminalLocation.Panel : { viewColumn: vscode.ViewColumn.Beside },
     cwd,
     env: agent.env,
+    shellPath: useWsl ? 'wsl.exe' : undefined,
   });
   terminal.show();
-  watchForMissingAgent(terminal, agent, context, launchCommand);
+  watchForMissingAgent(terminal, agent, context, launchCommand, platform);
   void vscode.window.setStatusBarMessage(`Started ${agent.label}`, 2500);
+}
+
+/** Runs the agent's official update command in a dedicated terminal (without launching the agent). */
+export async function updateAgent(agent: Agent, context: vscode.ExtensionContext): Promise<void> {
+  if (!vscode.workspace.isTrusted) {
+    const selection = await vscode.window.showWarningMessage(
+      `Super CLI runs terminal commands in the current workspace. Trust this workspace before updating ${agent.label}.`,
+      'Manage Workspace Trust',
+    );
+
+    if (selection === 'Manage Workspace Trust') {
+      await vscode.commands.executeCommand('workbench.trust.manage');
+    }
+
+    return;
+  }
+
+  const useWsl = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<boolean>('useWsl', false) && process.platform === 'win32';
+  const platform = useWsl ? 'linux' : process.platform;
+  const updateCommand = resolveInstallCommand(agent.updateCommand, platform);
+
+  if (!updateCommand) {
+    void vscode.window.showInformationMessage(`${agent.label} has no configured update command — it likely updates itself.`);
+    return;
+  }
+
+  const cwd = resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace);
+  const terminal = vscode.window.createTerminal({
+    name: `Update ${agent.label}`,
+    location: vscode.TerminalLocation.Panel,
+    cwd,
+    env: agent.env,
+    shellPath: useWsl ? 'wsl.exe' : undefined,
+  });
+  terminal.show();
+  terminal.sendText(updateCommand, true);
+  void vscode.window.setStatusBarMessage(`Updating ${agent.label}`, 2500);
 }

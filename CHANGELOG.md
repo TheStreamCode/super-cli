@@ -3,6 +3,18 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.6.0]
+
+- **Per-agent Update button.** Each sidebar agent that has a known update command now shows an update
+  button next to Launch, which runs the CLI's official update (e.g. `codex update`, `copilot update`,
+  `kilo upgrade`, `hermes update`, `claude update`, npm reinstall for Crush).
+- **Accurate updates.** New `updateCommand` agent field carries each CLI's official update command.
+  `superCli.autoUpdate` now runs that command instead of a blind reinstall; CLIs that update
+  themselves (OpenCode, Cursor, Droid, MiMo Code, Command Code) run nothing.
+- **`superCli.autoUpdate` is now off by default** — most CLIs already self-update.
+- **`superCli.useWsl`** (new): on Windows, open agents in a WSL terminal (native VS Code support);
+  under WSL the agents use their Unix install/update commands.
+
 ## [0.5.0]
 
 - New `superCli.autoUpdate` setting (default on): each coding agent CLI is updated to its latest

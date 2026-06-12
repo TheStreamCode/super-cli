@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { type Agent, BUILTIN_AGENTS, resolveAgents } from './agents.js';
 import { AgentTreeDataProvider } from './tree.js';
-import { launchAgent, openExtensionSettings } from './terminal.js';
+import { launchAgent, openExtensionSettings, updateAgent } from './terminal.js';
 
 const SETTINGS_NAMESPACE = 'superCli';
 
@@ -59,6 +59,14 @@ export function activate(context: vscode.ExtensionContext): void {
     await launchAgent(agent, context, terminalSequence++);
   });
 
+  const updateAgentCommand = vscode.commands.registerCommand('superCli.updateAgent', async (agent?: Agent) => {
+    if (!agent) {
+      return;
+    }
+
+    await updateAgent(agent, context);
+  });
+
   const refreshCommand = vscode.commands.registerCommand('superCli.refresh', () => {
     treeProvider.refresh();
   });
@@ -77,6 +85,7 @@ export function activate(context: vscode.ExtensionContext): void {
     treeView,
     launchCommand,
     launchAgentCommand,
+    updateAgentCommand,
     refreshCommand,
     openSettingsCommand,
     configWatcher,

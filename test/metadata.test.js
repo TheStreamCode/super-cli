@@ -45,6 +45,7 @@ test('package declares the launcher commands', () => {
   assert.deepEqual(commands, [
     'superCli.launch',
     'superCli.launchAgent',
+    'superCli.updateAgent',
     'superCli.refresh',
     'superCli.openSettings',
   ]);

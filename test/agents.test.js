@@ -53,6 +53,28 @@ test('OpenCode ships as a built-in preset', () => {
   assert.equal(opencode.installCommand, 'npm install -g opencode-ai');
 });
 
+test('agents with a known update command carry their official one', () => {
+  const expected = {
+    claude: 'claude update',
+    codex: 'codex update',
+    copilot: 'copilot update',
+    kilo: 'kilo upgrade',
+    hermes: 'hermes update',
+    crush: 'npm install -g @charmland/crush',
+  };
+  for (const [id, cmd] of Object.entries(expected)) {
+    const agent = BUILTIN_AGENTS.find((a) => a.id === id);
+    assert.equal(agent.updateCommand, cmd, id);
+  }
+});
+
+test('self-updating CLIs have no manual update command', () => {
+  for (const id of ['opencode', 'cursor', 'droid', 'mimo', 'command-code']) {
+    const agent = BUILTIN_AGENTS.find((a) => a.id === id);
+    assert.equal(agent.updateCommand, undefined, id);
+  }
+});
+
 test('Claude Code skips its IDE extension auto-install via env', () => {
   const claude = BUILTIN_AGENTS.find((a) => a.id === 'claude');
   assert.equal(claude.env.CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL, '1');

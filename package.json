@@ -3,7 +3,7 @@
   "displayName": "Super CLI",
   "description": "One VS Code extension to launch any coding agent CLI (Claude Code, Codex, Copilot, Antigravity, and your own) from a single side terminal.",
   "publisher": "mikesoft",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -99,6 +99,12 @@
         "icon": "$(play)"
       },
       {
+        "command": "superCli.updateAgent",
+        "title": "Update Agent",
+        "category": "Super CLI",
+        "icon": "$(arrow-circle-up)"
+      },
+      {
         "command": "superCli.refresh",
         "title": "Refresh Agents",
         "category": "Super CLI",
@@ -133,13 +139,22 @@
       "view/item/context": [
         {
           "command": "superCli.launchAgent",
-          "when": "view == superCli.agents && viewItem == agent",
-          "group": "inline"
+          "when": "view == superCli.agents && viewItem =~ /agent/",
+          "group": "inline@1"
+        },
+        {
+          "command": "superCli.updateAgent",
+          "when": "view == superCli.agents && viewItem == agent-updatable",
+          "group": "inline@2"
         }
       ],
       "commandPalette": [
         {
           "command": "superCli.launchAgent",
+          "when": "false"
+        },
+        {
+          "command": "superCli.updateAgent",
           "when": "false"
         },
         {
@@ -230,6 +245,25 @@
                 "additionalProperties": {
                   "type": "string"
                 }
+              },
+              "updateCommand": {
+                "description": "Optional command to update the CLI to its latest version (its official update/upgrade command, or an npm reinstall). Shown as an update button in the sidebar, and used by superCli.autoUpdate. Use a string, or an object with \"unix\" and \"windows\" keys for OS-specific commands.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "unix": {
+                        "type": "string"
+                      },
+                      "windows": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
               }
             }
           }
@@ -256,9 +290,15 @@
         },
         "superCli.autoUpdate": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "scope": "window",
-          "description": "Update each coding agent CLI to its latest version on launch, using its install command (npm reinstall, or the official installer script). Disable to launch without updating."
+          "description": "Run each coding agent CLI's update command on launch, when it has one. Off by default, since most CLIs already update themselves. Enable to have Super CLI update them before launching."
+        },
+        "superCli.useWsl": {
+          "type": "boolean",
+          "default": false,
+          "scope": "window",
+          "description": "On Windows, open coding agents in a WSL terminal instead of the default shell (uses VS Code's native WSL support). Ignored on macOS and Linux."
         }
       }
     }

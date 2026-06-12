@@ -40,6 +40,10 @@ You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsu
   retired by Google and replaced by Antigravity.)
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
+- **Update from the sidebar.** Agents with a known update command show an update button next to
+  Launch, which runs the CLI's official update (e.g. `codex update`, `kilo upgrade`, `hermes update`).
+  CLIs that update themselves don't show one. The optional `superCli.autoUpdate` setting can run that
+  update on launch.
 - **Guided install.** If a built-in CLI isn't found, Super CLI offers to install it with its official
   command after explicit confirmation — npm for Claude Code, Codex, Copilot, Kilo, OpenCode, Command
   Code, Droid, Crush and MiMo Code, and the official installer script for Grok, Antigravity, Cursor
@@ -86,6 +90,10 @@ reuses a built-in `id` — overrides that built-in (for example to point at a cu
   "defaults": { "autoInstallExtension": false } }`.
 - `env` — optional environment variables set for the agent's terminal, e.g. to opt out of a CLI's
   IDE-extension auto-install via its own variable: `{ "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1" }`.
+- `updateCommand` — optional command to update the CLI (its official `update`/`upgrade` command, or
+  an npm reinstall). Adds an update button next to the agent in the sidebar, and is used by
+  `superCli.autoUpdate`. Like `installCommand`, it can be a string or an object with `unix`/`windows`
+  keys.
 
 Only the user (global) value of `superCli.agents` is used; workspace overrides are ignored so that
 an untrusted repository cannot inject commands.
@@ -97,7 +105,8 @@ an untrusted repository cannot inject commands.
 | `superCli.agents` | `[]` | Your agents (added to or overriding the built-ins). |
 | `superCli.useBuiltins` | `true` | Include the built-in agent presets. |
 | `superCli.terminalLocation` | `beside` | Open the terminal `beside` the editor or in the `panel`. |
-| `superCli.autoUpdate` | `true` | Update each CLI to its latest version on launch (npm reinstall or the official installer script). |
+| `superCli.autoUpdate` | `false` | Run each CLI's update command on launch (when it has one). Off by default — most CLIs self-update. |
+| `superCli.useWsl` | `false` | On Windows, open agents in a WSL terminal instead of the default shell. Ignored on macOS/Linux. |
 
 Run **Super CLI: Open Settings** from the sidebar or the command palette to jump straight to these
 settings.

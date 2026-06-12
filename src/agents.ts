@@ -17,6 +17,7 @@ export interface Agent {
   autoInstall?: boolean;
   ensureConfig?: EnsureConfig;
   env?: Record<string, string>;
+  updateCommand?: InstallCommand;
 }
 
 /** Built-in agent presets shipped with the extension. Users override them by reusing an id. */
@@ -28,6 +29,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     icon: 'sparkle',
     installCommand: 'npm install -g @anthropic-ai/claude-code',
     autoInstall: true,
+    updateCommand: 'claude update',
     // Super CLI is one extension for every CLI, so skip Claude Code's IDE extension
     // auto-install using its own official environment variable.
     env: { CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL: '1' },
@@ -39,6 +41,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     icon: 'rocket',
     installCommand: 'npm install -g @openai/codex',
     autoInstall: true,
+    updateCommand: 'codex update',
   },
   {
     id: 'copilot',
@@ -47,6 +50,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     icon: 'github',
     installCommand: 'npm install -g @github/copilot',
     autoInstall: true,
+    updateCommand: 'copilot update',
   },
   {
     id: 'grok',
@@ -64,6 +68,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     icon: 'terminal',
     installCommand: 'npm install -g @kilocode/cli',
     autoInstall: true,
+    updateCommand: 'kilo upgrade',
   },
   {
     id: 'antigravity',
@@ -126,6 +131,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     icon: 'flame',
     installCommand: 'npm install -g @charmland/crush',
     autoInstall: true,
+    updateCommand: 'npm install -g @charmland/crush',
   },
   {
     id: 'hermes',
@@ -135,6 +141,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     // Official shell installer (no npm package).
     installCommand: { unix: 'curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash' },
     autoInstall: true,
+    updateCommand: 'hermes update',
   },
   {
     id: 'mimo',

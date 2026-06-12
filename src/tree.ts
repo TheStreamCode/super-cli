@@ -30,7 +30,7 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<Agent> {
     item.id = agent.id;
     item.description = agent.command;
     item.tooltip = `Launch ${agent.label} (${agent.command})`;
-    item.contextValue = 'agent';
+    item.contextValue = agent.updateCommand ? 'agent-updatable' : 'agent';
     item.iconPath = new vscode.ThemeIcon(normalizeIconId(agent.icon) ?? 'terminal');
     item.command = {
       command: 'superCli.launchAgent',
