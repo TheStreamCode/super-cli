@@ -2,6 +2,7 @@
 
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mikesoft.vscode-super-cli?label=Marketplace&color=6366F1)](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli)
 [![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/mikesoft.vscode-super-cli?color=0EA5E9)](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli)
+[![Open VSX](https://img.shields.io/open-vsx/v/mikesoft/vscode-super-cli?label=Open%20VSX&color=a60ee5)](https://open-vsx.org/extension/mikesoft/vscode-super-cli)
 [![CI](https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml)
 [![Sponsor](https://img.shields.io/badge/Sponsor-TheStreamCode-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/TheStreamCode)
 

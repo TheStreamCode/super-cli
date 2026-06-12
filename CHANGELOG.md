@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.6.2]
+
+- Added an **Open VSX** badge to the README (Super CLI is published on Open VSX for Cursor, Windsurf, VSCodium, and Gitpod users).
+- Unified the `LICENSE` copyright holder to **Michael Gasperini (Mikesoft)**. No functional changes.
+
 ## [0.6.1]
 
 - Marketplace discoverability: added the **AI** and **Chat** categories, a more descriptive title and
