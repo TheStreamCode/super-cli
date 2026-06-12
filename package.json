@@ -247,7 +247,7 @@
                 }
               },
               "updateCommand": {
-                "description": "Optional command to update the CLI to its latest version (its official update/upgrade command, or an npm reinstall). Shown as an update button in the sidebar, and used by superCli.autoUpdate. Use a string, or an object with \"unix\" and \"windows\" keys for OS-specific commands.",
+                "description": "Optional command to update the CLI to its latest version (its official update/upgrade command, or an npm reinstall). Shown as an update button next to the agent in the sidebar. Use a string, or an object with \"unix\" and \"windows\" keys for OS-specific commands.",
                 "oneOf": [
                   {
                     "type": "string"
@@ -256,10 +256,12 @@
                     "type": "object",
                     "properties": {
                       "unix": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Update command for macOS and Linux."
                       },
                       "windows": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Update command for Windows."
                       }
                     }
                   }
@@ -287,12 +289,6 @@
           "default": "beside",
           "scope": "window",
           "description": "Where to open the terminal that runs the coding agent."
-        },
-        "superCli.autoUpdate": {
-          "type": "boolean",
-          "default": false,
-          "scope": "window",
-          "description": "Run each coding agent CLI's update command on launch, when it has one. Off by default, since most CLIs already update themselves. Enable to have Super CLI update them before launching."
         },
         "superCli.useWsl": {
           "type": "boolean",

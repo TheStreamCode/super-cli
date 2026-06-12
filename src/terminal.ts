@@ -5,7 +5,6 @@ import * as vscode from 'vscode';
 import { type Agent, resolveInstallCommand } from './agents.js';
 import {
   buildExtensionSettingsQuery,
-  buildLaunchCommand,
   buildTerminalName,
   mergeMissingDefaults,
   resolveHomePath,
@@ -64,10 +63,6 @@ function executeCommandWithOptionalShellIntegration(
       })
       : undefined;
 
-    if (executionListener) {
-      context.subscriptions.push(executionListener);
-    }
-
     execution = shellIntegration.executeCommand(command);
     outputPromise = collectShellExecutionOutput(execution);
   };
@@ -105,6 +100,13 @@ function executeCommandWithOptionalShellIntegration(
 /** Opens the Settings UI filtered to this extension. */
 export async function openExtensionSettings(context: vscode.ExtensionContext): Promise<void> {
   await vscode.commands.executeCommand('workbench.action.openSettings', buildExtensionSettingsQuery(context.extension.id));
+}
+
+/** Resolves the launch platform: WSL on Windows maps to 'linux' so agents use their Unix commands. */
+function resolvePlatform(): { useWsl: boolean; platform: string } {
+  const useWsl = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<boolean>('useWsl', false)
+    && process.platform === 'win32';
+  return { useWsl, platform: useWsl ? 'linux' : process.platform };
 }
 
 /** Runs the resolved install command in a dedicated terminal. The modal dialog is the confirmation. */
@@ -229,14 +231,8 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
 
   applyEnsureConfig(agent);
 
-  const configuration = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE);
-  const location = configuration.get<string>('terminalLocation', 'beside');
-  // WSL only applies on Windows; under WSL the agents use their Unix install/update commands.
-  const useWsl = configuration.get<boolean>('useWsl', false) && process.platform === 'win32';
-  const platform = useWsl ? 'linux' : process.platform;
-  const autoUpdate = configuration.get<boolean>('autoUpdate', false);
-  const updateCommand = autoUpdate ? resolveInstallCommand(agent.updateCommand, platform) : undefined;
-  const launchCommand = buildLaunchCommand(command, updateCommand);
+  const location = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<string>('terminalLocation', 'beside');
+  const { useWsl, platform } = resolvePlatform();
   const cwd = resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace);
 
   const terminal = vscode.window.createTerminal({
@@ -247,7 +243,7 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
     shellPath: useWsl ? 'wsl.exe' : undefined,
   });
   terminal.show();
-  watchForMissingAgent(terminal, agent, context, launchCommand, platform);
+  watchForMissingAgent(terminal, agent, context, command, platform);
   void vscode.window.setStatusBarMessage(`Started ${agent.label}`, 2500);
 }
 
@@ -266,8 +262,7 @@ export async function updateAgent(agent: Agent, context: vscode.ExtensionContext
     return;
   }
 
-  const useWsl = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<boolean>('useWsl', false) && process.platform === 'win32';
-  const platform = useWsl ? 'linux' : process.platform;
+  const { useWsl, platform } = resolvePlatform();
   const updateCommand = resolveInstallCommand(agent.updateCommand, platform);
 
   if (!updateCommand) {

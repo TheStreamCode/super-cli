@@ -7,11 +7,11 @@ All notable changes to this project are documented here. The format is based on
 
 - **Per-agent Update button.** Each sidebar agent that has a known update command now shows an update
   button next to Launch, which runs the CLI's official update (e.g. `codex update`, `copilot update`,
-  `kilo upgrade`, `hermes update`, `claude update`, npm reinstall for Crush).
-- **Accurate updates.** New `updateCommand` agent field carries each CLI's official update command.
-  `superCli.autoUpdate` now runs that command instead of a blind reinstall; CLIs that update
-  themselves (OpenCode, Cursor, Droid, MiMo Code, Command Code) run nothing.
-- **`superCli.autoUpdate` is now off by default** — most CLIs already self-update.
+  `kilo upgrade`, `hermes update`, `claude update`, npm reinstall for Crush). CLIs that update
+  themselves (OpenCode, Cursor, Droid, MiMo Code, Command Code) don't show one.
+- New `updateCommand` agent field carrying each CLI's official update command.
+- **Removed the `superCli.autoUpdate` setting** (added in 0.5.0): updating is now manual via the
+  Update button, since most CLIs already self-update.
 - **`superCli.useWsl`** (new): on Windows, open agents in a WSL terminal (native VS Code support);
   under WSL the agents use their Unix install/update commands.
 
