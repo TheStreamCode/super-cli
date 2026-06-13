@@ -57,8 +57,11 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Grok CLI',
     command: 'grok',
     icon: 'zap',
-    // xAI ships a standalone binary via an official shell installer (no npm package).
-    installCommand: { unix: 'curl -fsSL https://x.ai/cli/install.sh | bash' },
+    // xAI ships a standalone binary via official installers: shell on macOS/Linux, PowerShell on Windows.
+    installCommand: {
+      unix: 'curl -fsSL https://x.ai/cli/install.sh | bash',
+      windows: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://x.ai/cli/install.ps1 | iex"',
+    },
     autoInstall: true,
   },
   {
@@ -90,6 +93,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     icon: 'code',
     installCommand: 'npm install -g opencode-ai',
     autoInstall: true,
+    updateCommand: 'opencode upgrade',
   },
   {
     id: 'command-code',
@@ -112,9 +116,13 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Cursor CLI',
     command: 'cursor-agent',
     icon: 'edit',
-    // Official shell installer (no npm package). On Windows it runs under WSL.
-    installCommand: { unix: 'curl https://cursor.com/install -fsS | bash' },
+    // Official shell installer (macOS/Linux) and native Windows PowerShell installer.
+    installCommand: {
+      unix: 'curl https://cursor.com/install -fsS | bash',
+      windows: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm \'https://cursor.com/install?win32=true\' | iex"',
+    },
     autoInstall: true,
+    updateCommand: 'cursor-agent update',
   },
   {
     id: 'droid',
@@ -123,6 +131,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     icon: 'circuit-board',
     installCommand: 'npm install -g droid',
     autoInstall: true,
+    updateCommand: 'droid update',
   },
   {
     id: 'crush',
@@ -138,8 +147,11 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Hermes',
     command: 'hermes',
     icon: 'send',
-    // Official shell installer (no npm package).
-    installCommand: { unix: 'curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash' },
+    // Official installers: shell on macOS/Linux/WSL, native PowerShell on Windows.
+    installCommand: {
+      unix: 'curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash',
+      windows: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "iex (irm https://hermes-agent.nousresearch.com/install.ps1)"',
+    },
     autoInstall: true,
     updateCommand: 'hermes update',
   },

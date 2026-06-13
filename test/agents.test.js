@@ -61,6 +61,9 @@ test('agents with a known update command carry their official one', () => {
     kilo: 'kilo upgrade',
     hermes: 'hermes update',
     crush: 'npm install -g @charmland/crush',
+    opencode: 'opencode upgrade',
+    cursor: 'cursor-agent update',
+    droid: 'droid update',
   };
   for (const [id, cmd] of Object.entries(expected)) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
@@ -69,7 +72,7 @@ test('agents with a known update command carry their official one', () => {
 });
 
 test('self-updating CLIs have no manual update command', () => {
-  for (const id of ['opencode', 'cursor', 'droid', 'mimo', 'command-code']) {
+  for (const id of ['mimo', 'command-code']) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
     assert.equal(agent.updateCommand, undefined, id);
   }
@@ -111,10 +114,10 @@ test("Antigravity inherits Gemini's icon and uses the official OS-specific insta
   assert.equal(agy.autoInstall, true);
 });
 
-test('Grok uses the official xAI shell installer on Unix only', () => {
+test('Grok uses the official xAI installers on both Unix and Windows', () => {
   const grok = BUILTIN_AGENTS.find((a) => a.id === 'grok');
   assert.match(grok.installCommand.unix, /x\.ai\/cli\/install\.sh/);
-  assert.equal(grok.installCommand.windows, undefined);
+  assert.match(grok.installCommand.windows, /x\.ai\/cli\/install\.ps1/);
 });
 
 test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () => {
@@ -123,10 +126,11 @@ test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () 
   assert.equal(byId.droid.command, 'droid');
   assert.equal(byId.crush.installCommand, 'npm install -g @charmland/crush');
   assert.equal(byId.mimo.installCommand, 'npm install -g @mimo-ai/cli');
-  // Shell installers are Unix-only objects.
-  assert.equal(byId.cursor.installCommand.windows, undefined);
+  // Cursor and Hermes now ship native Windows installers alongside the Unix ones.
   assert.match(byId.cursor.installCommand.unix, /cursor\.com\/install/);
+  assert.match(byId.cursor.installCommand.windows, /cursor\.com\/install\?win32=true/);
   assert.match(byId.hermes.installCommand.unix, /hermes-agent\.nousresearch\.com/);
+  assert.match(byId.hermes.installCommand.windows, /hermes-agent\.nousresearch\.com\/install\.ps1/);
 });
 
 test('resolveInstallCommand returns cross-platform strings unchanged', () => {

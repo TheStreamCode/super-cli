@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.1]
+
+- **Verified every built-in CLI against current official sources** and completed the install/update
+  presets:
+  - **Native Windows installers** added for **Cursor**, **Grok**, and **Hermes** (these now ship a
+    PowerShell installer upstream, so guided install works on native Windows, not only under WSL).
+  - **Update buttons** added for **Cursor** (`cursor-agent update`), **OpenCode** (`opencode upgrade`),
+    and **Droid** (`droid update`), which now expose official update commands.
+- No changes to commands or package names — claude, codex, copilot, kilo, crush (`@charmland/crush`),
+  command-code, antigravity, droid (`droid`), and mimo were all confirmed correct.
+
 ## [0.7.0]
 
 - **Favorite agent.** Mark an agent as your favorite with the star (★) button next to it in the
