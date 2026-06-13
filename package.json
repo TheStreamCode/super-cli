@@ -3,7 +3,7 @@
   "displayName": "Super CLI — AI Coding Agent Launcher (Claude Code, Codex, Copilot)",
   "description": "Launch any AI coding-agent CLI — Claude Code, Codex, GitHub Copilot, Cursor, Crush, OpenCode and more — from one sidebar and side terminal. Works in VS Code, Cursor, Antigravity & Windsurf on Windows, macOS & Linux.",
   "publisher": "mikesoft",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"

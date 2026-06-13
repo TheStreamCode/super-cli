@@ -47,12 +47,12 @@ You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsu
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
 - **Update from the sidebar.** Agents with a known update command show an update button next to
-  Launch, which runs the CLI's official update (e.g. `codex update`, `kilo upgrade`, `hermes update`).
-  CLIs that update themselves don't show one.
+  Launch, which runs the CLI's official update (e.g. `codex update`, `kilo upgrade`, `cursor-agent
+  update`, `opencode upgrade`, `droid update`). CLIs that update themselves don't show one.
 - **Guided install.** If a built-in CLI isn't found, Super CLI offers to install it with its official
   command after explicit confirmation — npm for Claude Code, Codex, Copilot, Kilo, OpenCode, Command
-  Code, Droid, Crush and MiMo Code, and the official installer script for Grok, Antigravity, Cursor
-  and Hermes.
+  Code, Droid, Crush and MiMo Code, and the official installer (native PowerShell on Windows, shell on
+  macOS/Linux) for Grok, Antigravity, Cursor and Hermes.
 - **Native integrated terminal.** Each agent runs in a real VS Code terminal, inheriting your
   shell, `PATH`, and environment. No bundled emulator, no runtime dependencies.
 

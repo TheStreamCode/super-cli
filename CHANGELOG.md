@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.2]
+
+- **Docs.** README updated to reflect 0.7.1: Cursor, Grok and Hermes now install natively on Windows
+  (PowerShell), and Cursor, OpenCode and Droid show an update button. No functional changes.
+
 ## [0.7.1]
 
 - **Verified every built-in CLI against current official sources** and completed the install/update
