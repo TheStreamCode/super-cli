@@ -3,6 +3,16 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.3]
+
+- **Fixed the Droid install command.** The `droid` built-in now installs the official scoped npm
+  package `@factory/cli` (which provides the `droid` binary) instead of the incorrect unscoped
+  `droid` package.
+- **Raised the minimum VS Code version to `^1.93.0`**, the actual floor for the terminal shell
+  integration APIs the extension uses (the manifest previously declared `^1.86.0`).
+- **Added** `CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md`, and `TRADEMARKS.md` governance documents,
+  and compiled against the `ES2022` target. No functional changes beyond the Droid fix.
+
 ## [0.7.2]
 
 - **Docs.** README updated to reflect 0.7.1: Cursor, Grok and Hermes now install natively on Windows

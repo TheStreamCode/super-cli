@@ -129,7 +129,8 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Droid CLI',
     command: 'droid',
     icon: 'circuit-board',
-    installCommand: 'npm install -g droid',
+    // Factory ships Droid as the scoped npm package @factory/cli, which provides the `droid` binary.
+    installCommand: 'npm install -g @factory/cli',
     autoInstall: true,
     updateCommand: 'droid update',
   },
