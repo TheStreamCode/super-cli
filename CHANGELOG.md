@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.8.0]
+
+- **Added Pi to the built-in agent presets.** Pi (Pi Coding Agent) installs via the official npm
+  package `@earendil-works/pi-coding-agent` (`pi` binary), with guided install and the official
+  `pi update` command.
+
 ## [0.7.3]
 
 - **Fixed the Droid install command.** The `droid` built-in now installs the official scoped npm

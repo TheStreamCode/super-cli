@@ -7,8 +7,8 @@
 [![Sponsor](https://img.shields.io/badge/Sponsor-TheStreamCode-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/TheStreamCode)
 
 One VS Code extension to launch any coding agent CLI — **Claude Code, Codex, GitHub Copilot CLI,
-Cursor, Droid, Grok, Kilo, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, and your
-own** — from a single sidebar and a side terminal.
+Cursor, Droid, Grok, Kilo, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, Pi, and
+your own** — from a single sidebar and a side terminal.
 
 Works on Windows, macOS, and Linux, and across the VS Code family (VS Code, Cursor, Antigravity,
 Windsurf).
@@ -42,8 +42,8 @@ You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsu
 - **Install status at a glance.** Agents whose CLI isn't on your `PATH` are shown dimmed and marked
   *not installed*, so you know what to install before launching.
 - **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Cursor, Droid, Grok, Kilo, Antigravity,
-  OpenCode, Command Code, Crush, Hermes, and MiMo Code are available out of the box. (Gemini CLI was
-  retired by Google and replaced by Antigravity.)
+  OpenCode, Command Code, Crush, Hermes, MiMo Code, and Pi are available out of the box. (Gemini CLI
+  was retired by Google and replaced by Antigravity.)
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
 - **Update from the sidebar.** Agents with a known update command show an update button next to
@@ -51,8 +51,8 @@ You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsu
   update`, `opencode upgrade`, `droid update`). CLIs that update themselves don't show one.
 - **Guided install.** If a built-in CLI isn't found, Super CLI offers to install it with its official
   command after explicit confirmation — npm for Claude Code, Codex, Copilot, Kilo, OpenCode, Command
-  Code, Droid, Crush and MiMo Code, and the official installer (native PowerShell on Windows, shell on
-  macOS/Linux) for Grok, Antigravity, Cursor and Hermes.
+  Code, Droid, Crush, MiMo Code and Pi, and the official installer (native PowerShell on Windows, shell
+  on macOS/Linux) for Grok, Antigravity, Cursor and Hermes.
 - **Native integrated terminal.** Each agent runs in a real VS Code terminal, inheriting your
   shell, `PATH`, and environment. No bundled emulator, no runtime dependencies.
 
@@ -143,7 +143,7 @@ do the same. It also works in Cursor, Antigravity, and Windsurf.
 
 **Which AI coding agents are supported?**
 Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Antigravity, OpenCode, Command Code, Cursor,
-Droid, Crush, Hermes, and MiMo Code out of the box — plus any CLI you add in `settings.json`.
+Droid, Crush, Hermes, MiMo Code, and Pi out of the box — plus any CLI you add in `settings.json`.
 
 **Does it work on Windows, macOS, and Linux?**
 Yes. On Windows you can also launch agents inside WSL with `superCli.useWsl`.

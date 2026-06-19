@@ -164,6 +164,18 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     installCommand: 'npm install -g @mimo-ai/cli',
     autoInstall: true,
   },
+  {
+    id: 'pi',
+    label: 'Pi',
+    command: 'pi',
+    icon: 'pulse',
+    // Pi ships the scoped npm package @earendil-works/pi-coding-agent (provides the `pi` binary).
+    // The official command keeps --ignore-scripts.
+    installCommand: 'npm install -g --ignore-scripts @earendil-works/pi-coding-agent',
+    autoInstall: true,
+    // Pi exposes an official self-update command (`pi update` updates pi only).
+    updateCommand: 'pi update',
+  },
 ];
 
 /** Returns true when a value is a usable agent definition (non-empty id and command). */

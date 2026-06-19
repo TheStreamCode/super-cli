@@ -64,6 +64,7 @@ test('agents with a known update command carry their official one', () => {
     opencode: 'opencode upgrade',
     cursor: 'cursor-agent update',
     droid: 'droid update',
+    pi: 'pi update',
   };
   for (const [id, cmd] of Object.entries(expected)) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
@@ -92,7 +93,7 @@ test('Command Code opts out of its companion editor-extension auto-install', () 
 });
 
 test('npm-installable built-ins offer a guided install with their official command', () => {
-  for (const id of ['claude', 'codex', 'copilot', 'kilo', 'opencode', 'command-code', 'droid', 'crush', 'mimo']) {
+  for (const id of ['claude', 'codex', 'copilot', 'kilo', 'opencode', 'command-code', 'droid', 'crush', 'mimo', 'pi']) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
     assert.ok(agent, `expected built-in ${id}`);
     assert.equal(typeof agent.installCommand, 'string');
@@ -131,6 +132,14 @@ test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () 
   assert.match(byId.cursor.installCommand.windows, /cursor\.com\/install\?win32=true/);
   assert.match(byId.hermes.installCommand.unix, /hermes-agent\.nousresearch\.com/);
   assert.match(byId.hermes.installCommand.windows, /hermes-agent\.nousresearch\.com\/install\.ps1/);
+});
+
+test('Pi ships as a built-in preset', () => {
+  const pi = BUILTIN_AGENTS.find((a) => a.id === 'pi');
+  assert.ok(pi);
+  assert.equal(pi.command, 'pi');
+  assert.match(pi.installCommand, /@earendil-works\/pi-coding-agent/);
+  assert.equal(pi.autoInstall, true);
 });
 
 test('resolveInstallCommand returns cross-platform strings unchanged', () => {
