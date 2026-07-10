@@ -5,5 +5,5 @@ authors:
   - family-names: Gasperini
     given-names: Michael
 url: "https://github.com/TheStreamCode/super-cli"
-version: "0.8.0"
+version: "0.8.1"
 license: MIT
