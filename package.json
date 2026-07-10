@@ -27,7 +27,7 @@
   },
   "pricing": "Free",
   "engines": {
-    "vscode": "^1.93.0"
+    "vscode": "^1.103.0"
   },
   "capabilities": {
     "untrustedWorkspaces": {
@@ -365,7 +365,7 @@
   "devDependencies": {
     "@vscode/test-electron": "^2.5.2",
     "@types/node": "^22.0.0",
-    "@types/vscode": "^1.93.0",
+    "@types/vscode": "^1.103.0",
     "@vscode/vsce": "^3.0.0",
     "typescript": "^5.0.0"
   }
