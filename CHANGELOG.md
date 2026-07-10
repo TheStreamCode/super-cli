@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- Upgraded TypeScript from `^5.0.0` to `^7.0.0` (resolved 7.0.2). No source or configuration changes were required.
 - Raised the minimum required VS Code version to `^1.103.0` and aligned `@types/vscode` to match, so `vsce` validation passes against the declared engine floor.
 
 ### Security
