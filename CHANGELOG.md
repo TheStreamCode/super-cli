@@ -5,6 +5,12 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.8.2]
+
+### Changed
+
+- Improved legal documentation, trademark notices, third-party terms references, and metadata cleanup.
+
 ## [0.8.1]
 
 ### Changed
