@@ -1,23 +1,12 @@
-/** A command used to install a CLI: a cross-platform string, or per-OS variants. */
-export type InstallCommand = string | { unix?: string; windows?: string };
-
-/** Ensures a JSON config file contains certain keys before the agent launches. */
-export interface EnsureConfig {
-  file: string;
-  defaults: Record<string, unknown>;
-}
-
 /** A coding agent CLI that the launcher can start. */
 export interface Agent {
   id: string;
   label: string;
   command: string;
   icon?: string;
-  installCommand?: InstallCommand;
-  autoInstall?: boolean;
-  ensureConfig?: EnsureConfig;
+  installationDocumentationUrl?: string;
   env?: Record<string, string>;
-  updateCommand?: InstallCommand;
+  updateCommand?: string;
 }
 
 /** Built-in agent presets shipped with the extension. Users override them by reusing an id. */
@@ -27,8 +16,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Claude Code',
     command: 'claude',
     icon: 'sparkle',
-    installCommand: 'npm install -g @anthropic-ai/claude-code',
-    autoInstall: true,
+    installationDocumentationUrl: 'https://code.claude.com/docs/en/setup',
     updateCommand: 'claude update',
     // Super CLI is one extension for every CLI, so skip Claude Code's IDE extension
     // auto-install using its own official environment variable.
@@ -39,8 +27,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Codex CLI',
     command: 'codex',
     icon: 'rocket',
-    installCommand: 'npm install -g @openai/codex',
-    autoInstall: true,
+    installationDocumentationUrl: 'https://developers.openai.com/codex/cli/',
     updateCommand: 'codex update',
   },
   {
@@ -48,8 +35,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'GitHub Copilot CLI',
     command: 'copilot',
     icon: 'github',
-    installCommand: 'npm install -g @github/copilot',
-    autoInstall: true,
+    installationDocumentationUrl: 'https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli',
     updateCommand: 'copilot update',
   },
   {
@@ -57,20 +43,13 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Grok CLI',
     command: 'grok',
     icon: 'zap',
-    // xAI ships a standalone binary via official installers: shell on macOS/Linux, PowerShell on Windows.
-    installCommand: {
-      unix: 'curl -fsSL https://x.ai/cli/install.sh | bash',
-      windows: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://x.ai/cli/install.ps1 | iex"',
-    },
-    autoInstall: true,
   },
   {
     id: 'kilo',
     label: 'Kilo CLI',
     command: 'kilo',
     icon: 'terminal',
-    installCommand: 'npm install -g @kilocode/cli',
-    autoInstall: true,
+    installationDocumentationUrl: 'https://kilo.ai/docs/cli',
     updateCommand: 'kilo upgrade',
   },
   {
@@ -79,20 +58,13 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     command: 'agy',
     // Inherits the icon of the retired Gemini CLI, which Antigravity replaces.
     icon: 'star-full',
-    // Google ships a standalone Go binary via official OS-specific installers (no npm package).
-    installCommand: {
-      unix: 'curl -fsSL https://antigravity.google/cli/install.sh | bash',
-      windows: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://antigravity.google/cli/install.ps1 | iex"',
-    },
-    autoInstall: true,
   },
   {
     id: 'opencode',
     label: 'OpenCode',
     command: 'opencode',
     icon: 'code',
-    installCommand: 'npm install -g opencode-ai',
-    autoInstall: true,
+    installationDocumentationUrl: 'https://opencode.ai/docs/',
     updateCommand: 'opencode upgrade',
   },
   {
@@ -102,26 +74,13 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     // `command-code` works on Windows, macOS, Linux, and WSL without that conflict.
     command: 'command-code',
     icon: 'terminal',
-    installCommand: 'npm install -g command-code',
-    autoInstall: true,
-    // Super CLI is one extension for every CLI, so opt out of Command Code's companion
-    // editor-extension auto-install using its own official config switch.
-    ensureConfig: {
-      file: '~/.commandcode/config.json',
-      defaults: { autoInstallExtension: false },
-    },
   },
   {
     id: 'cursor',
     label: 'Cursor CLI',
     command: 'cursor-agent',
     icon: 'edit',
-    // Official shell installer (macOS/Linux) and native Windows PowerShell installer.
-    installCommand: {
-      unix: 'curl https://cursor.com/install -fsS | bash',
-      windows: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm \'https://cursor.com/install?win32=true\' | iex"',
-    },
-    autoInstall: true,
+    installationDocumentationUrl: 'https://cursor.com/docs/cli/overview',
     updateCommand: 'cursor-agent update',
   },
   {
@@ -129,9 +88,7 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Droid CLI',
     command: 'droid',
     icon: 'circuit-board',
-    // Factory ships Droid as the scoped npm package @factory/cli, which provides the `droid` binary.
-    installCommand: 'npm install -g @factory/cli',
-    autoInstall: true,
+    installationDocumentationUrl: 'https://docs.factory.ai/cli/getting-started',
     updateCommand: 'droid update',
   },
   {
@@ -139,21 +96,14 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'Crush',
     command: 'crush',
     icon: 'flame',
-    installCommand: 'npm install -g @charmland/crush',
-    autoInstall: true,
-    updateCommand: 'npm install -g @charmland/crush',
+    installationDocumentationUrl: 'https://github.com/charmbracelet/crush',
   },
   {
     id: 'hermes',
     label: 'Hermes',
     command: 'hermes',
     icon: 'send',
-    // Official installers: shell on macOS/Linux/WSL, native PowerShell on Windows.
-    installCommand: {
-      unix: 'curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash',
-      windows: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "iex (irm https://hermes-agent.nousresearch.com/install.ps1)"',
-    },
-    autoInstall: true,
+    installationDocumentationUrl: 'https://hermes-agent.nousresearch.com/docs/getting-started/installation',
     updateCommand: 'hermes update',
   },
   {
@@ -161,18 +111,13 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
     label: 'MiMo Code',
     command: 'mimo',
     icon: 'beaker',
-    installCommand: 'npm install -g @mimo-ai/cli',
-    autoInstall: true,
   },
   {
     id: 'pi',
     label: 'Pi',
     command: 'pi',
     icon: 'pulse',
-    // Pi ships the scoped npm package @earendil-works/pi-coding-agent (provides the `pi` binary).
-    // The official command keeps --ignore-scripts.
-    installCommand: 'npm install -g --ignore-scripts @earendil-works/pi-coding-agent',
-    autoInstall: true,
+    installationDocumentationUrl: 'https://pi.dev/docs/latest',
     // Pi exposes an official self-update command (`pi update` updates pi only).
     updateCommand: 'pi update',
   },
@@ -193,20 +138,16 @@ function isValidAgent(value: unknown): value is Agent {
   );
 }
 
-/** Resolves the install command for a platform: strings are cross-platform, objects select unix/windows. */
-export function resolveInstallCommand(
-  installCommand: InstallCommand | undefined,
-  platform: string,
-): string | undefined {
-  if (!installCommand) {
-    return undefined;
+/** Describes the safe missing-command prompt and its optional verified documentation link. */
+export function getMissingAgentGuidance(agent: Agent): { message: string; documentationUrl?: string } {
+  if (agent.installationDocumentationUrl) {
+    return {
+      message: `${agent.label} was not found. Open its official installation documentation?`,
+      documentationUrl: agent.installationDocumentationUrl,
+    };
   }
 
-  if (typeof installCommand === 'string') {
-    return installCommand;
-  }
-
-  return platform === 'win32' ? installCommand.windows : installCommand.unix;
+  return { message: `${agent.label} was not found. Check its command in settings.` };
 }
 
 /**
@@ -235,6 +176,12 @@ export function resolveAgents(
       const existing = byId.get(candidate.id);
       const merged: Agent = { ...existing, ...candidate };
       merged.label = (merged.label ?? '').trim() || merged.id;
+      if (typeof merged.installationDocumentationUrl !== 'string') {
+        delete merged.installationDocumentationUrl;
+      }
+      if (typeof merged.updateCommand !== 'string') {
+        delete merged.updateCommand;
+      }
       byId.set(candidate.id, merged);
     }
   }

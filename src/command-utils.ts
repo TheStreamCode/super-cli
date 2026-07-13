@@ -96,19 +96,6 @@ export function resolveTerminalCwd<T>(
   return activeWorkspaceFolder?.uri ?? workspace.workspaceFolders?.[0]?.uri;
 }
 
-/** Expands a leading `~` (or `~/`, `~\`) in a path to the given home directory; other paths are unchanged. */
-export function resolveHomePath(p: string, homedir: string): string {
-  if (p === '~') {
-    return homedir;
-  }
-
-  if (p.startsWith('~/') || p.startsWith('~\\')) {
-    return homedir + p.slice(1);
-  }
-
-  return p;
-}
-
 const DEFAULT_PATHEXT = '.COM;.EXE;.BAT;.CMD';
 
 /** Returns the executable extensions to try on Windows (the bare name plus each PATHEXT entry). */
@@ -154,22 +141,4 @@ export function executableExistsOnPath(
     .split(delimiter)
     .filter((dir) => dir.length > 0)
     .some((dir) => existsWithExt(dir.replace(/[\\/]+$/, '') + separator + executable));
-}
-
-/** Adds only the keys from `defaults` that are absent in `existing`; reports whether anything changed. */
-export function mergeMissingDefaults(
-  existing: Record<string, unknown>,
-  defaults: Record<string, unknown>,
-): { merged: Record<string, unknown>; changed: boolean } {
-  const merged: Record<string, unknown> = { ...existing };
-  let changed = false;
-
-  for (const [key, value] of Object.entries(defaults)) {
-    if (!(key in merged)) {
-      merged[key] = value;
-      changed = true;
-    }
-  }
-
-  return { merged, changed };
 }

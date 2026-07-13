@@ -1,13 +1,8 @@
-import * as fs from 'node:fs';
-import * as os from 'node:os';
-import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { type Agent, resolveInstallCommand } from './agents.js';
+import { getMissingAgentGuidance, type Agent } from './agents.js';
 import {
   buildExtensionSettingsQuery,
   buildTerminalName,
-  mergeMissingDefaults,
-  resolveHomePath,
   resolveTerminalCwd,
   shouldPromptToInstall,
 } from './command-utils.js';
@@ -102,52 +97,21 @@ export async function openExtensionSettings(context: vscode.ExtensionContext): P
   await vscode.commands.executeCommand('workbench.action.openSettings', buildExtensionSettingsQuery(context.extension.id));
 }
 
-/** Resolves the launch platform: WSL on Windows maps to 'linux' so agents use their Unix commands. */
-function resolvePlatform(): { useWsl: boolean; platform: string } {
+/** Resolves whether launches should use VS Code's WSL terminal. */
+function resolveTerminalEnvironment(): { useWsl: boolean } {
   const useWsl = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<boolean>('useWsl', false)
     && process.platform === 'win32';
-  return { useWsl, platform: useWsl ? 'linux' : process.platform };
+  return { useWsl };
 }
 
-/** Runs the resolved install command in a dedicated terminal. The modal dialog is the confirmation. */
-function startGuidedInstall(agent: Agent, installCommand: string): void {
-  const installTerminal = vscode.window.createTerminal({
-    name: `Install ${agent.label}`,
-    location: vscode.TerminalLocation.Panel,
-  });
+async function handleMissingAgent(agent: Agent): Promise<void> {
+  const guidance = getMissingAgentGuidance(agent);
+  const selection = guidance.documentationUrl
+    ? await vscode.window.showWarningMessage(guidance.message, 'Open Official Installation Documentation')
+    : await vscode.window.showWarningMessage(guidance.message);
 
-  installTerminal.show();
-  installTerminal.sendText(installCommand, true);
-}
-
-async function handleMissingAgent(agent: Agent, context: vscode.ExtensionContext, platform: string): Promise<void> {
-  const installCommand = resolveInstallCommand(agent.installCommand, platform);
-
-  if (installCommand && agent.autoInstall) {
-    const selection = await vscode.window.showWarningMessage(
-      `${agent.label} was not found. Install it now?`,
-      { modal: true, detail: `This will run: ${installCommand}` },
-      'Install',
-      'Open Settings',
-    );
-
-    if (selection === 'Install') {
-      startGuidedInstall(agent, installCommand);
-    } else if (selection === 'Open Settings') {
-      await openExtensionSettings(context);
-    }
-
-    return;
-  }
-
-  const installHint = installCommand ? ` You can install it with: ${installCommand}` : '';
-  const selection = await vscode.window.showWarningMessage(
-    `${agent.label} could not be started. Check its command in settings.${installHint}`,
-    'Open Settings',
-  );
-
-  if (selection === 'Open Settings') {
-    await openExtensionSettings(context);
+  if (selection === 'Open Official Installation Documentation' && guidance.documentationUrl) {
+    await vscode.env.openExternal(vscode.Uri.parse(guidance.documentationUrl));
   }
 }
 
@@ -156,7 +120,6 @@ function watchForMissingAgent(
   agent: Agent,
   context: vscode.ExtensionContext,
   runCommand: string,
-  platform: string,
 ): void {
   executeCommandWithOptionalShellIntegration(
     terminal,
@@ -164,45 +127,10 @@ function watchForMissingAgent(
     context,
     async (endEvent, output) => {
       if (shouldPromptToInstall(agent.command, endEvent.exitCode, output)) {
-        await handleMissingAgent(agent, context, platform);
+        await handleMissingAgent(agent);
       }
     },
   );
-}
-
-/**
- * Ensures the agent's declared config file contains the required keys, adding only the missing ones.
- * Super CLI is one extension for every CLI, so this is how an agent's companion editor-extension
- * auto-install is opted out of (via that CLI's own config switch). Never blocks a launch on failure.
- */
-function applyEnsureConfig(agent: Agent): void {
-  const ensure = agent.ensureConfig;
-  if (!ensure) {
-    return;
-  }
-
-  try {
-    const file = resolveHomePath(ensure.file, os.homedir());
-    let existing: Record<string, unknown> = {};
-
-    if (fs.existsSync(file)) {
-      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        return;
-      }
-      existing = parsed as Record<string, unknown>;
-    }
-
-    const { merged, changed } = mergeMissingDefaults(existing, ensure.defaults);
-    if (!changed) {
-      return;
-    }
-
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, `${JSON.stringify(merged, null, 2)}\n`, 'utf8');
-  } catch {
-    // Never block a launch because of config seeding.
-  }
 }
 
 /** Opens a side terminal and launches the given agent, watching for a missing CLI. */
@@ -229,10 +157,8 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
     return;
   }
 
-  applyEnsureConfig(agent);
-
   const location = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<string>('terminalLocation', 'beside');
-  const { useWsl, platform } = resolvePlatform();
+  const { useWsl } = resolveTerminalEnvironment();
   const cwd = resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace);
 
   const terminal = vscode.window.createTerminal({
@@ -243,7 +169,7 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
     shellPath: useWsl ? 'wsl.exe' : undefined,
   });
   terminal.show();
-  watchForMissingAgent(terminal, agent, context, command, platform);
+  watchForMissingAgent(terminal, agent, context, command);
   void vscode.window.setStatusBarMessage(`Started ${agent.label}`, 2500);
 }
 
@@ -262,8 +188,8 @@ export async function updateAgent(agent: Agent, context: vscode.ExtensionContext
     return;
   }
 
-  const { useWsl, platform } = resolvePlatform();
-  const updateCommand = resolveInstallCommand(agent.updateCommand, platform);
+  const { useWsl } = resolveTerminalEnvironment();
+  const updateCommand = agent.updateCommand;
 
   if (!updateCommand) {
     void vscode.window.showInformationMessage(`${agent.label} has no configured update command — it likely updates itself.`);

@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { BUILTIN_AGENTS, resolveAgents, resolveInstallCommand } = require('../out/agents.js');
+const { BUILTIN_AGENTS, getMissingAgentGuidance, resolveAgents } = require('../out/agents.js');
 
 test('resolveAgents returns the built-ins when no user agents are configured', () => {
   const agents = resolveAgents(BUILTIN_AGENTS, undefined, true);
@@ -25,7 +25,7 @@ test('resolveAgents overrides a built-in when the id matches', () => {
   const claude = agents.find((agent) => agent.id === 'claude');
   assert.equal(claude.command, 'my-claude');
   // unspecified fields fall back to the built-in
-  assert.equal(claude.installCommand, 'npm install -g @anthropic-ai/claude-code');
+  assert.equal(claude.installationDocumentationUrl, 'https://code.claude.com/docs/en/setup');
   assert.equal(agents.length, BUILTIN_AGENTS.length);
 });
 
@@ -46,11 +46,24 @@ test('resolveAgents skips entries without a usable id or command', () => {
   assert.deepEqual(agents.map((agent) => agent.id), ['good']);
 });
 
+test('resolveAgents ignores legacy non-string documentation and update values', () => {
+  const agents = resolveAgents([], [{
+    id: 'legacy',
+    label: 'Legacy',
+    command: 'legacy',
+    installationDocumentationUrl: { unix: 'not-a-url' },
+    updateCommand: { unix: 'legacy update' },
+  }], false);
+
+  assert.equal(agents[0].installationDocumentationUrl, undefined);
+  assert.equal(agents[0].updateCommand, undefined);
+});
+
 test('OpenCode ships as a built-in preset', () => {
   const opencode = BUILTIN_AGENTS.find((agent) => agent.id === 'opencode');
   assert.ok(opencode);
   assert.equal(opencode.command, 'opencode');
-  assert.equal(opencode.installCommand, 'npm install -g opencode-ai');
+  assert.equal(opencode.installationDocumentationUrl, 'https://opencode.ai/docs/');
 });
 
 test('agents with a known update command carry their official one', () => {
@@ -60,7 +73,6 @@ test('agents with a known update command carry their official one', () => {
     copilot: 'copilot update',
     kilo: 'kilo upgrade',
     hermes: 'hermes update',
-    crush: 'npm install -g @charmland/crush',
     opencode: 'opencode upgrade',
     cursor: 'cursor-agent update',
     droid: 'droid update',
@@ -84,77 +96,89 @@ test('Claude Code skips its IDE extension auto-install via env', () => {
   assert.equal(claude.env.CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL, '1');
 });
 
-test('Command Code opts out of its companion editor-extension auto-install', () => {
+test('Command Code launches without modifying its configuration', () => {
   const cc = BUILTIN_AGENTS.find((a) => a.id === 'command-code');
   assert.ok(cc);
   assert.equal(cc.command, 'command-code');
-  assert.equal(cc.ensureConfig.file, '~/.commandcode/config.json');
-  assert.equal(cc.ensureConfig.defaults.autoInstallExtension, false);
+  assert.equal(Object.hasOwn(cc, 'ensureConfig'), false);
 });
 
-test('npm-installable built-ins offer a guided install with their official command', () => {
-  for (const id of ['claude', 'codex', 'copilot', 'kilo', 'opencode', 'command-code', 'droid', 'crush', 'mimo', 'pi']) {
+test('built-ins expose only verified official installation documentation', () => {
+  const documentationUrls = {
+    claude: 'https://code.claude.com/docs/en/setup',
+    codex: 'https://developers.openai.com/codex/cli/',
+    copilot: 'https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli',
+    kilo: 'https://kilo.ai/docs/cli',
+    opencode: 'https://opencode.ai/docs/',
+    cursor: 'https://cursor.com/docs/cli/overview',
+    droid: 'https://docs.factory.ai/cli/getting-started',
+    crush: 'https://github.com/charmbracelet/crush',
+    hermes: 'https://hermes-agent.nousresearch.com/docs/getting-started/installation',
+    pi: 'https://pi.dev/docs/latest',
+  };
+
+  for (const [id, url] of Object.entries(documentationUrls)) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
     assert.ok(agent, `expected built-in ${id}`);
-    assert.equal(typeof agent.installCommand, 'string');
-    assert.match(agent.installCommand, /^npm install -g /);
-    assert.equal(agent.autoInstall, true);
+    assert.equal(agent.installationDocumentationUrl, url, id);
   }
+});
+
+test('built-ins never define installer commands or automatic installation', () => {
+  for (const agent of BUILTIN_AGENTS) {
+    assert.equal(Object.hasOwn(agent, 'installCommand'), false, agent.id);
+    assert.equal(Object.hasOwn(agent, 'autoInstall'), false, agent.id);
+    assert.doesNotMatch(JSON.stringify(agent), /npm\s+install|curl\b|\birm\b|\biex\b|ExecutionPolicy/i, agent.id);
+  }
+});
+
+test('missing CLI guidance opens only its official documentation when available', () => {
+  const guidance = getMissingAgentGuidance({
+    id: 'codex',
+    label: 'Codex CLI',
+    command: 'codex',
+    installationDocumentationUrl: 'https://developers.openai.com/codex/cli/',
+  });
+
+  assert.match(guidance.message, /not found/i);
+  assert.equal(guidance.documentationUrl, 'https://developers.openai.com/codex/cli/');
+});
+
+test('missing CLI guidance offers no installation action without verified documentation', () => {
+  const guidance = getMissingAgentGuidance({ id: 'custom', label: 'Custom CLI', command: 'custom' });
+
+  assert.match(guidance.message, /not found/i);
+  assert.equal(guidance.documentationUrl, undefined);
 });
 
 test('Gemini CLI is no longer a built-in preset', () => {
   assert.equal(BUILTIN_AGENTS.find((a) => a.id === 'gemini'), undefined);
 });
 
-test("Antigravity inherits Gemini's icon and uses the official OS-specific installer", () => {
+test("Antigravity inherits Gemini's icon without an automatic installer", () => {
   const agy = BUILTIN_AGENTS.find((a) => a.id === 'antigravity');
   assert.ok(agy);
   assert.equal(agy.icon, 'star-full');
-  assert.match(agy.installCommand.unix, /antigravity\.google\/cli\/install\.sh/);
-  assert.match(agy.installCommand.windows, /install\.ps1/);
-  assert.equal(agy.autoInstall, true);
+  assert.equal(agy.installationDocumentationUrl, undefined);
 });
 
-test('Grok uses the official xAI installers on both Unix and Windows', () => {
+test('Grok has no unverified installation documentation link', () => {
   const grok = BUILTIN_AGENTS.find((a) => a.id === 'grok');
-  assert.match(grok.installCommand.unix, /x\.ai\/cli\/install\.sh/);
-  assert.match(grok.installCommand.windows, /x\.ai\/cli\/install\.ps1/);
+  assert.equal(grok.installationDocumentationUrl, undefined);
 });
 
 test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () => {
   const byId = Object.fromEntries(BUILTIN_AGENTS.map((a) => [a.id, a]));
   assert.equal(byId.cursor.command, 'cursor-agent');
   assert.equal(byId.droid.command, 'droid');
-  assert.equal(byId.crush.installCommand, 'npm install -g @charmland/crush');
-  assert.equal(byId.mimo.installCommand, 'npm install -g @mimo-ai/cli');
-  // Cursor and Hermes now ship native Windows installers alongside the Unix ones.
-  assert.match(byId.cursor.installCommand.unix, /cursor\.com\/install/);
-  assert.match(byId.cursor.installCommand.windows, /cursor\.com\/install\?win32=true/);
-  assert.match(byId.hermes.installCommand.unix, /hermes-agent\.nousresearch\.com/);
-  assert.match(byId.hermes.installCommand.windows, /hermes-agent\.nousresearch\.com\/install\.ps1/);
+  assert.equal(byId.mimo.installationDocumentationUrl, undefined);
+  assert.equal(byId.cursor.installationDocumentationUrl, 'https://cursor.com/docs/cli/overview');
+  assert.equal(byId.hermes.installationDocumentationUrl, 'https://hermes-agent.nousresearch.com/docs/getting-started/installation');
 });
 
 test('Pi ships as a built-in preset', () => {
   const pi = BUILTIN_AGENTS.find((a) => a.id === 'pi');
   assert.ok(pi);
   assert.equal(pi.command, 'pi');
-  assert.match(pi.installCommand, /@earendil-works\/pi-coding-agent/);
-  assert.equal(pi.autoInstall, true);
-});
-
-test('resolveInstallCommand returns cross-platform strings unchanged', () => {
-  assert.equal(resolveInstallCommand('npm install -g x', 'linux'), 'npm install -g x');
-  assert.equal(resolveInstallCommand('npm install -g x', 'win32'), 'npm install -g x');
-});
-
-test('resolveInstallCommand selects the per-OS variant', () => {
-  const cmd = { unix: 'curl | bash', windows: 'powershell ...' };
-  assert.equal(resolveInstallCommand(cmd, 'darwin'), 'curl | bash');
-  assert.equal(resolveInstallCommand(cmd, 'linux'), 'curl | bash');
-  assert.equal(resolveInstallCommand(cmd, 'win32'), 'powershell ...');
-});
-
-test('resolveInstallCommand returns undefined when the platform has no variant', () => {
-  assert.equal(resolveInstallCommand({ unix: 'x' }, 'win32'), undefined);
-  assert.equal(resolveInstallCommand(undefined, 'linux'), undefined);
+  assert.equal(pi.installationDocumentationUrl, 'https://pi.dev/docs/latest');
 });

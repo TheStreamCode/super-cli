@@ -85,6 +85,15 @@ test('agents setting is machine-scoped and security restricted', () => {
   assert.deepEqual(packageJson.capabilities.untrustedWorkspaces.restrictedConfigurations, ['superCli.agents']);
 });
 
+test('agent settings do not permit automatic CLI installation', () => {
+  const properties = readPackageJson().contributes.configuration.properties['superCli.agents'].items.properties;
+
+  assert.equal(Object.hasOwn(properties, 'installCommand'), false);
+  assert.equal(Object.hasOwn(properties, 'autoInstall'), false);
+  assert.equal(properties.installationDocumentationUrl.type, 'string');
+  assert.match(properties.installationDocumentationUrl.description, /official installation documentation/i);
+});
+
 test('package scripts use deterministic local tooling entry points', () => {
   const packageJson = readPackageJson();
 
@@ -106,20 +115,15 @@ test('extension keeps Marketplace, sidebar, and toolbar artwork packaged', () =>
   assert.match(sidebarIcon, /currentColor/);
 });
 
-test('documentation uses local images and published files include third-party notices', () => {
+test('documentation uses local images and VSIX packaging uses only .vscodeignore', () => {
   const packageJson = readPackageJson();
   const readme = readText('README.md');
   const notices = readText('TRADEMARKS.md');
+  const vscodeIgnore = readText('.vscodeignore');
 
-  assert.deepEqual(packageJson.files, [
-    'out',
-    '!out/**/*.map',
-    'media',
-    'README.md',
-    'CHANGELOG.md',
-    'LICENSE',
-    'TRADEMARKS.md',
-  ]);
+  assert.equal(packageJson.files, undefined);
+  assert.match(vscodeIgnore, /^\.vscode-test\/\*\*$/m);
+  assert.match(vscodeIgnore, /^src\/\*\*$/m);
   assert.doesNotMatch(readme, /!\[[^\]]*\]\(https?:\/\//i);
   assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/sidebar\.png\)/);
   assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/settings\.png\)/);

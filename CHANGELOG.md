@@ -5,6 +5,20 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.8.3]
+
+### Changed
+
+- Removed all automatic CLI installation and generated installer execution. Missing supported CLIs now
+  offer their verified official installation documentation in the external browser.
+- Removed automatic agent configuration-file edits. VSIX contents continue to be defined solely by
+  `.vscodeignore`, without a competing `files` allowlist.
+
+### Security
+
+- Super CLI no longer runs npm installers, remote shell installers, or shell/profile modifications for
+  agent CLIs.
+
 ## [0.8.2]
 
 ### Changed

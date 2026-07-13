@@ -49,10 +49,9 @@ You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsu
 - **Update from the sidebar.** Agents with a known update command show an update button next to
   Launch, which runs the CLI's official update (e.g. `codex update`, `kilo upgrade`, `cursor-agent
   update`, `opencode upgrade`, `droid update`). CLIs that update themselves don't show one.
-- **Guided install.** If a built-in CLI isn't found, Super CLI offers to install it with its official
-  command after explicit confirmation — npm for Claude Code, Codex, Copilot, Kilo, OpenCode, Command
-  Code, Droid, Crush, MiMo Code and Pi, and the official installer (native PowerShell on Windows, shell
-  on macOS/Linux) for Grok, Antigravity, Cursor and Hermes.
+- **Official installation docs.** If a supported CLI isn't found, Super CLI opens that agent's verified
+  official installation documentation in your browser. It never installs a CLI, runs an installer, or
+  changes your shell profile.
 - **Native integrated terminal.** Each agent runs in a real VS Code terminal, inheriting your
   shell, `PATH`, and environment. No bundled emulator, no runtime dependencies.
 
@@ -67,9 +66,7 @@ reuses a built-in `id` — overrides that built-in (for example to point at a cu
     "id": "my-agent",
     "label": "My Agent",
     "command": "my-agent",
-    "icon": "rocket",
-    "installCommand": "npm install -g my-agent",
-    "autoInstall": false
+    "icon": "rocket"
   },
   {
     "id": "claude",
@@ -85,19 +82,13 @@ reuses a built-in `id` — overrides that built-in (for example to point at a cu
   spaces.
 - `icon` — optional [ThemeIcon](https://code.visualstudio.com/api/references/icons-in-labels) id,
   e.g. `sparkle` or `rocket`.
-- `installCommand` / `autoInstall` — optional. `installCommand` is either a cross-platform string
-  (e.g. an npm command) or an object with `unix` and `windows` keys for OS-specific installers. When
-  the command is missing and `autoInstall` is `true`, the launcher offers a guided install after
-  explicit confirmation.
-- `ensureConfig` — optional; ensure a JSON config file contains certain keys before launch (added
-  only when missing, existing keys untouched). For example, opt out of a CLI's companion
-  editor-extension auto-install via its own config: `{ "file": "~/.commandcode/config.json",
-  "defaults": { "autoInstallExtension": false } }`.
+- `installationDocumentationUrl` — optional verified official installation documentation URL. When
+  the command is missing, Super CLI offers to open this URL in your external browser; it does not run
+  any installation command.
 - `env` — optional environment variables set for the agent's terminal, e.g. to opt out of a CLI's
   IDE-extension auto-install via its own variable: `{ "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1" }`.
-- `updateCommand` — optional command to update the CLI (its official `update`/`upgrade` command, or
-  an npm reinstall). Adds an update button next to the agent in the sidebar. Like `installCommand`,
-  it can be a string or an object with `unix`/`windows` keys.
+- `updateCommand` — optional command to update the CLI. Adds an update button next to the agent in the
+  sidebar.
 
 Only the user (global) value of `superCli.agents` is used; workspace overrides are ignored so that
 an untrusted repository cannot inject commands.
@@ -119,20 +110,17 @@ settings.
 
 ## Troubleshooting
 
-- **"… could not be started."** The configured `command` was not found. Install the CLI, or fix the
-  command in settings. The launcher uses the active editor's workspace folder as the working
-  directory.
+- **"… was not found."** The configured `command` was not found. Open the official documentation
+  offered by Super CLI, or fix the command in settings. The launcher uses the active editor's
+  workspace folder as the working directory.
 - **Nothing happens on launch.** Make sure the workspace is trusted — the launcher is disabled in
   untrusted workspaces because it runs terminal commands.
 - **"Not installed" looks wrong.** The indicator is a best-effort check of your `PATH` and doesn't
   spawn the CLI. It isn't shown when `superCli.useWsl` is on, because the Windows `PATH` doesn't
   reflect what's installed inside WSL. Use **Refresh Agents** after installing a CLI.
-- **Companion editor extensions (Command Code, Claude Code).** Super CLI keeps your editor free of
-  per-CLI companion extensions. It launches **Command Code** with `autoInstallExtension: false` in
-  `~/.commandcode/config.json`, and **Claude Code** with the `CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=1`
-  environment variable — both official opt-outs — so they stop auto-installing their editor
-  extensions. Install those extensions yourself if you want them (for Command Code set the value back
-  to `true`).
+- **Companion editor extensions.** Super CLI does not modify agent configuration files or shell
+  profiles. It launches **Claude Code** with the official `CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=1`
+  environment variable so its companion extension is not installed automatically.
 
 ## FAQ
 
@@ -160,8 +148,9 @@ Bug reports, feature requests, and contributions are welcome on
 
 ## Privacy
 
-This extension does not collect telemetry, analytics, or personal data. It only runs the commands
-you configure, in your own integrated terminal.
+This extension does not collect telemetry, analytics, or personal data. It never installs CLIs or
+modifies shell profiles; it only runs launch and user-requested update commands in your integrated
+terminal.
 
 ## Building
 

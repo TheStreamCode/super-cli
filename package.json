@@ -3,7 +3,7 @@
   "displayName": "Super CLI — AI Coding Agent Launcher (Claude Code, Codex, Copilot)",
   "description": "Launch any AI coding-agent CLI — Claude Code, Codex, GitHub Copilot, Cursor, Crush, OpenCode and more — from one sidebar and side terminal. Works in VS Code, Cursor, Antigravity & Windsurf on Windows, macOS & Linux.",
   "publisher": "mikesoft",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -242,49 +242,9 @@
                 "type": "string",
                 "description": "Optional VS Code ThemeIcon id, for example sparkle or rocket. Defaults to a terminal icon."
               },
-              "installCommand": {
-                "description": "Optional command used to install the CLI when it is missing. Use a string for a cross-platform command (e.g. npm), or an object with \"unix\" and \"windows\" keys for OS-specific installers.",
-                "oneOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "unix": {
-                        "type": "string",
-                        "description": "Install command for macOS and Linux."
-                      },
-                      "windows": {
-                        "type": "string",
-                        "description": "Install command for Windows."
-                      }
-                    }
-                  }
-                ]
-              },
-              "autoInstall": {
-                "type": "boolean",
-                "default": false,
-                "description": "Offer a guided install when the command is not found. Installation only starts after explicit confirmation."
-              },
-              "ensureConfig": {
-                "type": "object",
-                "description": "Optional. Before launching, ensure a JSON config file contains certain keys (added only when missing). Useful to opt out of a CLI's companion editor-extension auto-install via its own config switch.",
-                "required": [
-                  "file",
-                  "defaults"
-                ],
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "description": "Path to the JSON config file. A leading ~ expands to the home directory."
-                  },
-                  "defaults": {
-                    "type": "object",
-                    "description": "Keys to ensure are present in the file. Existing keys are never overwritten."
-                  }
-                }
+              "installationDocumentationUrl": {
+                "type": "string",
+                "description": "Optional verified official installation documentation URL opened in your browser when this CLI is not found."
               },
               "env": {
                 "type": "object",
@@ -294,25 +254,8 @@
                 }
               },
               "updateCommand": {
-                "description": "Optional command to update the CLI to its latest version (its official update/upgrade command, or an npm reinstall). Shown as an update button next to the agent in the sidebar. Use a string, or an object with \"unix\" and \"windows\" keys for OS-specific commands.",
-                "oneOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "unix": {
-                        "type": "string",
-                        "description": "Update command for macOS and Linux."
-                      },
-                      "windows": {
-                        "type": "string",
-                        "description": "Update command for Windows."
-                      }
-                    }
-                  }
-                ]
+                "type": "string",
+                "description": "Optional command to update the CLI to its latest version. Shown as an update button next to the agent in the sidebar."
               }
             }
           }
