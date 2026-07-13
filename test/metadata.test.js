@@ -106,6 +106,27 @@ test('extension keeps Marketplace, sidebar, and toolbar artwork packaged', () =>
   assert.match(sidebarIcon, /currentColor/);
 });
 
+test('documentation uses local images and published files include third-party notices', () => {
+  const packageJson = readPackageJson();
+  const readme = readText('README.md');
+  const notices = readText('TRADEMARKS.md');
+
+  assert.deepEqual(packageJson.files, [
+    'out',
+    '!out/**/*.map',
+    'media',
+    'README.md',
+    'CHANGELOG.md',
+    'LICENSE',
+    'TRADEMARKS.md',
+  ]);
+  assert.doesNotMatch(readme, /!\[[^\]]*\]\(https?:\/\//i);
+  assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/sidebar\.png\)/);
+  assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/settings\.png\)/);
+  assert.match(notices, /not affiliated with or endorsed\s+by \[Chutes\]\(https:\/\/chutes\.ai\/\)/i);
+  assert.match(notices, /\[Terms of Service\]\(https:\/\/chutes\.ai\/terms\)/);
+});
+
 test('package contributes split sidebar and toolbar icons', () => {
   const packageJson = readPackageJson();
 

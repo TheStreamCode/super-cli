@@ -20,6 +20,15 @@
     "url": "https://github.com/sponsors/TheStreamCode"
   },
   "license": "MIT",
+  "files": [
+    "out",
+    "!out/**/*.map",
+    "media",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "TRADEMARKS.md"
+  ],
   "icon": "media/icon.png",
   "galleryBanner": {
     "color": "#0F172A",

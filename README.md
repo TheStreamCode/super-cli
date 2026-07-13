@@ -1,10 +1,9 @@
 # Super CLI
 
-[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mikesoft.vscode-super-cli?label=Marketplace&color=6366F1)](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli)
-[![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/mikesoft.vscode-super-cli?color=0EA5E9)](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli)
-[![Open VSX](https://img.shields.io/open-vsx/v/mikesoft/vscode-super-cli?label=Open%20VSX&color=a60ee5)](https://open-vsx.org/extension/mikesoft/vscode-super-cli)
-[![CI](https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml)
-[![Sponsor](https://img.shields.io/badge/Sponsor-TheStreamCode-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/TheStreamCode)
+[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli)
+· [Open VSX](https://open-vsx.org/extension/mikesoft/vscode-super-cli)
+· [CI](https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml)
+· [Sponsor](https://github.com/sponsors/TheStreamCode)
 
 One VS Code extension to launch any coding agent CLI — **Claude Code, Codex, GitHub Copilot CLI,
 Cursor, Droid, Grok, Kilo, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, Pi, and
@@ -14,9 +13,10 @@ Works on Windows, macOS, and Linux, and across the VS Code family (VS Code, Curs
 Windsurf).
 
 This extension is unofficial and is not affiliated with, endorsed by, or sponsored by Anthropic,
-OpenAI, GitHub, Google, or any other vendor.
+OpenAI, GitHub, Google, or any other vendor. See the [third-party
+notices](TRADEMARKS.md).
 
-![Super CLI — the Coding Agents sidebar listing the built-in presets](https://raw.githubusercontent.com/TheStreamCode/super-cli/main/media/screenshots/sidebar.png)
+![Super CLI — the Coding Agents sidebar listing the built-in presets](media/screenshots/sidebar.png)
 
 ## Install
 
@@ -115,7 +115,7 @@ an untrusted repository cannot inject commands.
 Run **Super CLI: Open Settings** from the sidebar or the command palette to jump straight to these
 settings.
 
-![Super CLI settings: agents, terminal location, and built-in presets](https://raw.githubusercontent.com/TheStreamCode/super-cli/main/media/screenshots/settings.png)
+![Super CLI settings: agents, terminal location, and built-in presets](media/screenshots/settings.png)
 
 ## Troubleshooting
 
