@@ -1,3 +1,5 @@
+import * as fs from 'node:fs';
+
 type WorkspaceFolderLike<T> = { uri: T };
 type WorkspaceLike<T> = {
   workspaceFolders?: readonly WorkspaceFolderLike<T>[];
@@ -40,8 +42,6 @@ function buildCommandNotFoundPatterns(command: string): RegExp[] {
     new RegExp(`command not found:\\s*${escapedName}`, 'i'),
     new RegExp(`unknown command:?\\s*${escapedName}`, 'i'),
     new RegExp(`['"]?${escapedName}['"]?.*is not recognized`, 'i'),
-    new RegExp(`\\b${escapedName}\\b.*not found`, 'i'),
-    new RegExp(`\\b${escapedName}\\b.*cannot find the file`, 'i'),
   ];
 }
 
@@ -85,15 +85,26 @@ export function extractExecutable(command: string): string {
 
 /** Returns whether a terminal failure likely means the configured CLI is missing. */
 export function shouldPromptToInstall(command: string, exitCode: number | undefined, output: string): boolean {
-  if (exitCode === 127) {
-    return true;
-  }
-
-  if (exitCode !== undefined && exitCode !== 1) {
+  if (exitCode !== undefined && exitCode !== 1 && exitCode !== 127) {
     return false;
   }
 
   return buildCommandNotFoundPatterns(command).some((pattern) => pattern.test(output));
+}
+
+/** Returns whether a path points to a file the current host can execute. */
+export function isExecutableFile(filePath: string, platform: NodeJS.Platform = process.platform): boolean {
+  try {
+    if (!fs.statSync(filePath).isFile()) {
+      return false;
+    }
+    if (platform !== 'win32') {
+      fs.accessSync(filePath, fs.constants.X_OK);
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Resolves the terminal cwd from the active editor or the first workspace folder. */
@@ -119,14 +130,14 @@ function resolveWindowsExtensions(pathExt: string | undefined): string[] {
 
 /**
  * Best-effort check that a command's executable resolves on PATH, without spawning a process.
- * On Windows the bare name is also tried with each PATHEXT extension. `fileExists` is injected so
- * the logic stays pure and testable; production passes `fs.existsSync`.
+ * On Windows the bare name is also tried with each PATHEXT extension. The executable predicate is
+ * injected so path resolution stays pure and testable.
  */
 export function executableExistsOnPath(
   command: string,
   env: Record<string, string | undefined>,
   platform: string,
-  fileExists: (filePath: string) => boolean,
+  isExecutable: (filePath: string) => boolean,
 ): boolean {
   const executable = extractExecutable(command);
   if (!executable) {
@@ -135,7 +146,7 @@ export function executableExistsOnPath(
 
   const isWindows = platform === 'win32';
   const extensions = isWindows ? resolveWindowsExtensions(env.PATHEXT) : [''];
-  const existsWithExt = (base: string): boolean => extensions.some((ext) => fileExists(base + ext));
+  const existsWithExt = (base: string): boolean => extensions.some((ext) => isExecutable(base + ext));
 
   // A path-qualified command is checked directly, not searched on PATH.
   if (/[\\/]/.test(executable)) {
@@ -148,6 +159,7 @@ export function executableExistsOnPath(
 
   return pathValue
     .split(delimiter)
+    .map((dir) => isWindows ? dir.trim().replace(/^"(.*)"$/, '$1') : dir)
     .filter((dir) => dir.length > 0)
     .some((dir) => existsWithExt(dir.replace(/[\\/]+$/, '') + separator + executable));
 }

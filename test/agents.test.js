@@ -41,12 +41,23 @@ test('resolveAgents omits the built-ins when disabled', () => {
 });
 
 test('filterHiddenBuiltins hides only selected built-in identities', () => {
-  const agents = resolveAgents(BUILTIN_AGENTS, [{ id: 'mine', label: 'Mine', command: 'mine' }], true);
-  const visible = filterHiddenBuiltins(agents, BUILTIN_AGENTS, ['kiro', 'openclaw', 'mine']);
+  const visibleBuiltins = filterHiddenBuiltins(BUILTIN_AGENTS, ['kiro', 'openclaw', 'mine']);
+  const visible = resolveAgents(visibleBuiltins, [{ id: 'mine', label: 'Mine', command: 'mine' }], true);
 
   assert.equal(visible.some((agent) => agent.id === 'kiro'), false);
   assert.equal(visible.some((agent) => agent.id === 'openclaw'), false);
   assert.equal(visible.some((agent) => agent.id === 'mine'), true);
+});
+
+test('hidden built-ins do not hide user overrides with the same id', () => {
+  const visibleBuiltins = filterHiddenBuiltins(BUILTIN_AGENTS, ['codex']);
+  const agents = resolveAgents(
+    visibleBuiltins,
+    [{ id: 'codex', label: 'Private Codex Wrapper', command: 'private-codex' }],
+    true,
+  );
+
+  assert.equal(agents.find((agent) => agent.id === 'codex').command, 'private-codex');
 });
 
 test('resolveAgents appends new user agents', () => {
@@ -111,6 +122,24 @@ test('resolveAgents ignores legacy non-string documentation and command values',
   assert.equal(agents[0].installationDocumentationUrl, undefined);
   assert.equal(agents[0].updateCommand, undefined);
   assert.equal(agents[0].versionCommand, undefined);
+});
+
+test('resolveAgents sanitizes malformed optional user fields without throwing', () => {
+  const agents = resolveAgents([], [{
+    id: 'malformed',
+    label: 42,
+    command: 'malformed',
+    icon: 42,
+    iconPath: { light: 'light.svg' },
+    env: { VALID: 'yes', INVALID: 42 },
+  }], false);
+
+  assert.deepEqual(agents, [{
+    id: 'malformed',
+    label: 'malformed',
+    command: 'malformed',
+    env: { VALID: 'yes' },
+  }]);
 });
 
 test('OpenCode ships as a built-in preset', () => {

@@ -1,5 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
 const {
   appendBoundedText,
@@ -10,6 +13,7 @@ const {
   extractExecutable,
   shouldPromptToInstall,
   executableExistsOnPath,
+  isExecutableFile,
 } = require('../out/command-utils.js');
 
 test('appendBoundedText retains output only up to the configured limit', () => {
@@ -67,8 +71,9 @@ test('shouldPromptToInstall detects PowerShell command-not-found output', () => 
   assert.equal(shouldPromptToInstall('claude', 1, output), true);
 });
 
-test('shouldPromptToInstall detects POSIX command-not-found exit code', () => {
-  assert.equal(shouldPromptToInstall('claude', 127, ''), true);
+test('shouldPromptToInstall requires command-not-found output for POSIX exit code 127', () => {
+  assert.equal(shouldPromptToInstall('claude', 127, 'sh: claude: not found'), true);
+  assert.equal(shouldPromptToInstall('claude', 127, ''), false);
 });
 
 test('shouldPromptToInstall detects bash command-not-found output', () => {
@@ -85,6 +90,9 @@ test('shouldPromptToInstall ignores output for a different configured executable
 
 test('shouldPromptToInstall ignores unrelated runtime failures', () => {
   assert.equal(shouldPromptToInstall('claude', 1, 'Error: authentication required'), false);
+  assert.equal(shouldPromptToInstall('claude', 1, 'claude: model not found'), false);
+  assert.equal(shouldPromptToInstall('claude', 1, 'claude configuration not found'), false);
+  assert.equal(shouldPromptToInstall('claude', 127, 'an internal helper failed'), false);
 });
 
 test('shouldPromptToInstall ignores non-1 exit codes that are not 127', () => {
@@ -146,6 +154,12 @@ test('executableExistsOnPath resolves a bare name via PATHEXT on Windows', () =>
   assert.equal(executableExistsOnPath('claude', env, 'win32', exists), true);
 });
 
+test('executableExistsOnPath normalizes quoted Windows PATH entries', () => {
+  const env = { Path: '"C:\\Program Files\\Agent"', PATHEXT: '.EXE' };
+  const exists = existsIn(['C:\\Program Files\\Agent\\agent.EXE']);
+  assert.equal(executableExistsOnPath('agent', env, 'win32', exists), true);
+});
+
 test('executableExistsOnPath checks a path-qualified command directly', () => {
   const exists = existsIn(['/opt/agents/my-agent']);
   assert.equal(executableExistsOnPath('/opt/agents/my-agent --flag', { PATH: '' }, 'linux', exists), true);
@@ -159,4 +173,31 @@ test('executableExistsOnPath uses the quoted Windows executable path', () => {
 
 test('executableExistsOnPath returns false for an empty command', () => {
   assert.equal(executableExistsOnPath('   ', { PATH: '/usr/bin' }, 'linux', existsIn(['/usr/bin'])), false);
+});
+
+test('isExecutableFile rejects directories', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'super-cli-'));
+  try {
+    assert.equal(isExecutableFile(directory, process.platform), false);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('isExecutableFile requires executable permission on POSIX hosts', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'super-cli-'));
+  const executable = path.join(directory, process.platform === 'win32' ? 'agent.cmd' : 'agent');
+  try {
+    fs.writeFileSync(executable, process.platform === 'win32' ? '@echo off\r\n' : '#!/bin/sh\n');
+    if (process.platform === 'win32') {
+      assert.equal(isExecutableFile(executable, process.platform), true);
+    } else {
+      fs.chmodSync(executable, 0o644);
+      assert.equal(isExecutableFile(executable, process.platform), false);
+      fs.chmodSync(executable, 0o755);
+      assert.equal(isExecutableFile(executable, process.platform), true);
+    }
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 });

@@ -252,6 +252,33 @@ function isValidPlatformCommand(value: unknown): value is PlatformCommand {
   );
 }
 
+function isValidAgentIconPath(value: unknown): value is AgentIconPath {
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<Record<'light' | 'dark', unknown>>;
+  return typeof candidate.light === 'string'
+    && candidate.light.trim().length > 0
+    && typeof candidate.dark === 'string'
+    && candidate.dark.trim().length > 0;
+}
+
+function normalizeAgentEnvironment(value: unknown): Record<string, string> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const entries = Object.entries(value).filter(
+    ([name, environmentValue]) => name.length > 0 && typeof environmentValue === 'string',
+  );
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
 /** Maps Node's host platform and the WSL setting to the command variant that will actually run. */
 export function resolveCommandPlatform(nodePlatform: NodeJS.Platform, useWsl: boolean): CommandPlatform {
   if (nodePlatform === 'win32') {
@@ -335,9 +362,23 @@ export function resolveAgents(
 
       const existing = byId.get(candidate.id);
       const merged: AgentDefinition = { ...existing, ...candidate };
-      merged.label = (merged.label ?? '').trim() || merged.id;
-      if (typeof merged.installationDocumentationUrl !== 'string') {
+      const label = typeof candidate.label === 'string' ? candidate.label.trim() : existing?.label.trim();
+      merged.label = label || merged.id;
+      if (typeof merged.icon !== 'string' || merged.icon.trim().length === 0) {
+        delete merged.icon;
+      }
+      if (merged.iconPath !== undefined && !isValidAgentIconPath(merged.iconPath)) {
+        delete merged.iconPath;
+      }
+      if (typeof merged.installationDocumentationUrl !== 'string'
+        || merged.installationDocumentationUrl.trim().length === 0) {
         delete merged.installationDocumentationUrl;
+      }
+      const environment = normalizeAgentEnvironment(merged.env);
+      if (environment) {
+        merged.env = environment;
+      } else {
+        delete merged.env;
       }
       if (merged.updateCommand !== undefined && !isValidPlatformCommand(merged.updateCommand)) {
         delete merged.updateCommand;
@@ -352,14 +393,12 @@ export function resolveAgents(
   return [...byId.values()];
 }
 
-/** Hides selected built-in identities while preserving unrelated custom agents. */
+/** Hides selected built-in definitions before user overrides are merged. */
 export function filterHiddenBuiltins(
-  agents: readonly AgentDefinition[],
   builtins: readonly AgentDefinition[],
   hiddenIds: readonly string[],
 ): AgentDefinition[] {
-  const builtinIds = new Set(builtins.map((agent) => agent.id));
   const hidden = new Set(hiddenIds);
 
-  return agents.filter((agent) => !(builtinIds.has(agent.id) && hidden.has(agent.id)));
+  return builtins.filter((agent) => !hidden.has(agent.id));
 }

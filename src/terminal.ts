@@ -137,7 +137,7 @@ function watchForMissingAgent(
 }
 
 /** Opens a side terminal and launches the given agent, watching for a missing CLI. */
-export async function launchAgent(agent: Agent, context: vscode.ExtensionContext, sequence: number): Promise<void> {
+export async function launchAgent(agent: Agent, context: vscode.ExtensionContext, sequence: number): Promise<boolean> {
   if (!vscode.workspace.isTrusted) {
     const selection = await vscode.window.showWarningMessage(
       `Super CLI runs terminal commands in the current workspace. Trust this workspace before launching ${agent.label}.`,
@@ -151,13 +151,13 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
       await openExtensionSettings(context);
     }
 
-    return;
+    return false;
   }
 
   const command = agent.command.trim();
   if (!command) {
     void vscode.window.showErrorMessage(`Agent "${agent.label}" has no command configured.`);
-    return;
+    return false;
   }
 
   const location = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<string>('terminalLocation', 'beside');
@@ -175,6 +175,7 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
   terminal.show();
   watchForMissingAgent(terminal, agent, context, command);
   void vscode.window.setStatusBarMessage(`Started ${agent.label}`, 2500);
+  return true;
 }
 
 /** Runs the agent's official update command in a dedicated terminal (without launching the agent). */

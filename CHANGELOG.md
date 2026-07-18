@@ -5,6 +5,18 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-07-18
+
+### Fixed
+
+- Hardened custom-agent configuration handling so malformed optional fields cannot break the
+  sidebar, launcher, icons, or terminal creation.
+- Reduced false missing-CLI prompts by requiring a shell-specific command-not-found diagnostic.
+- Offered to save a favorite only after a terminal was actually launched.
+- Kept user-defined overrides visible when their matching built-in preset is hidden.
+- Improved executable detection for quoted Windows `PATH` entries, directories, and executable
+  permissions.
+
 ## [1.0.5] - 2026-07-18
 
 ### Fixed

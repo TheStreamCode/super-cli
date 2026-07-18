@@ -21,6 +21,16 @@ export function compareAgentsByLabel(
   return left.label.localeCompare(right.label) || left.id.localeCompare(right.id);
 }
 
+/** Returns whether a successful launch should offer to remember the selected agent. */
+export function shouldOfferFavoriteAfterLaunch(
+  offerFavorite: boolean,
+  launched: boolean,
+  selectedId: string,
+  favoriteId: string,
+): boolean {
+  return offerFavorite && launched && selectedId !== favoriteId;
+}
+
 function sortAgents(agents: readonly Agent[]): Agent[] {
   return [...agents].sort(compareAgentsByLabel);
 }

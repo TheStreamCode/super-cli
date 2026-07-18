@@ -1,4 +1,3 @@
-import * as fs from 'node:fs';
 import * as vscode from 'vscode';
 import {
   type Agent,
@@ -10,8 +9,8 @@ import {
   resolveAgents,
   resolveCommandPlatform,
 } from './agents.js';
-import { buildAgentSections, compareAgentsByLabel } from './agent-view.js';
-import { executableExistsOnPath } from './command-utils.js';
+import { buildAgentSections, compareAgentsByLabel, shouldOfferFavoriteAfterLaunch } from './agent-view.js';
+import { executableExistsOnPath, isExecutableFile } from './command-utils.js';
 import { buildDoctorReport, inspectAgents, type DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
 import { AgentTreeDataProvider } from './tree.js';
@@ -21,6 +20,11 @@ const SETTINGS_NAMESPACE = 'superCli';
 
 let terminalSequence = 1;
 
+function getGlobalStringArray(configuration: vscode.WorkspaceConfiguration, setting: string): string[] {
+  const value = configuration.inspect<unknown>(setting)?.globalValue;
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
+}
+
 /** Resolves the effective agent list from built-ins and user (global) configuration. */
 function getEffectiveAgents(): Agent[] {
   const configuration = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE);
@@ -29,13 +33,10 @@ function getEffectiveAgents(): Agent[] {
   const commandPlatform = resolveCommandPlatform(process.platform, useWsl);
   // Read user-level config only; workspace overrides are ignored for security.
   const userAgents = configuration.inspect<AgentDefinition[]>('agents')?.globalValue;
-  const hiddenBuiltins = configuration.inspect<string[]>('hiddenBuiltins')?.globalValue ?? [];
+  const hiddenBuiltins = getGlobalStringArray(configuration, 'hiddenBuiltins');
 
-  return filterHiddenBuiltins(
-    resolveAgents(BUILTIN_AGENTS, userAgents, useBuiltins),
-    BUILTIN_AGENTS,
-    hiddenBuiltins,
-  )
+  const visibleBuiltins = filterHiddenBuiltins(BUILTIN_AGENTS, hiddenBuiltins);
+  return resolveAgents(visibleBuiltins, userAgents, useBuiltins)
     .map((agent) => resolveAgentCommands(agent, commandPlatform));
 }
 
@@ -95,7 +96,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
       if (!useWsl) {
         for (const agent of getEffectiveAgents()) {
-          installStatus.set(agent.id, executableExistsOnPath(agent.command, process.env, process.platform, fs.existsSync));
+          installStatus.set(
+            agent.id,
+            executableExistsOnPath(agent.command, process.env, process.platform, isExecutableFile),
+          );
         }
       }
 
@@ -105,7 +109,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const manageBuiltins = async (): Promise<void> => {
     const configuration = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE);
-    const hiddenIds = new Set(configuration.inspect<string[]>('hiddenBuiltins')?.globalValue ?? []);
+    const hiddenIds = new Set(getGlobalStringArray(configuration, 'hiddenBuiltins'));
     const items = [...BUILTIN_AGENTS]
       .sort(compareAgentsByLabel)
       .map((agent) => ({
@@ -147,7 +151,10 @@ export function activate(context: vscode.ExtensionContext): void {
     installStatus.clear();
     if (!useWsl) {
       for (const agent of agents) {
-        installStatus.set(agent.id, executableExistsOnPath(agent.command, process.env, process.platform, fs.existsSync));
+        installStatus.set(
+          agent.id,
+          executableExistsOnPath(agent.command, process.env, process.platform, isExecutableFile),
+        );
       }
     }
     treeProvider.refresh();
@@ -190,10 +197,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
 
-  const launchWithStatusGuard = async (agent: Agent): Promise<void> => {
+  const launchWithStatusGuard = async (agent: Agent): Promise<boolean> => {
     if (installStatus.get(agent.id) !== false) {
-      await launchAgent(agent, context, terminalSequence++);
-      return;
+      return launchAgent(agent, context, terminalSequence++);
     }
 
     const actions = agent.installationDocumentationUrl
@@ -209,8 +215,10 @@ export function activate(context: vscode.ExtensionContext): void {
     } else if (selection === 'Open Settings') {
       await openExtensionSettings(context);
     } else if (selection === 'Launch Anyway') {
-      await launchAgent(agent, context, terminalSequence++);
+      return launchAgent(agent, context, terminalSequence++);
     }
+
+    return false;
   };
 
   const buildQuickPickItems = (): AgentQuickPickItem[] => {
@@ -302,9 +310,9 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
 
-    await launchWithStatusGuard(picked);
+    const launched = await launchWithStatusGuard(picked);
 
-    if (offerFavorite && picked.id !== getFavoriteId()) {
+    if (shouldOfferFavoriteAfterLaunch(offerFavorite, launched, picked.id, getFavoriteId())) {
       const choice = await vscode.window.showInformationMessage(
         `Set "${picked.label}" as your favorite agent? You can then launch it with Ctrl+Alt+A.`,
         'Set Favorite',

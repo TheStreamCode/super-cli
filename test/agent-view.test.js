@@ -1,7 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { buildAgentGroups, buildAgentSections } = require('../out/agent-view.js');
+const {
+  buildAgentGroups,
+  buildAgentSections,
+  shouldOfferFavoriteAfterLaunch,
+} = require('../out/agent-view.js');
 
 const agents = [
   { id: 'charlie', label: 'Charlie', command: 'charlie' },
@@ -41,4 +45,11 @@ test('buildAgentSections promotes the favorite and alphabetizes the remaining ag
   assert.deepEqual(sections[0].agents.map((agent) => agent.id), ['bravo']);
   assert.deepEqual(sections[1].agents.map((agent) => agent.id), ['alpha', 'charlie']);
   assert.deepEqual(flattened.sort(), ['alpha', 'bravo', 'charlie']);
+});
+
+test('favorite prompt is offered only after a successful launch', () => {
+  assert.equal(shouldOfferFavoriteAfterLaunch(true, true, 'codex', ''), true);
+  assert.equal(shouldOfferFavoriteAfterLaunch(true, false, 'codex', ''), false);
+  assert.equal(shouldOfferFavoriteAfterLaunch(false, true, 'codex', ''), false);
+  assert.equal(shouldOfferFavoriteAfterLaunch(true, true, 'codex', 'codex'), false);
 });
