@@ -5,6 +5,13 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-07-18
+
+### Changed
+
+- Moved the maintainer-facing Super CLI brand asset reference from the Marketplace README to
+  `docs/BRAND.md`.
+
 ## [1.0.3] - 2026-07-18
 
 ### Changed

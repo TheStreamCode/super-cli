@@ -226,19 +226,6 @@ terminal, plus bounded version commands when you explicitly run Agent Doctor.
 Keep credentials in each CLI's supported credential store or environment configuration rather than
 embedding them directly in launch, update, or version command strings.
 
-## Brand assets
-
-The Router S combines the Super CLI initial with two directional command paths. The artwork is kept
-flat and geometric so it remains legible from the 16 px editor toolbar through the 512 px Marketplace
-listing.
-
-| Usage | Asset |
-| --- | --- |
-| Marketplace and extension listing | [`media/icon.png`](media/icon.png), generated from [`media/icon.svg`](media/icon.svg) |
-| Activity bar | [`media/sidebar-mark.svg`](media/sidebar-mark.svg), monochrome and theme-adaptive |
-| Editor toolbar on light themes | [`media/toolbar-mark-light.svg`](media/toolbar-mark-light.svg) |
-| Editor toolbar on dark themes | [`media/toolbar-mark-dark.svg`](media/toolbar-mark-dark.svg) |
-
 ## Building
 
 ```bash

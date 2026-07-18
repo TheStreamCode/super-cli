@@ -13,6 +13,7 @@ Keep changes focused and covered by tests. Third-party marks must come from an a
 source, remain limited to product identification, and be recorded in
 [`media/agents/ATTRIBUTION.md`](media/agents/ATTRIBUTION.md) and [`TRADEMARKS.md`](TRADEMARKS.md).
 Package only static, safe SVGs without scripts, embedded images, or external references.
+See [`docs/BRAND.md`](docs/BRAND.md) before changing Super CLI's own logo or interface marks.
 
 ## Pull Requests
 
