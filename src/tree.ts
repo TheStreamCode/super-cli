@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { Agent } from './agents.js';
 import { buildAgentGroups, type AgentGroup } from './agent-view.js';
+import type { DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
 
 export interface AgentGroupNode extends AgentGroup {
@@ -23,6 +24,7 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
     private readonly getAgents: () => Agent[],
     private readonly getFavoriteId: () => string,
     private readonly getInstallStatus: (id: string) => boolean | undefined,
+    private readonly getDoctorResult: (id: string) => DoctorResult | undefined,
     private readonly extensionUri: vscode.Uri,
   ) {}
 
@@ -32,7 +34,10 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
 
   getTreeItem(node: AgentTreeNode): vscode.TreeItem {
     if (node.kind === 'group') {
-      const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Expanded);
+      const collapsibleState = node.id === 'setup'
+        ? vscode.TreeItemCollapsibleState.Collapsed
+        : vscode.TreeItemCollapsibleState.Expanded;
+      const item = new vscode.TreeItem(node.label, collapsibleState);
       item.id = `group:${node.id}`;
       item.description = String(node.agents.length);
       item.contextValue = 'agent-group';
@@ -48,14 +53,24 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
     const agent = node.agent;
     const isFavorite = agent.id === this.getFavoriteId();
     const installStatus = this.getInstallStatus(agent.id);
+    const doctorResult = this.getDoctorResult(agent.id);
     const isMissing = installStatus === false;
+    const doctorDescription = doctorResult?.version
+      ?? (doctorResult?.status === 'timed-out' ? 'check timed out'
+        : doctorResult?.status === 'check-failed' ? 'check failed'
+          : doctorResult?.status === 'version-unavailable' ? 'version unavailable'
+            : undefined);
 
     const item = new vscode.TreeItem(agent.label, vscode.TreeItemCollapsibleState.None);
     item.id = agent.id;
-    item.description = isMissing ? `setup required · ${agent.command}` : agent.command;
+    item.description = isMissing
+      ? `setup required · ${agent.command}`
+      : doctorDescription ? `${doctorDescription} · ${agent.command}` : agent.command;
     item.tooltip = `Launch ${agent.label} (${agent.command})`
       + (isFavorite ? ' · Favorite (Ctrl+Alt+A)' : '')
-      + (installStatus === true ? ' · ready' : isMissing ? ' · not found on PATH' : ' · status unknown');
+      + (installStatus === true ? ' · ready' : isMissing ? ' · not found on PATH' : ' · status unknown')
+      + (doctorResult?.version ? ` · ${doctorResult.version}` : '')
+      + (doctorResult?.detail ? ` · ${doctorResult.detail}` : '');
     item.contextValue = `agent-${isMissing ? 'missing' : 'ready'}`
       + (agent.updateCommand ? '-updatable' : '')
       + (isFavorite ? '-favorite' : '')
@@ -64,6 +79,7 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
     item.accessibilityInformation = {
       label: `${agent.label}, ${isFavorite ? 'favorite, ' : ''}`
         + `${installStatus === true ? 'ready' : isMissing ? 'setup required' : 'installation status unknown'}, `
+        + `${doctorResult?.version ? `version ${doctorResult.version}, ` : ''}`
         + `command ${agent.command}`,
     };
     item.command = {

@@ -3,7 +3,7 @@
   "displayName": "Super CLI — AI Coding Agent Launcher (Claude Code, Codex, Copilot)",
   "description": "Launch any AI coding-agent CLI — Claude Code, Codex, GitHub Copilot, Cursor, Crush, OpenCode and more — from one sidebar and side terminal. Works in VS Code, Cursor, Antigravity & Windsurf on Windows, macOS & Linux.",
   "publisher": "mikesoft",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -62,13 +62,20 @@
     "crush",
     "hermes",
     "kimi",
+    "kiro",
+    "openclaw",
     "mimo",
     "pi",
     "vscode"
   ],
   "main": "./out/extension.js",
   "activationEvents": [
-    "onStartupFinished"
+    "onView:superCli.agents",
+    "onCommand:superCli.launch",
+    "onCommand:superCli.launchFavorite",
+    "onCommand:superCli.manageBuiltins",
+    "onCommand:superCli.runDoctor",
+    "onCommand:superCli.openSettings"
   ],
   "contributes": {
     "viewsContainers": {
@@ -145,6 +152,18 @@
         "category": "Super CLI"
       },
       {
+        "command": "superCli.manageBuiltins",
+        "title": "Manage Built-in Agents",
+        "category": "Super CLI",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "superCli.runDoctor",
+        "title": "Run Agent Doctor",
+        "category": "Super CLI",
+        "icon": "$(pulse)"
+      },
+      {
         "command": "superCli.refresh",
         "title": "Refresh Agents",
         "category": "Super CLI",
@@ -166,14 +185,24 @@
       ],
       "view/title": [
         {
+          "command": "superCli.runDoctor",
+          "when": "view == superCli.agents",
+          "group": "navigation@1"
+        },
+        {
+          "command": "superCli.manageBuiltins",
+          "when": "view == superCli.agents",
+          "group": "navigation@2"
+        },
+        {
           "command": "superCli.refresh",
           "when": "view == superCli.agents",
-          "group": "navigation"
+          "group": "navigation@3"
         },
         {
           "command": "superCli.openSettings",
           "when": "view == superCli.agents",
-          "group": "navigation"
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [
@@ -259,7 +288,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, antigravity, opencode, command-code, cursor, droid, crush, hermes, mimo, pi, kimi) to override that built-in."
+                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, kiro, openclaw, antigravity, opencode, command-code, cursor, droid, crush, hermes, mimo, pi, kimi) to override that built-in."
               },
               "label": {
                 "type": "string",
@@ -335,6 +364,34 @@
                     "additionalProperties": false
                   }
                 ]
+              },
+              "versionCommand": {
+                "description": "Optional command used by Agent Doctor to report the installed CLI version. Use a string when it is the same everywhere, or provide windows, macos, and linux variants. It runs only when you explicitly invoke Agent Doctor.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "windows",
+                      "macos",
+                      "linux"
+                    ],
+                    "properties": {
+                      "windows": {
+                        "type": "string"
+                      },
+                      "macos": {
+                        "type": "string"
+                      },
+                      "linux": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
               }
             }
           }
@@ -343,7 +400,36 @@
           "type": "boolean",
           "scope": "machine",
           "default": true,
-          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Grok, Kilo, Antigravity, OpenCode, Command Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI) in the launcher."
+          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI) in the launcher."
+        },
+        "superCli.hiddenBuiltins": {
+          "type": "array",
+          "scope": "machine",
+          "default": [],
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "claude",
+              "codex",
+              "copilot",
+              "grok",
+              "kilo",
+              "kiro",
+              "openclaw",
+              "antigravity",
+              "opencode",
+              "command-code",
+              "cursor",
+              "droid",
+              "crush",
+              "hermes",
+              "mimo",
+              "pi",
+              "kimi"
+            ]
+          },
+          "markdownDescription": "Built-in agent ids hidden from the sidebar and launcher. Use **Super CLI: Manage Built-in Agents** instead of editing this list by hand."
         },
         "superCli.favoriteAgent": {
           "type": "string",

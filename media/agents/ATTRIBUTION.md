@@ -13,6 +13,8 @@ and are excluded from Super CLI's MIT license; see [`TRADEMARKS.md`](../../TRADE
 | GitHub Copilot CLI | Copilot glyph, black/white contrast variants | [Primer Octicons `copilot-48.svg`](https://github.com/primer/octicons/blob/main/icons/copilot-48.svg) |
 | Grok CLI | Grok glyph, background removed for transparent light/dark variants | [Grok favicon](https://grok.com/images/favicon.svg) |
 | Kilo CLI | Kilo logomark, official current-color artwork rendered in contrast variants | [Kilo repository logo](https://github.com/Kilo-Org/kilocode/blob/main/packages/kilo-docs/public/img/logo.svg) |
+| Kiro CLI | Official Kiro app mark | [Kiro website icon](https://kiro.dev/icon.svg) |
+| OpenClaw CLI | Official static Clawd lobster mark with transparent background | [OpenClaw repository icon](https://github.com/openclaw/openclaw/blob/main/apps/linux/src-tauri/icons/icon.svg) |
 | OpenCode | Official light/dark square logomarks | [OpenCode brand assets](https://github.com/anomalyco/opencode/tree/dev/packages/console/app/src/asset/brand) |
 | Command Code | Official compact symbol | [Command Code brand assets](https://commandcode.ai/brand) |
 | Cursor CLI | Official 2.5D cube | [Cursor brand guidelines](https://cursor.com/brand) |

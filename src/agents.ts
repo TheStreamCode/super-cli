@@ -17,12 +17,14 @@ export interface AgentDefinition {
   installationDocumentationUrl?: string;
   env?: Record<string, string>;
   updateCommand?: PlatformCommand;
+  versionCommand?: PlatformCommand;
 }
 
 /** A coding agent with commands resolved for the terminal environment. */
-export interface Agent extends Omit<AgentDefinition, 'command' | 'updateCommand'> {
+export interface Agent extends Omit<AgentDefinition, 'command' | 'updateCommand' | 'versionCommand'> {
   command: string;
   updateCommand?: string;
+  versionCommand?: string;
 }
 
 function onAllPlatforms(command: string): Record<CommandPlatform, string> {
@@ -39,6 +41,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     iconPath: 'media/agents/claude.svg',
     installationDocumentationUrl: 'https://code.claude.com/docs/en/setup',
     updateCommand: onAllPlatforms('claude update'),
+    versionCommand: onAllPlatforms('claude --version'),
     // Super CLI is one extension for every CLI, so skip Claude Code's IDE extension
     // auto-install using its own official environment variable.
     env: { CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL: '1' },
@@ -51,6 +54,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     iconPath: 'media/agents/codex.svg',
     installationDocumentationUrl: 'https://developers.openai.com/codex/cli/',
     updateCommand: onAllPlatforms('codex update'),
+    versionCommand: onAllPlatforms('codex --version'),
   },
   {
     id: 'copilot',
@@ -63,6 +67,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     },
     installationDocumentationUrl: 'https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli',
     updateCommand: onAllPlatforms('copilot update'),
+    versionCommand: onAllPlatforms('copilot --version'),
   },
   {
     id: 'grok',
@@ -85,6 +90,27 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     },
     installationDocumentationUrl: 'https://kilo.ai/docs/cli',
     updateCommand: onAllPlatforms('kilo upgrade'),
+    versionCommand: onAllPlatforms('kilo --version'),
+  },
+  {
+    id: 'kiro',
+    label: 'Kiro CLI',
+    command: onAllPlatforms('kiro-cli'),
+    icon: 'sparkle-filled',
+    iconPath: 'media/agents/kiro.svg',
+    installationDocumentationUrl: 'https://kiro.dev/docs/cli/',
+    // Kiro downloads updates in the background and installs them when the CLI exits.
+    versionCommand: onAllPlatforms('kiro-cli --version'),
+  },
+  {
+    id: 'openclaw',
+    label: 'OpenClaw CLI',
+    command: onAllPlatforms('openclaw chat'),
+    icon: 'comment-discussion',
+    iconPath: 'media/agents/openclaw.svg',
+    installationDocumentationUrl: 'https://docs.openclaw.ai/install',
+    updateCommand: onAllPlatforms('openclaw update'),
+    versionCommand: onAllPlatforms('openclaw --version'),
   },
   {
     id: 'antigravity',
@@ -104,6 +130,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     },
     installationDocumentationUrl: 'https://opencode.ai/docs/',
     updateCommand: onAllPlatforms('opencode upgrade'),
+    versionCommand: onAllPlatforms('opencode --version'),
   },
   {
     id: 'command-code',
@@ -122,6 +149,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     iconPath: 'media/agents/cursor.svg',
     installationDocumentationUrl: 'https://cursor.com/docs/cli/overview',
     updateCommand: onAllPlatforms('cursor-agent update'),
+    versionCommand: onAllPlatforms('cursor-agent --version'),
   },
   {
     id: 'droid',
@@ -180,6 +208,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     iconPath: 'media/agents/kimi.svg',
     installationDocumentationUrl: 'https://www.kimi.com/code/docs/en/kimi-code-cli/guides/getting-started.html',
     updateCommand: onAllPlatforms('kimi upgrade'),
+    versionCommand: onAllPlatforms('kimi --version'),
   },
 ];
 
@@ -214,7 +243,7 @@ export function resolvePlatformCommand(command: PlatformCommand, platform: Comma
 
 /** Resolves an agent definition into commands safe to pass to the active terminal. */
 export function resolveAgentCommands(agent: AgentDefinition, platform: CommandPlatform): Agent {
-  const { command, updateCommand, ...metadata } = agent;
+  const { command, updateCommand, versionCommand, ...metadata } = agent;
   const resolved: Agent = {
     ...metadata,
     command: resolvePlatformCommand(command, platform),
@@ -222,6 +251,9 @@ export function resolveAgentCommands(agent: AgentDefinition, platform: CommandPl
 
   if (updateCommand) {
     resolved.updateCommand = resolvePlatformCommand(updateCommand, platform);
+  }
+  if (versionCommand) {
+    resolved.versionCommand = resolvePlatformCommand(versionCommand, platform);
   }
 
   return resolved;
@@ -285,9 +317,24 @@ export function resolveAgents(
       if (merged.updateCommand !== undefined && !isValidPlatformCommand(merged.updateCommand)) {
         delete merged.updateCommand;
       }
+      if (merged.versionCommand !== undefined && !isValidPlatformCommand(merged.versionCommand)) {
+        delete merged.versionCommand;
+      }
       byId.set(candidate.id, merged);
     }
   }
 
   return [...byId.values()];
+}
+
+/** Hides selected built-in identities while preserving unrelated custom agents. */
+export function filterHiddenBuiltins(
+  agents: readonly AgentDefinition[],
+  builtins: readonly AgentDefinition[],
+  hiddenIds: readonly string[],
+): AgentDefinition[] {
+  const builtinIds = new Set(builtins.map((agent) => agent.id));
+  const hidden = new Set(hiddenIds);
+
+  return agents.filter((agent) => !(builtinIds.has(agent.id) && hidden.has(agent.id)));
 }

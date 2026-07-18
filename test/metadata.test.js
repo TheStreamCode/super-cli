@@ -35,7 +35,14 @@ test('package metadata uses Super CLI branding', () => {
   assert.equal(packageJson.publisher, 'mikesoft');
   assert.equal(packageJson.icon, 'media/icon.png');
   assert.equal(packageJson.main, './out/extension.js');
-  assert.deepEqual(packageJson.activationEvents, ['onStartupFinished']);
+  assert.deepEqual(packageJson.activationEvents, [
+    'onView:superCli.agents',
+    'onCommand:superCli.launch',
+    'onCommand:superCli.launchFavorite',
+    'onCommand:superCli.manageBuiltins',
+    'onCommand:superCli.runDoctor',
+    'onCommand:superCli.openSettings',
+  ]);
   assert.equal(packageJson.contributes.configuration.title, 'Super CLI');
 });
 
@@ -64,6 +71,8 @@ test('package declares the launcher commands', () => {
     'superCli.updateAgent',
     'superCli.openAgentDocumentation',
     'superCli.enableBuiltins',
+    'superCli.manageBuiltins',
+    'superCli.runDoctor',
     'superCli.refresh',
     'superCli.openSettings',
   ]);
@@ -96,6 +105,8 @@ test('agents setting is machine-scoped and security restricted', () => {
   assert.equal(properties['superCli.agents'].type, 'array');
   assert.equal(properties['superCli.agents'].scope, 'machine');
   assert.equal(properties['superCli.useBuiltins'].default, true);
+  assert.equal(properties['superCli.hiddenBuiltins'].scope, 'machine');
+  assert.ok(properties['superCli.hiddenBuiltins'].items.enum.includes('openclaw'));
   assert.equal(properties['superCli.favoriteAgent'].type, 'string');
   assert.equal(properties['superCli.favoriteAgent'].scope, 'machine');
   assert.deepEqual(properties['superCli.agents'].items.required, ['id', 'label', 'command']);
@@ -103,6 +114,8 @@ test('agents setting is machine-scoped and security restricted', () => {
   assert.match(properties['superCli.agents'].items.properties.id.description, /kimi/);
   assert.match(properties['superCli.useBuiltins'].description, /Kimi Code CLI/);
   assert.ok(packageJson.keywords.includes('kimi'));
+  assert.ok(packageJson.keywords.includes('kiro'));
+  assert.ok(packageJson.keywords.includes('openclaw'));
 });
 
 test('agent settings do not permit automatic CLI installation', () => {
@@ -112,7 +125,7 @@ test('agent settings do not permit automatic CLI installation', () => {
   assert.equal(Object.hasOwn(properties, 'autoInstall'), false);
   assert.equal(properties.installationDocumentationUrl.type, 'string');
   assert.match(properties.installationDocumentationUrl.description, /official installation documentation/i);
-  for (const field of ['command', 'updateCommand']) {
+  for (const field of ['command', 'updateCommand', 'versionCommand']) {
     const platformVariant = properties[field].oneOf.find((schema) => schema.type === 'object');
     assert.ok(properties[field].oneOf.some((schema) => schema.type === 'string'), field);
     assert.deepEqual(platformVariant.required, ['windows', 'macos', 'linux'], field);

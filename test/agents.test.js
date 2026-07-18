@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 
 const {
   BUILTIN_AGENTS,
+  filterHiddenBuiltins,
   getMissingAgentGuidance,
   resolveAgentCommands,
   resolveAgents,
@@ -26,6 +27,15 @@ test('resolveAgents returns the built-ins when no user agents are configured', (
 test('resolveAgents omits the built-ins when disabled', () => {
   const agents = resolveAgents(BUILTIN_AGENTS, [], false);
   assert.deepEqual(agents, []);
+});
+
+test('filterHiddenBuiltins hides only selected built-in identities', () => {
+  const agents = resolveAgents(BUILTIN_AGENTS, [{ id: 'mine', label: 'Mine', command: 'mine' }], true);
+  const visible = filterHiddenBuiltins(agents, BUILTIN_AGENTS, ['kiro', 'openclaw', 'mine']);
+
+  assert.equal(visible.some((agent) => agent.id === 'kiro'), false);
+  assert.equal(visible.some((agent) => agent.id === 'openclaw'), false);
+  assert.equal(visible.some((agent) => agent.id === 'mine'), true);
 });
 
 test('resolveAgents appends new user agents', () => {
@@ -77,17 +87,19 @@ test('resolveAgents rejects incomplete platform-specific user commands', () => {
   assert.deepEqual(agents, []);
 });
 
-test('resolveAgents ignores legacy non-string documentation and update values', () => {
+test('resolveAgents ignores legacy non-string documentation and command values', () => {
   const agents = resolveAgents([], [{
     id: 'legacy',
     label: 'Legacy',
     command: 'legacy',
     installationDocumentationUrl: { unix: 'not-a-url' },
     updateCommand: { unix: 'legacy update' },
+    versionCommand: { unix: 'legacy version' },
   }], false);
 
   assert.equal(agents[0].installationDocumentationUrl, undefined);
   assert.equal(agents[0].updateCommand, undefined);
+  assert.equal(agents[0].versionCommand, undefined);
 });
 
 test('OpenCode ships as a built-in preset', () => {
@@ -119,6 +131,7 @@ test('agents with a known update command carry their official one', () => {
     codex: 'codex update',
     copilot: 'copilot update',
     kilo: 'kilo upgrade',
+    openclaw: 'openclaw update',
     hermes: 'hermes update',
     opencode: 'opencode upgrade',
     cursor: 'cursor-agent update',
@@ -135,7 +148,7 @@ test('agents with a known update command carry their official one', () => {
 });
 
 test('self-updating CLIs have no manual update command', () => {
-  for (const id of ['mimo', 'command-code']) {
+  for (const id of ['kiro', 'mimo', 'command-code']) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
     assert.equal(agent.updateCommand, undefined, id);
   }
@@ -158,6 +171,8 @@ test('built-ins expose only verified official installation documentation', () =>
     codex: 'https://developers.openai.com/codex/cli/',
     copilot: 'https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli',
     kilo: 'https://kilo.ai/docs/cli',
+    kiro: 'https://kiro.dev/docs/cli/',
+    openclaw: 'https://docs.openclaw.ai/install',
     opencode: 'https://opencode.ai/docs/',
     cursor: 'https://cursor.com/docs/cli/overview',
     droid: 'https://docs.factory.ai/cli/getting-started',
@@ -245,4 +260,17 @@ test('Kimi Code CLI ships as a built-in preset', () => {
     'https://www.kimi.com/code/docs/en/kimi-code-cli/guides/getting-started.html',
   );
   assert.equal(kimi.updateCommand, 'kimi upgrade');
+});
+
+test('Kiro and OpenClaw ship as adaptive built-in presets', () => {
+  for (const platform of SUPPORTED_PLATFORMS) {
+    const kiro = resolveBuiltin('kiro', platform);
+    assert.equal(kiro.command, 'kiro-cli');
+    assert.equal(kiro.versionCommand, 'kiro-cli --version');
+
+    const openclaw = resolveBuiltin('openclaw', platform);
+    assert.equal(openclaw.command, 'openclaw chat');
+    assert.equal(openclaw.versionCommand, 'openclaw --version');
+    assert.equal(openclaw.updateCommand, 'openclaw update');
+  }
 });

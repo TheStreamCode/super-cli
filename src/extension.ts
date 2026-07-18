@@ -4,12 +4,14 @@ import {
   type Agent,
   type AgentDefinition,
   BUILTIN_AGENTS,
+  filterHiddenBuiltins,
   resolveAgentCommands,
   resolveAgents,
   resolveCommandPlatform,
 } from './agents.js';
 import { buildAgentSections } from './agent-view.js';
 import { executableExistsOnPath } from './command-utils.js';
+import { buildDoctorReport, inspectAgents, type DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
 import { AgentTreeDataProvider } from './tree.js';
 import { launchAgent, openExtensionSettings, updateAgent } from './terminal.js';
@@ -26,8 +28,13 @@ function getEffectiveAgents(): Agent[] {
   const commandPlatform = resolveCommandPlatform(process.platform, useWsl);
   // Read user-level config only; workspace overrides are ignored for security.
   const userAgents = configuration.inspect<AgentDefinition[]>('agents')?.globalValue;
+  const hiddenBuiltins = configuration.inspect<string[]>('hiddenBuiltins')?.globalValue ?? [];
 
-  return resolveAgents(BUILTIN_AGENTS, userAgents, useBuiltins)
+  return filterHiddenBuiltins(
+    resolveAgents(BUILTIN_AGENTS, userAgents, useBuiltins),
+    BUILTIN_AGENTS,
+    hiddenBuiltins,
+  )
     .map((agent) => resolveAgentCommands(agent, commandPlatform));
 }
 
@@ -50,12 +57,21 @@ interface AgentQuickPickItem extends vscode.QuickPickItem {
 export function activate(context: vscode.ExtensionContext): void {
   // Best-effort "installed / not installed" status per agent, keyed by id (undefined = unknown).
   const installStatus = new Map<string, boolean>();
+  const doctorResults = new Map<string, DoctorResult>();
   let statusRefreshSequence = 0;
+  const doctorReportUri = vscode.Uri.parse('super-cli:/agent-doctor.md');
+  let doctorReport = '# Super CLI Agent Doctor\n\nRun **Super CLI: Run Agent Doctor** to inspect configured agents.\n';
+  const doctorReportEmitter = new vscode.EventEmitter<vscode.Uri>();
+  const doctorReportProvider: vscode.TextDocumentContentProvider = {
+    onDidChange: doctorReportEmitter.event,
+    provideTextDocumentContent: () => doctorReport,
+  };
 
   const treeProvider = new AgentTreeDataProvider(
     getEffectiveAgents,
     getFavoriteId,
     (id) => installStatus.get(id),
+    (id) => doctorResults.get(id),
     context.extensionUri,
   );
   const treeView = vscode.window.createTreeView('superCli.agents', { treeDataProvider: treeProvider });
@@ -65,6 +81,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const refreshInstallStatus = (): void => {
     const refreshSequence = ++statusRefreshSequence;
     installStatus.clear();
+    doctorResults.clear();
     treeProvider.refresh();
 
     setTimeout(() => {
@@ -83,6 +100,85 @@ export function activate(context: vscode.ExtensionContext): void {
 
       treeProvider.refresh();
     }, 0);
+  };
+
+  const manageBuiltins = async (): Promise<void> => {
+    const configuration = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE);
+    const hiddenIds = new Set(configuration.inspect<string[]>('hiddenBuiltins')?.globalValue ?? []);
+    const items = BUILTIN_AGENTS.map((agent) => ({
+      label: agent.label,
+      description: agent.id,
+      picked: !hiddenIds.has(agent.id),
+      agentId: agent.id,
+    }));
+    const selection = await vscode.window.showQuickPick(items, {
+      canPickMany: true,
+      placeHolder: 'Choose the built-in agents shown by Super CLI',
+      title: 'Manage Built-in Agents',
+      ignoreFocusOut: true,
+    });
+
+    if (!selection) {
+      return;
+    }
+
+    const selectedIds = new Set(selection.map((item) => item.agentId));
+    const nextHiddenIds = BUILTIN_AGENTS
+      .map((agent) => agent.id)
+      .filter((id) => !selectedIds.has(id));
+    await configuration.update('useBuiltins', selection.length > 0, vscode.ConfigurationTarget.Global);
+    await configuration.update('hiddenBuiltins', nextHiddenIds, vscode.ConfigurationTarget.Global);
+
+    const favoriteId = getFavoriteId();
+    if (favoriteId && nextHiddenIds.includes(favoriteId)) {
+      await setFavoriteId('');
+      void vscode.window.showInformationMessage('The hidden agent was removed as your favorite.');
+    }
+  };
+
+  const runDoctor = async (): Promise<void> => {
+    const agents = getEffectiveAgents();
+    const useWsl = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<boolean>('useWsl', false)
+      && process.platform === 'win32';
+
+    installStatus.clear();
+    if (!useWsl) {
+      for (const agent of agents) {
+        installStatus.set(agent.id, executableExistsOnPath(agent.command, process.env, process.platform, fs.existsSync));
+      }
+    }
+    treeProvider.refresh();
+
+    const results = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Super CLI: checking coding agents',
+        cancellable: false,
+      },
+      () => inspectAgents(
+        agents,
+        (id) => installStatus.get(id),
+        vscode.workspace.isTrusted,
+        useWsl,
+      ),
+    );
+
+    doctorResults.clear();
+    for (const [id, result] of results) {
+      doctorResults.set(id, result);
+    }
+    treeProvider.refresh();
+
+    doctorReport = buildDoctorReport(
+      agents,
+      results,
+      process.platform === 'win32' ? 'Windows' : process.platform === 'darwin' ? 'macOS' : 'Linux',
+      useWsl,
+      vscode.workspace.isTrusted,
+    );
+    doctorReportEmitter.fire(doctorReportUri);
+    const document = await vscode.workspace.openTextDocument(doctorReportUri);
+    await vscode.window.showTextDocument(document, { preview: true });
   };
 
   const openAgentDocumentation = async (agent: Agent): Promise<void> => {
@@ -275,11 +371,14 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   const enableBuiltinsCommand = vscode.commands.registerCommand('superCli.enableBuiltins', async () => {
-    await vscode.workspace
-      .getConfiguration(SETTINGS_NAMESPACE)
-      .update('useBuiltins', true, vscode.ConfigurationTarget.Global);
+    const configuration = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE);
+    await configuration.update('useBuiltins', true, vscode.ConfigurationTarget.Global);
+    await configuration.update('hiddenBuiltins', [], vscode.ConfigurationTarget.Global);
     refreshInstallStatus();
   });
+
+  const manageBuiltinsCommand = vscode.commands.registerCommand('superCli.manageBuiltins', manageBuiltins);
+  const runDoctorCommand = vscode.commands.registerCommand('superCli.runDoctor', runDoctor);
 
   const refreshCommand = vscode.commands.registerCommand('superCli.refresh', () => {
     refreshInstallStatus();
@@ -291,11 +390,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const configWatcher = vscode.workspace.onDidChangeConfiguration((event) => {
     if (event.affectsConfiguration('superCli.agents') || event.affectsConfiguration('superCli.useBuiltins')
+      || event.affectsConfiguration('superCli.hiddenBuiltins')
       || event.affectsConfiguration('superCli.useWsl')) {
       refreshInstallStatus();
     }
 
     if (event.affectsConfiguration('superCli.agents') || event.affectsConfiguration('superCli.useBuiltins')
+      || event.affectsConfiguration('superCli.hiddenBuiltins')
       || event.affectsConfiguration('superCli.favoriteAgent')) {
       treeProvider.refresh();
     }
@@ -317,9 +418,13 @@ export function activate(context: vscode.ExtensionContext): void {
     updateAgentCommand,
     openAgentDocumentationCommand,
     enableBuiltinsCommand,
+    manageBuiltinsCommand,
+    runDoctorCommand,
     refreshCommand,
     openSettingsCommand,
     configWatcher,
     themeWatcher,
+    doctorReportEmitter,
+    vscode.workspace.registerTextDocumentContentProvider('super-cli', doctorReportProvider),
   );
 }

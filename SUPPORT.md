@@ -10,6 +10,7 @@ Please include:
 - The coding agent you launched and its configured command
 - Whether that command works in a regular VS Code integrated terminal
 - Whether the agent appears under **Ready**, **Agents**, or **Setup required** after refreshing
+- The relevant status from **Super CLI: Run Agent Doctor** (the report already excludes environment values)
 - Relevant terminal output, without secrets or authentication tokens
 
 For non-public support questions, contact the maintainer at `info@mikesoft.it` or through https://mikesoft.it.

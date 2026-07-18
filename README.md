@@ -12,8 +12,8 @@
 <p align="center"><strong>One launcher. Every coding agent.</strong></p>
 
 One VS Code extension to launch any coding agent CLI — **Claude Code, Codex, GitHub Copilot CLI,
-Cursor, Droid, Grok, Kilo, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, Pi, Kimi
-Code CLI, and your own** — from a single sidebar and a side terminal.
+Cursor, Droid, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo
+Code, Pi, Kimi Code CLI, and your own** — from a single sidebar and a side terminal.
 
 Works on Windows, macOS, and Linux, and across the VS Code family (VS Code, Cursor, Antigravity,
 Windsurf).
@@ -34,7 +34,7 @@ the editor toolbar opens the same launcher without leaving the current file.
 
 ### Focused configuration
 
-All five settings are available in one filtered view. Commands can be shared across platforms or
+All settings are available in one filtered view. Commands can be shared across platforms or
 defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the Linux command.
 
 ![Super CLI settings for agents, favorites, terminal placement, built-ins, and WSL](media/screenshots/settings.png)
@@ -62,16 +62,21 @@ You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsu
   Shortcuts). With no favorite set the shortcut opens the picker and offers to remember your choice.
 - **Ready and setup states.** The sidebar groups ready agents, unknown WSL states, and CLIs that need
   setup. The launcher mirrors those sections and keeps the favorite first.
+- **Agent Manager.** Choose exactly which built-in CLIs appear from the sidebar toolbar or with
+  **Super CLI: Manage Built-in Agents**. Hiding a favorite safely clears the favorite selection.
+- **Agent Doctor.** Run an explicit, bounded local diagnostic to see detected CLI versions and
+  missing or failing version checks. It does not perform network update checks and its report omits
+  environment variables, credentials, `PATH` contents, and captured command output.
 - **Agent-specific artwork.** Built-ins use vendor-sourced CLI marks where suitable SVGs are
   available, with a documented compact fallback for Kimi and a ThemeIcon fallback for custom agents.
-- **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Cursor, Droid, Grok, Kilo, Antigravity,
-  OpenCode, Command Code, Crush, Hermes, MiMo Code, Pi, and Kimi Code CLI are available out of the
-  box.
+- **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Cursor, Droid, Grok, Kilo, Kiro,
+  OpenClaw, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, Pi, and Kimi Code CLI are
+  available out of the box.
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
 - **Update from the sidebar.** Agents with a known update command show an update button next to
   Launch, which runs the CLI's official update (e.g. `codex update`, `kilo upgrade`, `cursor-agent
-  update`, `opencode upgrade`, `droid update`, `kimi upgrade`). CLIs that update themselves don't
+  update`, `opencode upgrade`, `droid update`, `openclaw update`, `kimi upgrade`). CLIs that update themselves don't
   show one. With terminal shell integration available, Super CLI reports whether the update completed
   or failed and can bring the update terminal back into focus.
 - **Official installation docs.** If a supported CLI isn't found, Super CLI opens that agent's verified
@@ -124,6 +129,8 @@ reuses a built-in `id` — overrides that built-in (for example to point at a cu
   IDE-extension auto-install via its own variable: `{ "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1" }`.
 - `updateCommand` — optional command to update the CLI. It accepts the same cross-platform string or
   `windows`/`macos`/`linux` object as `command`, and adds an update button next to the agent.
+- `versionCommand` — optional command used only when you explicitly run Agent Doctor. It accepts the
+  same cross-platform forms and should print a short version string without requiring authentication.
 
 Every built-in preset defines its launch and update commands through the same platform-aware model.
 When `superCli.useWsl` is enabled on Windows, Super CLI selects the `linux` command variant because
@@ -138,6 +145,7 @@ an untrusted repository cannot inject commands.
 | --- | --- | --- |
 | `superCli.agents` | `[]` | Your agents (added to or overriding the built-ins). |
 | `superCli.useBuiltins` | `true` | Include the built-in agent presets. |
+| `superCli.hiddenBuiltins` | `[]` | Built-in ids hidden by **Manage Built-in Agents**. Prefer the manager over editing this list. |
 | `superCli.favoriteAgent` | `""` | Id of the agent launched by `Ctrl+Alt+A`. Set it with the ★ button in the sidebar rather than by hand. |
 | `superCli.terminalLocation` | `beside` | Open the terminal `beside` the editor or in the `panel`. |
 | `superCli.useWsl` | `false` | On Windows, open agents in WSL and use their Linux command variants. Ignored on macOS/Linux. |
@@ -158,6 +166,9 @@ settings.
 - **The wrong OS command runs.** Platform-specific custom commands must define all three keys:
   `windows`, `macos`, and `linux`. Super CLI selects the host OS automatically; WSL deliberately uses
   the `linux` variant because the command runs inside the WSL terminal.
+- **A version is unavailable.** Run **Super CLI: Run Agent Doctor**. A custom agent needs a verified
+  `versionCommand`; untrusted workspaces skip version commands, and each check is limited to five
+  seconds and 4 KB of output.
 - **Companion editor extensions.** Super CLI does not modify agent configuration files or shell
   profiles. It launches **Claude Code** with the official `CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=1`
   environment variable so its companion extension is not installed automatically.
@@ -170,9 +181,9 @@ a terminal beside your editor. The toolbar button and the **Super CLI: Launch Co
 do the same. It also works in Cursor, Antigravity, and Windsurf.
 
 **Which AI coding agents are supported?**
-Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Antigravity, OpenCode, Command Code, Cursor,
-Droid, Crush, Hermes, MiMo Code, Pi, and Kimi Code CLI out of the box — plus any CLI you add in
-`settings.json`.
+Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command
+Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi, and Kimi Code CLI out of the box — plus any CLI you
+add in `settings.json`.
 
 **Does it work on Windows, macOS, and Linux?**
 Yes. On Windows you can also launch agents inside WSL with `superCli.useWsl`.
@@ -191,7 +202,7 @@ Bug reports, feature requests, and contributions are welcome on
 
 This extension does not collect telemetry, analytics, or personal data. It never installs CLIs or
 modifies shell profiles; it only runs launch and user-requested update commands in your integrated
-terminal.
+terminal, plus bounded version commands when you explicitly run Agent Doctor.
 
 ## Brand assets
 

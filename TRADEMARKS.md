@@ -8,8 +8,8 @@ Chutes' [Terms of Service](https://chutes.ai/terms) apply to use of Chutes.
 
 The third-party names used solely to identify launchable CLIs or compatible
 editors and services include Anthropic and Claude Code; OpenAI and Codex;
-GitHub and GitHub Copilot; xAI and Grok; Kilo Code and Kilo; Google and
-Antigravity; OpenCode; Command Code; Cursor; Factory and Droid; Charm and
+GitHub and GitHub Copilot; xAI and Grok; Kilo Code and Kilo; Amazon Web Services and Kiro;
+OpenClaw; Google and Antigravity; OpenCode; Command Code; Cursor; Factory and Droid; Charm and
 Crush; Nous Research and Hermes; Xiaomi and MiMo Code; Earendil Works and Pi;
 Moonshot AI and Kimi Code; Microsoft and Visual Studio Code; Windsurf; npm; and Open VSX. These names,
 logos, and trademarks belong to their respective owners and are used only to

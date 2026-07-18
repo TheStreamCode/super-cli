@@ -5,6 +5,24 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-18
+
+### Added
+
+- Added Kiro CLI and OpenClaw CLI as platform-adaptive built-in presets, including verified official
+  installation documentation, version checks, and transparent vendor-sourced marks.
+- Added **Manage Built-in Agents**, a multi-select control for keeping the sidebar focused without
+  editing settings by hand.
+- Added **Agent Doctor**, an explicit local diagnostic with bounded version checks, WSL support, and
+  a privacy-conscious virtual report.
+
+### Changed
+
+- Switched from eager startup activation to view- and command-based activation.
+- Expanded ready agent groups by default and collapsed setup-required agents to reduce visual noise.
+- Extended custom agent configuration with adaptive `versionCommand` values for Windows, macOS, and
+  Linux.
+
 ## [0.9.0]
 
 ### Added
