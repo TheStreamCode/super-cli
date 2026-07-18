@@ -66,7 +66,8 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   **Super CLI: Manage Built-in Agents**. Hiding a favorite safely clears the favorite selection.
 - **Agent Doctor.** Run an explicit, bounded local diagnostic to see detected CLI versions and
   missing or failing version checks. It does not perform network update checks and its report omits
-  environment variables, credentials, `PATH` contents, and captured command output.
+  environment variables, `PATH` contents, launch commands, and raw diagnostic output. The report is
+  a single read-only virtual document that is replaced on every run and is never written to disk.
 - **Agent-specific artwork.** Built-ins use vendor-sourced CLI marks where suitable SVGs are
   available, with a documented compact fallback for Kimi and a ThemeIcon fallback for custom agents.
 - **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Cursor, Droid, Grok, Kilo, Kiro,
@@ -219,6 +220,9 @@ Bug reports, feature requests, and contributions are welcome on
 This extension does not collect telemetry, analytics, or personal data. It never installs CLIs or
 modifies shell profiles; it only runs launch and user-requested update commands in your integrated
 terminal, plus bounded version commands when you explicitly run Agent Doctor.
+
+Keep credentials in each CLI's supported credential store or environment configuration rather than
+embedding them directly in launch, update, or version command strings.
 
 ## Brand assets
 

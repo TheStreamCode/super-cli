@@ -5,6 +5,7 @@ const {
   BUILTIN_AGENTS,
   filterHiddenBuiltins,
   getMissingAgentGuidance,
+  resolveCommandAgentArgument,
   resolveAgentCommands,
   resolveAgents,
   resolveCommandPlatform,
@@ -17,6 +18,16 @@ function resolveBuiltin(id, platform = 'linux') {
   assert.ok(definition, `expected built-in ${id}`);
   return resolveAgentCommands(definition, platform);
 }
+
+test('resolveCommandAgentArgument accepts direct agents and tree item nodes', () => {
+  const agent = { id: 'example', label: 'Example CLI', command: 'example' };
+
+  assert.equal(resolveCommandAgentArgument(agent), agent);
+  assert.equal(resolveCommandAgentArgument({ kind: 'agent', agent }), agent);
+  assert.equal(resolveCommandAgentArgument({ kind: 'group', agents: [agent] }), undefined);
+  assert.equal(resolveCommandAgentArgument({ kind: 'agent', agent: { id: 'broken' } }), undefined);
+  assert.equal(resolveCommandAgentArgument(undefined), undefined);
+});
 
 test('resolveAgents returns the built-ins when no user agents are configured', () => {
   const agents = resolveAgents(BUILTIN_AGENTS, undefined, true);

@@ -167,7 +167,7 @@ export function buildDoctorReport(
   };
   const rows = agents.map((agent) => {
     const result = results.get(agent.id) ?? { status: 'version-unavailable' as const };
-    return `| ${escapeMarkdownCell(agent.label)} | ${labels[result.status]} | ${escapeMarkdownCell(result.version ?? '—')} | ${escapeMarkdownCell(agent.command)} |`;
+    return `| ${escapeMarkdownCell(agent.label)} | ${labels[result.status]} | ${escapeMarkdownCell(result.version ?? '—')} |`;
   });
 
   return [
@@ -178,11 +178,11 @@ export function buildDoctorReport(
     `- Workspace trusted: ${workspaceTrusted ? 'yes' : 'no'}`,
     '- Update availability is not checked over the network.',
     '',
-    '| Agent | Status | Version | Launch command |',
-    '| --- | --- | --- | --- |',
+    '| Agent | Status | Version |',
+    '| --- | --- | --- |',
     ...rows,
     '',
-    'This report intentionally excludes environment variables, credentials, PATH contents, and command output.',
+    'This report excludes environment variables, PATH contents, launch commands, and raw diagnostic output.',
     '',
   ].join('\n');
 }

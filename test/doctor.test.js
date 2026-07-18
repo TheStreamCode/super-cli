@@ -81,12 +81,16 @@ test('inspectAgents preserves order and limits version checks to three workers',
   assert.ok(maximumActive <= 3);
 });
 
-test('doctor report contains useful state without raw output or environment data', () => {
+test('doctor report contains useful state without commands, raw output, or environment data', () => {
   const results = new Map([['example', { status: 'ready', version: 'example 1.2.3' }]]);
-  const report = buildDoctorReport([agent], results, 'Windows', false, true);
+  const report = buildDoctorReport([
+    { ...agent, command: 'example chat --api-key DOCTOR_SECRET_SENTINEL' },
+  ], results, 'Windows', false, true);
 
   assert.match(report, /Super CLI Agent Doctor/);
   assert.match(report, /Example CLI \| Ready \| example 1\.2\.3/);
   assert.match(report, /Update availability is not checked/);
   assert.doesNotMatch(report, /PATH=/);
+  assert.doesNotMatch(report, /Launch command/);
+  assert.doesNotMatch(report, /DOCTOR_SECRET_SENTINEL/);
 });

@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-07-18
+
+### Fixed
+
+- Fixed the grouped sidebar actions so Launch, Favorite, Update, and Setup Guide consistently receive
+  the selected agent instead of the surrounding tree node.
+- Removed launch commands from the virtual Agent Doctor report so command-line credentials cannot be
+  reproduced in its Markdown table.
+
 ## [1.0.1] - 2026-07-18
 
 ### Changed

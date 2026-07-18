@@ -5,6 +5,7 @@ import {
   type AgentDefinition,
   BUILTIN_AGENTS,
   filterHiddenBuiltins,
+  resolveCommandAgentArgument,
   resolveAgentCommands,
   resolveAgents,
   resolveCommandPlatform,
@@ -328,7 +329,8 @@ export function activate(context: vscode.ExtensionContext): void {
     await runLaunchQuickPick(true);
   });
 
-  const launchAgentCommand = vscode.commands.registerCommand('superCli.launchAgent', async (agent?: Agent) => {
+  const launchAgentCommand = vscode.commands.registerCommand('superCli.launchAgent', async (argument?: unknown) => {
+    const agent = resolveCommandAgentArgument(argument);
     if (!agent) {
       return;
     }
@@ -336,7 +338,8 @@ export function activate(context: vscode.ExtensionContext): void {
     await launchWithStatusGuard(agent);
   });
 
-  const setFavoriteCommand = vscode.commands.registerCommand('superCli.setFavorite', async (agent?: Agent) => {
+  const setFavoriteCommand = vscode.commands.registerCommand('superCli.setFavorite', async (argument?: unknown) => {
+    const agent = resolveCommandAgentArgument(argument);
     if (!agent) {
       return;
     }
@@ -345,7 +348,8 @@ export function activate(context: vscode.ExtensionContext): void {
     void vscode.window.setStatusBarMessage(`${agent.label} is now the favorite agent`, 2500);
   });
 
-  const unsetFavoriteCommand = vscode.commands.registerCommand('superCli.unsetFavorite', async (agent?: Agent) => {
+  const unsetFavoriteCommand = vscode.commands.registerCommand('superCli.unsetFavorite', async (argument?: unknown) => {
+    const agent = resolveCommandAgentArgument(argument);
     if (!agent) {
       return;
     }
@@ -353,7 +357,8 @@ export function activate(context: vscode.ExtensionContext): void {
     await setFavoriteId('');
   });
 
-  const updateAgentCommand = vscode.commands.registerCommand('superCli.updateAgent', async (agent?: Agent) => {
+  const updateAgentCommand = vscode.commands.registerCommand('superCli.updateAgent', async (argument?: unknown) => {
+    const agent = resolveCommandAgentArgument(argument);
     if (!agent) {
       return;
     }
@@ -363,7 +368,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const openAgentDocumentationCommand = vscode.commands.registerCommand(
     'superCli.openAgentDocumentation',
-    async (agent?: Agent) => {
+    async (argument?: unknown) => {
+      const agent = resolveCommandAgentArgument(argument);
       if (agent) {
         await openAgentDocumentation(agent);
       }

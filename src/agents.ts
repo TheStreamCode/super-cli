@@ -27,6 +27,31 @@ export interface Agent extends Omit<AgentDefinition, 'command' | 'updateCommand'
   versionCommand?: string;
 }
 
+function isAgent(value: unknown): value is Agent {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<Agent>;
+  return typeof candidate.id === 'string'
+    && typeof candidate.label === 'string'
+    && typeof candidate.command === 'string';
+}
+
+/** Accepts both direct command arguments and agent nodes supplied by VS Code tree item menus. */
+export function resolveCommandAgentArgument(argument: unknown): Agent | undefined {
+  if (isAgent(argument)) {
+    return argument;
+  }
+
+  if (!argument || typeof argument !== 'object') {
+    return undefined;
+  }
+
+  const node = argument as { kind?: unknown; agent?: unknown };
+  return node.kind === 'agent' && isAgent(node.agent) ? node.agent : undefined;
+}
+
 function onAllPlatforms(command: string): Record<CommandPlatform, string> {
   return { windows: command, macos: command, linux: command };
 }
