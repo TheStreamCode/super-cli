@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { getMissingAgentGuidance, type Agent } from './agents.js';
+import { resolveAgentIcon } from './icons.js';
 import {
+  appendBoundedText,
   buildExtensionSettingsQuery,
   buildTerminalName,
   resolveTerminalCwd,
@@ -8,6 +10,7 @@ import {
 } from './command-utils.js';
 
 const SETTINGS_NAMESPACE = 'superCli';
+const MAX_CAPTURED_SHELL_OUTPUT = 16 * 1024;
 
 function collectShellExecutionOutput(execution: vscode.TerminalShellExecution): Promise<string> {
   return (async () => {
@@ -15,7 +18,7 @@ function collectShellExecutionOutput(execution: vscode.TerminalShellExecution): 
 
     try {
       for await (const chunk of execution.read()) {
-        output += chunk;
+        output = appendBoundedText(output, chunk, MAX_CAPTURED_SHELL_OUTPUT);
       }
     } catch {
       return output;
@@ -166,6 +169,7 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
     location: location === 'panel' ? vscode.TerminalLocation.Panel : { viewColumn: vscode.ViewColumn.Beside },
     cwd,
     env: agent.env,
+    iconPath: resolveAgentIcon(agent, context.extensionUri),
     shellPath: useWsl ? 'wsl.exe' : undefined,
   });
   terminal.show();
@@ -202,9 +206,34 @@ export async function updateAgent(agent: Agent, context: vscode.ExtensionContext
     location: vscode.TerminalLocation.Panel,
     cwd,
     env: agent.env,
+    iconPath: resolveAgentIcon(agent, context.extensionUri),
     shellPath: useWsl ? 'wsl.exe' : undefined,
   });
   terminal.show();
-  terminal.sendText(updateCommand, true);
+  executeCommandWithOptionalShellIntegration(
+    terminal,
+    updateCommand,
+    context,
+    async (endEvent) => {
+      if (endEvent.exitCode === 0) {
+        const selection = await vscode.window.showInformationMessage(
+          `${agent.label} update completed.`,
+          'Show Terminal',
+        );
+        if (selection === 'Show Terminal') {
+          terminal.show();
+        }
+        return;
+      }
+
+      const selection = await vscode.window.showErrorMessage(
+        `${agent.label} update failed${endEvent.exitCode === undefined ? '' : ` with exit code ${endEvent.exitCode}`}.`,
+        'Show Terminal',
+      );
+      if (selection === 'Show Terminal') {
+        terminal.show();
+      }
+    },
+  );
   void vscode.window.setStatusBarMessage(`Updating ${agent.label}`, 2500);
 }

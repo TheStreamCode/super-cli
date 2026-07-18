@@ -1,23 +1,44 @@
-/** A coding agent CLI that the launcher can start. */
-export interface Agent {
+/** Operating systems supported by platform-specific agent commands. */
+export type CommandPlatform = 'windows' | 'macos' | 'linux';
+
+/** A command shared by every OS or explicitly defined for each supported OS. */
+export type PlatformCommand = string | Record<CommandPlatform, string>;
+
+/** A packaged icon shared across themes or a dedicated light/dark pair. */
+export type AgentIconPath = string | { light: string; dark: string };
+
+/** A configured coding agent before its platform-specific commands are resolved. */
+export interface AgentDefinition {
   id: string;
   label: string;
-  command: string;
+  command: PlatformCommand;
   icon?: string;
+  iconPath?: AgentIconPath;
   installationDocumentationUrl?: string;
   env?: Record<string, string>;
+  updateCommand?: PlatformCommand;
+}
+
+/** A coding agent with commands resolved for the terminal environment. */
+export interface Agent extends Omit<AgentDefinition, 'command' | 'updateCommand'> {
+  command: string;
   updateCommand?: string;
 }
 
+function onAllPlatforms(command: string): Record<CommandPlatform, string> {
+  return { windows: command, macos: command, linux: command };
+}
+
 /** Built-in agent presets shipped with the extension. Users override them by reusing an id. */
-export const BUILTIN_AGENTS: readonly Agent[] = [
+export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
   {
     id: 'claude',
     label: 'Claude Code',
-    command: 'claude',
+    command: onAllPlatforms('claude'),
     icon: 'sparkle',
+    iconPath: 'media/agents/claude.svg',
     installationDocumentationUrl: 'https://code.claude.com/docs/en/setup',
-    updateCommand: 'claude update',
+    updateCommand: onAllPlatforms('claude update'),
     // Super CLI is one extension for every CLI, so skip Claude Code's IDE extension
     // auto-install using its own official environment variable.
     env: { CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL: '1' },
@@ -25,116 +46,198 @@ export const BUILTIN_AGENTS: readonly Agent[] = [
   {
     id: 'codex',
     label: 'Codex CLI',
-    command: 'codex',
+    command: onAllPlatforms('codex'),
     icon: 'rocket',
+    iconPath: 'media/agents/codex.svg',
     installationDocumentationUrl: 'https://developers.openai.com/codex/cli/',
-    updateCommand: 'codex update',
+    updateCommand: onAllPlatforms('codex update'),
   },
   {
     id: 'copilot',
     label: 'GitHub Copilot CLI',
-    command: 'copilot',
+    command: onAllPlatforms('copilot'),
     icon: 'github',
+    iconPath: {
+      light: 'media/agents/copilot-light.svg',
+      dark: 'media/agents/copilot-dark.svg',
+    },
     installationDocumentationUrl: 'https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli',
-    updateCommand: 'copilot update',
+    updateCommand: onAllPlatforms('copilot update'),
   },
   {
     id: 'grok',
     label: 'Grok CLI',
-    command: 'grok',
+    command: onAllPlatforms('grok'),
     icon: 'zap',
+    iconPath: {
+      light: 'media/agents/grok-light.svg',
+      dark: 'media/agents/grok-dark.svg',
+    },
   },
   {
     id: 'kilo',
     label: 'Kilo CLI',
-    command: 'kilo',
+    command: onAllPlatforms('kilo'),
     icon: 'terminal',
+    iconPath: {
+      light: 'media/agents/kilo-light.svg',
+      dark: 'media/agents/kilo-dark.svg',
+    },
     installationDocumentationUrl: 'https://kilo.ai/docs/cli',
-    updateCommand: 'kilo upgrade',
+    updateCommand: onAllPlatforms('kilo upgrade'),
   },
   {
     id: 'antigravity',
     label: 'Antigravity CLI',
-    command: 'agy',
-    // Inherits the icon of the retired Gemini CLI, which Antigravity replaces.
+    command: onAllPlatforms('agy'),
     icon: 'star-full',
+    iconPath: 'media/agents/antigravity.svg',
   },
   {
     id: 'opencode',
     label: 'OpenCode',
-    command: 'opencode',
+    command: onAllPlatforms('opencode'),
     icon: 'code',
+    iconPath: {
+      light: 'media/agents/opencode-light.svg',
+      dark: 'media/agents/opencode-dark.svg',
+    },
     installationDocumentationUrl: 'https://opencode.ai/docs/',
-    updateCommand: 'opencode upgrade',
+    updateCommand: onAllPlatforms('opencode upgrade'),
   },
   {
     id: 'command-code',
     label: 'Command Code',
     // Use the `command-code` alias, not `cmd`: on Windows `cmd` is intercepted as the Command Prompt.
     // `command-code` works on Windows, macOS, Linux, and WSL without that conflict.
-    command: 'command-code',
+    command: onAllPlatforms('command-code'),
     icon: 'terminal',
+    iconPath: 'media/agents/command-code.svg',
   },
   {
     id: 'cursor',
     label: 'Cursor CLI',
-    command: 'cursor-agent',
+    command: onAllPlatforms('cursor-agent'),
     icon: 'edit',
+    iconPath: 'media/agents/cursor.svg',
     installationDocumentationUrl: 'https://cursor.com/docs/cli/overview',
-    updateCommand: 'cursor-agent update',
+    updateCommand: onAllPlatforms('cursor-agent update'),
   },
   {
     id: 'droid',
     label: 'Droid CLI',
-    command: 'droid',
+    command: onAllPlatforms('droid'),
     icon: 'circuit-board',
+    iconPath: 'media/agents/droid.svg',
     installationDocumentationUrl: 'https://docs.factory.ai/cli/getting-started',
-    updateCommand: 'droid update',
+    updateCommand: onAllPlatforms('droid update'),
   },
   {
     id: 'crush',
     label: 'Crush',
-    command: 'crush',
+    command: onAllPlatforms('crush'),
     icon: 'flame',
+    iconPath: 'media/agents/crush.svg',
     installationDocumentationUrl: 'https://github.com/charmbracelet/crush',
   },
   {
     id: 'hermes',
     label: 'Hermes',
-    command: 'hermes',
+    command: onAllPlatforms('hermes'),
     icon: 'send',
+    iconPath: {
+      light: 'media/agents/hermes-light.svg',
+      dark: 'media/agents/hermes-dark.svg',
+    },
     installationDocumentationUrl: 'https://hermes-agent.nousresearch.com/docs/getting-started/installation',
-    updateCommand: 'hermes update',
+    updateCommand: onAllPlatforms('hermes update'),
   },
   {
     id: 'mimo',
     label: 'MiMo Code',
-    command: 'mimo',
+    command: onAllPlatforms('mimo'),
     icon: 'beaker',
+    iconPath: 'media/agents/mimo.svg',
   },
   {
     id: 'pi',
     label: 'Pi',
-    command: 'pi',
+    command: onAllPlatforms('pi'),
     icon: 'pulse',
+    iconPath: {
+      light: 'media/agents/pi-light.svg',
+      dark: 'media/agents/pi-dark.svg',
+    },
     installationDocumentationUrl: 'https://pi.dev/docs/latest',
     // Pi exposes an official self-update command (`pi update` updates pi only).
-    updateCommand: 'pi update',
+    updateCommand: onAllPlatforms('pi update'),
+  },
+  {
+    id: 'kimi',
+    label: 'Kimi Code CLI',
+    command: onAllPlatforms('kimi'),
+    icon: 'comment-discussion',
+    iconPath: 'media/agents/kimi.svg',
+    installationDocumentationUrl: 'https://www.kimi.com/code/docs/en/kimi-code-cli/guides/getting-started.html',
+    updateCommand: onAllPlatforms('kimi upgrade'),
   },
 ];
 
-/** Returns true when a value is a usable agent definition (non-empty id and command). */
-function isValidAgent(value: unknown): value is Agent {
+function isValidPlatformCommand(value: unknown): value is PlatformCommand {
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+
   if (!value || typeof value !== 'object') {
     return false;
   }
 
-  const candidate = value as Partial<Agent>;
+  const candidate = value as Partial<Record<CommandPlatform, unknown>>;
+  return (['windows', 'macos', 'linux'] as const).every(
+    (platform) => typeof candidate[platform] === 'string' && candidate[platform].trim().length > 0,
+  );
+}
+
+/** Maps Node's host platform and the WSL setting to the command variant that will actually run. */
+export function resolveCommandPlatform(nodePlatform: NodeJS.Platform, useWsl: boolean): CommandPlatform {
+  if (nodePlatform === 'win32') {
+    return useWsl ? 'linux' : 'windows';
+  }
+
+  return nodePlatform === 'darwin' ? 'macos' : 'linux';
+}
+
+/** Resolves one shared or platform-specific command for the selected terminal environment. */
+export function resolvePlatformCommand(command: PlatformCommand, platform: CommandPlatform): string {
+  return (typeof command === 'string' ? command : command[platform]).trim();
+}
+
+/** Resolves an agent definition into commands safe to pass to the active terminal. */
+export function resolveAgentCommands(agent: AgentDefinition, platform: CommandPlatform): Agent {
+  const { command, updateCommand, ...metadata } = agent;
+  const resolved: Agent = {
+    ...metadata,
+    command: resolvePlatformCommand(command, platform),
+  };
+
+  if (updateCommand) {
+    resolved.updateCommand = resolvePlatformCommand(updateCommand, platform);
+  }
+
+  return resolved;
+}
+
+/** Returns true when a value is a usable agent definition (non-empty id and commands). */
+function isValidAgent(value: unknown): value is AgentDefinition {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<AgentDefinition>;
   return (
     typeof candidate.id === 'string' &&
     candidate.id.trim().length > 0 &&
-    typeof candidate.command === 'string' &&
-    candidate.command.trim().length > 0
+    isValidPlatformCommand(candidate.command)
   );
 }
 
@@ -155,11 +258,11 @@ export function getMissingAgentGuidance(agent: Agent): { message: string; docume
  * User entries with a matching id override the built-in; new ids are appended.
  */
 export function resolveAgents(
-  builtins: readonly Agent[],
-  userAgents: readonly Agent[] | undefined,
+  builtins: readonly AgentDefinition[],
+  userAgents: readonly AgentDefinition[] | undefined,
   useBuiltins: boolean,
-): Agent[] {
-  const byId = new Map<string, Agent>();
+): AgentDefinition[] {
+  const byId = new Map<string, AgentDefinition>();
 
   if (useBuiltins) {
     for (const agent of builtins) {
@@ -174,12 +277,12 @@ export function resolveAgents(
       }
 
       const existing = byId.get(candidate.id);
-      const merged: Agent = { ...existing, ...candidate };
+      const merged: AgentDefinition = { ...existing, ...candidate };
       merged.label = (merged.label ?? '').trim() || merged.id;
       if (typeof merged.installationDocumentationUrl !== 'string') {
         delete merged.installationDocumentationUrl;
       }
-      if (typeof merged.updateCommand !== 'string') {
+      if (merged.updateCommand !== undefined && !isValidPlatformCommand(merged.updateCommand)) {
         delete merged.updateCommand;
       }
       byId.set(candidate.id, merged);

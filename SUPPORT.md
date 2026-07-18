@@ -5,10 +5,11 @@ Use GitHub Issues for reproducible bugs, compatibility problems, and feature req
 Please include:
 
 - VS Code version
-- Operating system and version
+- Operating system and version, and whether the agent runs through WSL
 - Extension version
 - The coding agent you launched and its configured command
 - Whether that command works in a regular VS Code integrated terminal
+- Whether the agent appears under **Ready**, **Agents**, or **Setup required** after refreshing
 - Relevant terminal output, without secrets or authentication tokens
 
 For non-public support questions, contact the maintainer at `info@mikesoft.it` or through https://mikesoft.it.

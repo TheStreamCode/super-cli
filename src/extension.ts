@@ -1,7 +1,16 @@
 import * as fs from 'node:fs';
 import * as vscode from 'vscode';
-import { type Agent, BUILTIN_AGENTS, resolveAgents } from './agents.js';
+import {
+  type Agent,
+  type AgentDefinition,
+  BUILTIN_AGENTS,
+  resolveAgentCommands,
+  resolveAgents,
+  resolveCommandPlatform,
+} from './agents.js';
+import { buildAgentSections } from './agent-view.js';
 import { executableExistsOnPath } from './command-utils.js';
+import { resolveAgentIcon } from './icons.js';
 import { AgentTreeDataProvider } from './tree.js';
 import { launchAgent, openExtensionSettings, updateAgent } from './terminal.js';
 
@@ -13,10 +22,13 @@ let terminalSequence = 1;
 function getEffectiveAgents(): Agent[] {
   const configuration = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE);
   const useBuiltins = configuration.get<boolean>('useBuiltins', true);
+  const useWsl = configuration.get<boolean>('useWsl', false) && process.platform === 'win32';
+  const commandPlatform = resolveCommandPlatform(process.platform, useWsl);
   // Read user-level config only; workspace overrides are ignored for security.
-  const userAgents = configuration.inspect<Agent[]>('agents')?.globalValue;
+  const userAgents = configuration.inspect<AgentDefinition[]>('agents')?.globalValue;
 
-  return resolveAgents(BUILTIN_AGENTS, userAgents, useBuiltins);
+  return resolveAgents(BUILTIN_AGENTS, userAgents, useBuiltins)
+    .map((agent) => resolveAgentCommands(agent, commandPlatform));
 }
 
 /** Returns the id of the user's favorite agent, or '' when none is set. */
@@ -32,25 +44,34 @@ async function setFavoriteId(id: string): Promise<void> {
 }
 
 interface AgentQuickPickItem extends vscode.QuickPickItem {
-  agent: Agent;
+  agent?: Agent;
 }
 
 export function activate(context: vscode.ExtensionContext): void {
   // Best-effort "installed / not installed" status per agent, keyed by id (undefined = unknown).
   const installStatus = new Map<string, boolean>();
+  let statusRefreshSequence = 0;
 
   const treeProvider = new AgentTreeDataProvider(
     getEffectiveAgents,
     getFavoriteId,
     (id) => installStatus.get(id),
+    context.extensionUri,
   );
   const treeView = vscode.window.createTreeView('superCli.agents', { treeDataProvider: treeProvider });
 
   // Recomputes install status off the activation path. Under WSL the host PATH is not representative,
   // so status is left unknown rather than reported as missing.
   const refreshInstallStatus = (): void => {
+    const refreshSequence = ++statusRefreshSequence;
+    installStatus.clear();
+    treeProvider.refresh();
+
     setTimeout(() => {
-      installStatus.clear();
+      if (refreshSequence !== statusRefreshSequence) {
+        return;
+      }
+
       const useWsl = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<boolean>('useWsl', false)
         && process.platform === 'win32';
 
@@ -62,6 +83,62 @@ export function activate(context: vscode.ExtensionContext): void {
 
       treeProvider.refresh();
     }, 0);
+  };
+
+  const openAgentDocumentation = async (agent: Agent): Promise<void> => {
+    if (agent.installationDocumentationUrl) {
+      await vscode.env.openExternal(vscode.Uri.parse(agent.installationDocumentationUrl));
+    }
+  };
+
+  const launchWithStatusGuard = async (agent: Agent): Promise<void> => {
+    if (installStatus.get(agent.id) !== false) {
+      await launchAgent(agent, context, terminalSequence++);
+      return;
+    }
+
+    const actions = agent.installationDocumentationUrl
+      ? ['Open Setup Guide', 'Launch Anyway'] as const
+      : ['Open Settings', 'Launch Anyway'] as const;
+    const selection = await vscode.window.showWarningMessage(
+      `${agent.label} was not found on PATH.`,
+      ...actions,
+    );
+
+    if (selection === 'Open Setup Guide') {
+      await openAgentDocumentation(agent);
+    } else if (selection === 'Open Settings') {
+      await openExtensionSettings(context);
+    } else if (selection === 'Launch Anyway') {
+      await launchAgent(agent, context, terminalSequence++);
+    }
+  };
+
+  const buildQuickPickItems = (): AgentQuickPickItem[] => {
+    const agents = getEffectiveAgents();
+    const favoriteId = getFavoriteId();
+    const sections = buildAgentSections(agents, favoriteId, (id) => installStatus.get(id));
+    const items: AgentQuickPickItem[] = [];
+
+    for (const section of sections) {
+      items.push({ label: section.label, kind: vscode.QuickPickItemKind.Separator });
+      for (const agent of section.agents) {
+        const status = installStatus.get(agent.id);
+        items.push({
+          label: agent.label,
+          description: agent.command,
+          detail: status === false ? 'Setup required' : status === true ? 'Ready to launch' : 'Installation status unknown',
+          iconPath: resolveAgentIcon(agent, context.extensionUri),
+          buttons: [{
+            iconPath: new vscode.ThemeIcon(agent.id === favoriteId ? 'star-full' : 'star-empty'),
+            tooltip: agent.id === favoriteId ? 'Remove favorite' : 'Set as favorite',
+          }],
+          agent,
+        });
+      }
+    }
+
+    return items;
   };
 
   // Shows the agent picker and launches the chosen agent; optionally offers to remember it as favorite.
@@ -81,25 +158,61 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
 
-    const picked = await vscode.window.showQuickPick<AgentQuickPickItem>(
-      agents.map((agent) => ({ label: agent.label, description: agent.command, agent })),
-      { placeHolder: 'Select a coding agent to launch' },
-    );
+    const quickPick = vscode.window.createQuickPick<AgentQuickPickItem>();
+    quickPick.placeholder = 'Select a coding agent to launch';
+    quickPick.matchOnDescription = true;
+    quickPick.matchOnDetail = true;
+    quickPick.items = buildQuickPickItems();
+
+    const picked = await new Promise<Agent | undefined>((resolve) => {
+      let accepted = false;
+      const acceptListener = quickPick.onDidAccept(() => {
+        const agent = quickPick.selectedItems[0]?.agent;
+        if (!agent) {
+          return;
+        }
+
+        accepted = true;
+        quickPick.hide();
+        resolve(agent);
+      });
+      const buttonListener = quickPick.onDidTriggerItemButton(async (event) => {
+        const agent = event.item.agent;
+        if (!agent) {
+          return;
+        }
+
+        await setFavoriteId(agent.id === getFavoriteId() ? '' : agent.id);
+        quickPick.items = buildQuickPickItems();
+        treeProvider.refresh();
+      });
+      const hideListener = quickPick.onDidHide(() => {
+        acceptListener.dispose();
+        buttonListener.dispose();
+        hideListener.dispose();
+        quickPick.dispose();
+        if (!accepted) {
+          resolve(undefined);
+        }
+      });
+
+      quickPick.show();
+    });
 
     if (!picked) {
       return;
     }
 
-    await launchAgent(picked.agent, context, terminalSequence++);
+    await launchWithStatusGuard(picked);
 
-    if (offerFavorite) {
+    if (offerFavorite && picked.id !== getFavoriteId()) {
       const choice = await vscode.window.showInformationMessage(
-        `Set "${picked.agent.label}" as your favorite agent? You can then launch it with Ctrl+Alt+A.`,
+        `Set "${picked.label}" as your favorite agent? You can then launch it with Ctrl+Alt+A.`,
         'Set Favorite',
       );
 
       if (choice === 'Set Favorite') {
-        await setFavoriteId(picked.agent.id);
+        await setFavoriteId(picked.id);
       }
     }
   };
@@ -111,7 +224,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const favorite = favoriteId ? getEffectiveAgents().find((agent) => agent.id === favoriteId) : undefined;
 
     if (favorite) {
-      await launchAgent(favorite, context, terminalSequence++);
+      await launchWithStatusGuard(favorite);
       return;
     }
 
@@ -124,7 +237,7 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
 
-    await launchAgent(agent, context, terminalSequence++);
+    await launchWithStatusGuard(agent);
   });
 
   const setFavoriteCommand = vscode.commands.registerCommand('superCli.setFavorite', async (agent?: Agent) => {
@@ -152,9 +265,24 @@ export function activate(context: vscode.ExtensionContext): void {
     await updateAgent(agent, context);
   });
 
+  const openAgentDocumentationCommand = vscode.commands.registerCommand(
+    'superCli.openAgentDocumentation',
+    async (agent?: Agent) => {
+      if (agent) {
+        await openAgentDocumentation(agent);
+      }
+    },
+  );
+
+  const enableBuiltinsCommand = vscode.commands.registerCommand('superCli.enableBuiltins', async () => {
+    await vscode.workspace
+      .getConfiguration(SETTINGS_NAMESPACE)
+      .update('useBuiltins', true, vscode.ConfigurationTarget.Global);
+    refreshInstallStatus();
+  });
+
   const refreshCommand = vscode.commands.registerCommand('superCli.refresh', () => {
     refreshInstallStatus();
-    treeProvider.refresh();
   });
 
   const openSettingsCommand = vscode.commands.registerCommand('superCli.openSettings', async () => {
@@ -173,6 +301,10 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
+  const themeWatcher = vscode.window.onDidChangeActiveColorTheme(() => {
+    treeProvider.refresh();
+  });
+
   refreshInstallStatus();
 
   context.subscriptions.push(
@@ -183,11 +315,11 @@ export function activate(context: vscode.ExtensionContext): void {
     setFavoriteCommand,
     unsetFavoriteCommand,
     updateAgentCommand,
+    openAgentDocumentationCommand,
+    enableBuiltinsCommand,
     refreshCommand,
     openSettingsCommand,
     configWatcher,
+    themeWatcher,
   );
-}
-
-export function deactivate(): void {
 }

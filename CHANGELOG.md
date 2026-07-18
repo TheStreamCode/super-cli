@@ -5,6 +5,30 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.9.0]
+
+### Added
+
+- Added Kimi Code CLI (`kimi`) to the built-in agent presets, with its verified official installation
+  documentation and the official `kimi upgrade` command.
+- Added vendor-sourced, theme-aware SVG marks in the sidebar, Quick Pick, and terminal tabs, with
+  a documented compact fallback where no suitable transparent vendor SVG is available.
+- Added a native empty-state welcome with actions to enable built-ins or open settings.
+
+### Changed
+
+- Replaced the inconsistent legacy artwork with the unified Router S identity across the Marketplace,
+  activity bar, and editor toolbar, with larger optical sizing and color toolbar variants for light
+  and dark themes.
+- Refreshed the README, support guidance, brand-asset reference, citation metadata, and product
+  screenshots to match the current agent groups, settings, icons, and Router S identity.
+- Built-in and user-defined launch/update commands now resolve explicitly for Windows, macOS, or
+  Linux. Existing cross-platform string commands remain supported, and WSL selects the Linux variant.
+- Reorganized the sidebar and launcher into favorite, ready, unknown, and setup-required states;
+  favorites can now be changed directly inside the launcher.
+- Missing CLIs now offer their setup guide before launch, and terminal-integrated updates report
+  completion or failure with a direct return to the update terminal.
+
 ## [0.8.3]
 
 ### Changed

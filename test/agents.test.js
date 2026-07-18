@@ -1,7 +1,21 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { BUILTIN_AGENTS, getMissingAgentGuidance, resolveAgents } = require('../out/agents.js');
+const {
+  BUILTIN_AGENTS,
+  getMissingAgentGuidance,
+  resolveAgentCommands,
+  resolveAgents,
+  resolveCommandPlatform,
+} = require('../out/agents.js');
+
+const SUPPORTED_PLATFORMS = ['windows', 'macos', 'linux'];
+
+function resolveBuiltin(id, platform = 'linux') {
+  const definition = BUILTIN_AGENTS.find((agent) => agent.id === id);
+  assert.ok(definition, `expected built-in ${id}`);
+  return resolveAgentCommands(definition, platform);
+}
 
 test('resolveAgents returns the built-ins when no user agents are configured', () => {
   const agents = resolveAgents(BUILTIN_AGENTS, undefined, true);
@@ -46,6 +60,23 @@ test('resolveAgents skips entries without a usable id or command', () => {
   assert.deepEqual(agents.map((agent) => agent.id), ['good']);
 });
 
+test('resolveAgents accepts complete platform-specific user commands', () => {
+  const command = { windows: 'agent.exe', macos: 'agent-macos', linux: 'agent-linux' };
+  const agents = resolveAgents([], [{ id: 'adaptive', label: 'Adaptive', command }], false);
+
+  assert.deepEqual(agents, [{ id: 'adaptive', label: 'Adaptive', command }]);
+});
+
+test('resolveAgents rejects incomplete platform-specific user commands', () => {
+  const agents = resolveAgents([], [{
+    id: 'incomplete',
+    label: 'Incomplete',
+    command: { windows: 'agent.exe', linux: 'agent-linux' },
+  }], false);
+
+  assert.deepEqual(agents, []);
+});
+
 test('resolveAgents ignores legacy non-string documentation and update values', () => {
   const agents = resolveAgents([], [{
     id: 'legacy',
@@ -60,10 +91,26 @@ test('resolveAgents ignores legacy non-string documentation and update values', 
 });
 
 test('OpenCode ships as a built-in preset', () => {
-  const opencode = BUILTIN_AGENTS.find((agent) => agent.id === 'opencode');
-  assert.ok(opencode);
+  const opencode = resolveBuiltin('opencode');
   assert.equal(opencode.command, 'opencode');
   assert.equal(opencode.installationDocumentationUrl, 'https://opencode.ai/docs/');
+});
+
+test('runtime platforms map Windows, macOS, Linux, and WSL to the correct command variant', () => {
+  assert.equal(resolveCommandPlatform('win32', false), 'windows');
+  assert.equal(resolveCommandPlatform('win32', true), 'linux');
+  assert.equal(resolveCommandPlatform('darwin', false), 'macos');
+  assert.equal(resolveCommandPlatform('linux', false), 'linux');
+});
+
+test('all built-ins resolve non-empty launch commands on Windows, macOS, and Linux', () => {
+  for (const definition of BUILTIN_AGENTS) {
+    for (const platform of SUPPORTED_PLATFORMS) {
+      const agent = resolveAgentCommands(definition, platform);
+      assert.equal(typeof agent.command, 'string', `${definition.id}:${platform}`);
+      assert.notEqual(agent.command.trim(), '', `${definition.id}:${platform}`);
+    }
+  }
 });
 
 test('agents with a known update command carry their official one', () => {
@@ -77,10 +124,13 @@ test('agents with a known update command carry their official one', () => {
     cursor: 'cursor-agent update',
     droid: 'droid update',
     pi: 'pi update',
+    kimi: 'kimi upgrade',
   };
   for (const [id, cmd] of Object.entries(expected)) {
-    const agent = BUILTIN_AGENTS.find((a) => a.id === id);
-    assert.equal(agent.updateCommand, cmd, id);
+    for (const platform of SUPPORTED_PLATFORMS) {
+      const agent = resolveBuiltin(id, platform);
+      assert.equal(agent.updateCommand, cmd, `${id}:${platform}`);
+    }
   }
 });
 
@@ -97,8 +147,7 @@ test('Claude Code skips its IDE extension auto-install via env', () => {
 });
 
 test('Command Code launches without modifying its configuration', () => {
-  const cc = BUILTIN_AGENTS.find((a) => a.id === 'command-code');
-  assert.ok(cc);
+  const cc = resolveBuiltin('command-code', 'windows');
   assert.equal(cc.command, 'command-code');
   assert.equal(Object.hasOwn(cc, 'ensureConfig'), false);
 });
@@ -115,6 +164,7 @@ test('built-ins expose only verified official installation documentation', () =>
     crush: 'https://github.com/charmbracelet/crush',
     hermes: 'https://hermes-agent.nousresearch.com/docs/getting-started/installation',
     pi: 'https://pi.dev/docs/latest',
+    kimi: 'https://www.kimi.com/code/docs/en/kimi-code-cli/guides/getting-started.html',
   };
 
   for (const [id, url] of Object.entries(documentationUrls)) {
@@ -155,7 +205,7 @@ test('Gemini CLI is no longer a built-in preset', () => {
   assert.equal(BUILTIN_AGENTS.find((a) => a.id === 'gemini'), undefined);
 });
 
-test("Antigravity inherits Gemini's icon without an automatic installer", () => {
+test('Antigravity ships a dedicated icon without an automatic installer', () => {
   const agy = BUILTIN_AGENTS.find((a) => a.id === 'antigravity');
   assert.ok(agy);
   assert.equal(agy.icon, 'star-full');
@@ -168,7 +218,10 @@ test('Grok has no unverified installation documentation link', () => {
 });
 
 test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () => {
-  const byId = Object.fromEntries(BUILTIN_AGENTS.map((a) => [a.id, a]));
+  const byId = Object.fromEntries(BUILTIN_AGENTS.map((definition) => {
+    const agent = resolveAgentCommands(definition, 'linux');
+    return [agent.id, agent];
+  }));
   assert.equal(byId.cursor.command, 'cursor-agent');
   assert.equal(byId.droid.command, 'droid');
   assert.equal(byId.mimo.installationDocumentationUrl, undefined);
@@ -177,8 +230,19 @@ test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () 
 });
 
 test('Pi ships as a built-in preset', () => {
-  const pi = BUILTIN_AGENTS.find((a) => a.id === 'pi');
-  assert.ok(pi);
+  const pi = resolveBuiltin('pi');
   assert.equal(pi.command, 'pi');
   assert.equal(pi.installationDocumentationUrl, 'https://pi.dev/docs/latest');
+});
+
+test('Kimi Code CLI ships as a built-in preset', () => {
+  const kimi = resolveBuiltin('kimi');
+  assert.equal(kimi.label, 'Kimi Code CLI');
+  assert.equal(kimi.command, 'kimi');
+  assert.equal(kimi.icon, 'comment-discussion');
+  assert.equal(
+    kimi.installationDocumentationUrl,
+    'https://www.kimi.com/code/docs/en/kimi-code-cli/guides/getting-started.html',
+  );
+  assert.equal(kimi.updateCommand, 'kimi upgrade');
 });

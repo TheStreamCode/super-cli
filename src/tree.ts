@@ -1,21 +1,21 @@
 import * as vscode from 'vscode';
 import type { Agent } from './agents.js';
+import { buildAgentGroups, type AgentGroup } from './agent-view.js';
+import { resolveAgentIcon } from './icons.js';
 
-/** Removes a $(...) wrapper so users can write either "sparkle" or "$(sparkle)". */
-function normalizeIconId(icon: string | undefined): string | undefined {
-  if (!icon) {
-    return undefined;
-  }
-
-  const trimmed = icon.trim();
-  const wrapped = trimmed.match(/^\$\(([^)]+)\)$/);
-  const id = wrapped ? wrapped[1] : trimmed;
-
-  return id || undefined;
+export interface AgentGroupNode extends AgentGroup {
+  kind: 'group';
 }
 
+export interface AgentItemNode {
+  kind: 'agent';
+  agent: Agent;
+}
+
+export type AgentTreeNode = AgentGroupNode | AgentItemNode;
+
 /** Lists the configured coding agents in the Super CLI sidebar. */
-export class AgentTreeDataProvider implements vscode.TreeDataProvider<Agent> {
+export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeNode> {
   private readonly changeEmitter = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this.changeEmitter.event;
 
@@ -23,26 +23,49 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<Agent> {
     private readonly getAgents: () => Agent[],
     private readonly getFavoriteId: () => string,
     private readonly getInstallStatus: (id: string) => boolean | undefined,
+    private readonly extensionUri: vscode.Uri,
   ) {}
 
   refresh(): void {
     this.changeEmitter.fire();
   }
 
-  getTreeItem(agent: Agent): vscode.TreeItem {
+  getTreeItem(node: AgentTreeNode): vscode.TreeItem {
+    if (node.kind === 'group') {
+      const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Expanded);
+      item.id = `group:${node.id}`;
+      item.description = String(node.agents.length);
+      item.contextValue = 'agent-group';
+      item.iconPath = new vscode.ThemeIcon(
+        node.id === 'ready' ? 'pass-filled' : node.id === 'setup' ? 'tools' : 'list-unordered',
+      );
+      item.accessibilityInformation = {
+        label: `${node.label}, ${node.agents.length} ${node.agents.length === 1 ? 'agent' : 'agents'}`,
+      };
+      return item;
+    }
+
+    const agent = node.agent;
     const isFavorite = agent.id === this.getFavoriteId();
     const installStatus = this.getInstallStatus(agent.id);
     const isMissing = installStatus === false;
 
     const item = new vscode.TreeItem(agent.label, vscode.TreeItemCollapsibleState.None);
     item.id = agent.id;
-    item.description = isMissing ? `${agent.command} — not installed` : agent.command;
+    item.description = isMissing ? `setup required · ${agent.command}` : agent.command;
     item.tooltip = `Launch ${agent.label} (${agent.command})`
       + (isFavorite ? ' · Favorite (Ctrl+Alt+A)' : '')
-      + (isMissing ? ' · not found on PATH' : '');
-    item.contextValue = `agent${agent.updateCommand ? '-updatable' : ''}${isFavorite ? '-favorite' : ''}`;
-    const iconColor = isMissing ? new vscode.ThemeColor('disabledForeground') : undefined;
-    item.iconPath = new vscode.ThemeIcon(normalizeIconId(agent.icon) ?? 'terminal', iconColor);
+      + (installStatus === true ? ' · ready' : isMissing ? ' · not found on PATH' : ' · status unknown');
+    item.contextValue = `agent-${isMissing ? 'missing' : 'ready'}`
+      + (agent.updateCommand ? '-updatable' : '')
+      + (isFavorite ? '-favorite' : '')
+      + (agent.installationDocumentationUrl ? '-documented' : '');
+    item.iconPath = resolveAgentIcon(agent, this.extensionUri);
+    item.accessibilityInformation = {
+      label: `${agent.label}, ${isFavorite ? 'favorite, ' : ''}`
+        + `${installStatus === true ? 'ready' : isMissing ? 'setup required' : 'installation status unknown'}, `
+        + `command ${agent.command}`,
+    };
     item.command = {
       command: 'superCli.launchAgent',
       title: 'Launch',
@@ -52,7 +75,16 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<Agent> {
     return item;
   }
 
-  getChildren(): Agent[] {
-    return this.getAgents();
+  getChildren(node?: AgentTreeNode): AgentTreeNode[] {
+    if (node?.kind === 'group') {
+      return node.agents.map((agent) => ({ kind: 'agent', agent }));
+    }
+
+    if (node?.kind === 'agent') {
+      return [];
+    }
+
+    return buildAgentGroups(this.getAgents(), this.getFavoriteId(), this.getInstallStatus)
+      .map((group) => ({ ...group, kind: 'group' }));
   }
 }

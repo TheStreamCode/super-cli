@@ -27,6 +27,8 @@ async function run() {
   const commands = await vscode.commands.getCommands(true);
   assert.ok(commands.includes('superCli.launch'));
   assert.ok(commands.includes('superCli.launchAgent'));
+  assert.ok(commands.includes('superCli.openAgentDocumentation'));
+  assert.ok(commands.includes('superCli.enableBuiltins'));
   assert.ok(commands.includes('superCli.openSettings'));
 
   const beforeCount = vscode.window.terminals.length;

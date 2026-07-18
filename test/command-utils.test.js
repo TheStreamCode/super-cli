@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+  appendBoundedText,
   buildTerminalName,
   normalizeTerminalName,
   buildExtensionSettingsQuery,
@@ -10,6 +11,14 @@ const {
   shouldPromptToInstall,
   executableExistsOnPath,
 } = require('../out/command-utils.js');
+
+test('appendBoundedText retains output only up to the configured limit', () => {
+  const first = appendBoundedText('', 'command not found', 12);
+  const second = appendBoundedText(first, ' more output', 12);
+
+  assert.equal(first, 'command not ');
+  assert.equal(second, 'command not ');
+});
 
 /** Builds a fileExists predicate that returns true only for the given set of paths. */
 function existsIn(paths) {

@@ -3,7 +3,7 @@
   "displayName": "Super CLI — AI Coding Agent Launcher (Claude Code, Codex, Copilot)",
   "description": "Launch any AI coding-agent CLI — Claude Code, Codex, GitHub Copilot, Cursor, Crush, OpenCode and more — from one sidebar and side terminal. Works in VS Code, Cursor, Antigravity & Windsurf on Windows, macOS & Linux.",
   "publisher": "mikesoft",
-  "version": "0.8.3",
+  "version": "0.9.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -61,6 +61,7 @@
     "droid",
     "crush",
     "hermes",
+    "kimi",
     "mimo",
     "pi",
     "vscode"
@@ -87,14 +88,20 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "superCli.agents",
+        "contents": "No coding agents are configured.\n[Enable built-in agents](command:superCli.enableBuiltins)\n[Open settings](command:superCli.openSettings)"
+      }
+    ],
     "commands": [
       {
         "command": "superCli.launch",
         "title": "Launch Coding Agent",
         "category": "Super CLI",
         "icon": {
-          "light": "./media/toolbar-mark.svg",
-          "dark": "./media/toolbar-mark.svg"
+          "light": "./media/toolbar-mark-light.svg",
+          "dark": "./media/toolbar-mark-dark.svg"
         }
       },
       {
@@ -125,6 +132,17 @@
         "title": "Update Agent",
         "category": "Super CLI",
         "icon": "$(arrow-circle-up)"
+      },
+      {
+        "command": "superCli.openAgentDocumentation",
+        "title": "Open Setup Guide",
+        "category": "Super CLI",
+        "icon": "$(book)"
+      },
+      {
+        "command": "superCli.enableBuiltins",
+        "title": "Enable Built-in Agents",
+        "category": "Super CLI"
       },
       {
         "command": "superCli.refresh",
@@ -161,12 +179,12 @@
       "view/item/context": [
         {
           "command": "superCli.launchAgent",
-          "when": "view == superCli.agents && viewItem =~ /agent/",
+          "when": "view == superCli.agents && viewItem =~ /^agent-/",
           "group": "inline@1"
         },
         {
           "command": "superCli.setFavorite",
-          "when": "view == superCli.agents && viewItem =~ /^agent(?!.*favorite)/",
+          "when": "view == superCli.agents && viewItem =~ /^agent-(?!.*favorite)/",
           "group": "inline@2"
         },
         {
@@ -178,6 +196,11 @@
           "command": "superCli.updateAgent",
           "when": "view == superCli.agents && viewItem =~ /updatable/",
           "group": "inline@3"
+        },
+        {
+          "command": "superCli.openAgentDocumentation",
+          "when": "view == superCli.agents && viewItem =~ /missing.*documented/",
+          "group": "inline@4"
         }
       ],
       "commandPalette": [
@@ -195,6 +218,14 @@
         },
         {
           "command": "superCli.updateAgent",
+          "when": "false"
+        },
+        {
+          "command": "superCli.openAgentDocumentation",
+          "when": "false"
+        },
+        {
+          "command": "superCli.enableBuiltins",
           "when": "false"
         },
         {
@@ -217,7 +248,7 @@
           "type": "array",
           "scope": "machine",
           "default": [],
-          "markdownDescription": "Coding agent CLIs to make available in the launcher. Each entry adds a new agent or, when it reuses a built-in `id`, overrides that built-in. Only the user (global) value is read; workspace overrides are ignored for security.\n\nExample:\n```json\n\"superCli.agents\": [\n  { \"id\": \"my-agent\", \"label\": \"My Agent\", \"command\": \"my-agent\" }\n]\n```",
+          "markdownDescription": "Coding agent CLIs to make available in the launcher. Each entry adds a new agent or, when it reuses a built-in `id`, overrides that built-in. Commands can be a cross-platform string or an object with `windows`, `macos`, and `linux` variants. Only the user (global) value is read; workspace overrides are ignored for security.\n\nExample:\n```json\n\"superCli.agents\": [\n  { \"id\": \"my-agent\", \"label\": \"My Agent\", \"command\": \"my-agent\" }\n]\n```",
           "items": {
             "type": "object",
             "required": [
@@ -228,15 +259,39 @@
             "properties": {
               "id": {
                 "type": "string",
-                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, antigravity, opencode, command-code, cursor, droid, crush, hermes, mimo, pi) to override that built-in."
+                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, antigravity, opencode, command-code, cursor, droid, crush, hermes, mimo, pi, kimi) to override that built-in."
               },
               "label": {
                 "type": "string",
                 "description": "Display name shown in the sidebar and the launcher."
               },
               "command": {
-                "type": "string",
-                "description": "Command that starts the CLI. On Windows, quote executable paths that contain spaces."
+                "description": "Command that starts the CLI. Use a string when it is the same everywhere, or provide windows, macos, and linux variants. On Windows, quote executable paths that contain spaces.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "windows",
+                      "macos",
+                      "linux"
+                    ],
+                    "properties": {
+                      "windows": {
+                        "type": "string"
+                      },
+                      "macos": {
+                        "type": "string"
+                      },
+                      "linux": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
               },
               "icon": {
                 "type": "string",
@@ -254,8 +309,32 @@
                 }
               },
               "updateCommand": {
-                "type": "string",
-                "description": "Optional command to update the CLI to its latest version. Shown as an update button next to the agent in the sidebar."
+                "description": "Optional command to update the CLI to its latest version. Use a string when it is the same everywhere, or provide windows, macos, and linux variants. Shown as an update button next to the agent in the sidebar.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "windows",
+                      "macos",
+                      "linux"
+                    ],
+                    "properties": {
+                      "windows": {
+                        "type": "string"
+                      },
+                      "macos": {
+                        "type": "string"
+                      },
+                      "linux": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
               }
             }
           }
@@ -264,7 +343,7 @@
           "type": "boolean",
           "scope": "machine",
           "default": true,
-          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Grok, Kilo, Antigravity, OpenCode, Command Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi) in the launcher."
+          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Grok, Kilo, Antigravity, OpenCode, Command Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI) in the launcher."
         },
         "superCli.favoriteAgent": {
           "type": "string",
@@ -290,7 +369,7 @@
           "type": "boolean",
           "default": false,
           "scope": "window",
-          "description": "On Windows, open coding agents in a WSL terminal instead of the default shell (uses VS Code's native WSL support). Ignored on macOS and Linux."
+          "description": "On Windows, open coding agents in a WSL terminal and select their Linux command variants (uses VS Code's native WSL support). Ignored on macOS and Linux."
         }
       }
     }

@@ -5,6 +5,15 @@ type WorkspaceLike<T> = {
 };
 type ActiveEditorLike<T> = { document: { uri: T } };
 
+/** Appends a chunk without allowing a long-running process to grow the retained output indefinitely. */
+export function appendBoundedText(current: string, chunk: string, maxLength: number): string {
+  if (current.length >= maxLength) {
+    return current;
+  }
+
+  return current + chunk.slice(0, maxLength - current.length);
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
