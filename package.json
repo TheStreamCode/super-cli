@@ -1,9 +1,9 @@
 {
   "name": "vscode-super-cli",
-  "displayName": "Super CLI — AI Coding Agent Launcher (Claude Code, Codex, Copilot)",
-  "description": "Launch any AI coding-agent CLI — Claude Code, Codex, GitHub Copilot, Cursor, Crush, OpenCode and more — from one sidebar and side terminal. Works in VS Code, Cursor, Antigravity & Windsurf on Windows, macOS & Linux.",
+  "displayName": "Super CLI: Claude Code, Codex & AI Agent Launcher",
+  "description": "Launch Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro, OpenClaw and other AI coding agents from one VS Code sidebar.",
   "publisher": "mikesoft",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -15,7 +15,7 @@
   "bugs": {
     "url": "https://github.com/TheStreamCode/super-cli/issues"
   },
-  "homepage": "https://mikesoft.it",
+  "homepage": "https://github.com/TheStreamCode/super-cli#readme",
   "sponsor": {
     "url": "https://github.com/sponsors/TheStreamCode"
   },
@@ -44,29 +44,36 @@
     "Other"
   ],
   "keywords": [
-    "ai",
     "coding agent",
     "ai agent",
-    "claude code",
+    "ai coding agent",
+    "coding assistant",
     "cli",
+    "cli launcher",
     "terminal",
-    "copilot",
-    "cursor",
+    "terminal launcher",
+    "vscode",
+    "vscode ai",
+    "claude code",
+    "claude cli",
     "codex",
-    "launcher",
-    "ai cli",
-    "antigravity",
-    "grok",
+    "codex cli",
+    "copilot cli",
+    "cursor agent",
     "opencode",
+    "kiro",
+    "kiro cli",
+    "openclaw",
+    "openclaw cli",
+    "antigravity",
+    "google antigravity",
+    "antigravity cli",
+    "grok",
     "droid",
     "crush",
     "hermes",
-    "kimi",
-    "kiro",
-    "openclaw",
-    "mimo",
-    "pi",
-    "vscode"
+    "kimi code",
+    "pi coding agent"
   ],
   "main": "./out/extension.js",
   "activationEvents": [

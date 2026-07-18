@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-18
+
+### Changed
+
+- Improved Visual Studio Marketplace discovery with a concise search-focused display name and
+  description, a complete 30-keyword map, and a product-specific homepage.
+- Reworked the README opening, installation path, image descriptions, and FAQ around common
+  Claude Code, Codex CLI, Google Antigravity, Kiro CLI, OpenClaw CLI, and VS Code search intents.
+
 ## [1.0.0] - 2026-07-18
 
 ### Added

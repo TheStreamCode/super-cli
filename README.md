@@ -1,4 +1,4 @@
-# Super CLI
+# Super CLI — AI Coding Agent CLI Launcher for VS Code
 
 [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli)
 · [Open VSX](https://open-vsx.org/extension/mikesoft/vscode-super-cli)
@@ -11,12 +11,25 @@
 
 <p align="center"><strong>One launcher. Every coding agent.</strong></p>
 
-One VS Code extension to launch any coding agent CLI — **Claude Code, Codex, GitHub Copilot CLI,
-Cursor, Droid, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo
-Code, Pi, Kimi Code CLI, and your own** — from a single sidebar and a side terminal.
+Launch **Claude Code, OpenAI Codex CLI, GitHub Copilot CLI, Google Antigravity, OpenCode, Kiro CLI,
+OpenClaw CLI, Cursor Agent, and other AI coding agents** inside VS Code from one sidebar and the native
+integrated terminal. Super CLI keeps every supported agent one click away without replacing its
+official command-line experience.
 
-Works on Windows, macOS, and Linux, and across the VS Code family (VS Code, Cursor, Antigravity,
-Windsurf).
+It works on Windows, macOS, Linux, and WSL, and across the VS Code family: VS Code, Cursor,
+Antigravity, and Windsurf. It is free, open source, and has no telemetry or automatic CLI installers.
+
+## Install Super CLI in VS Code
+
+[Install Super CLI from the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli),
+or run:
+
+```bash
+code --install-extension mikesoft.vscode-super-cli
+```
+
+You can also open the Extensions view in VS Code, Cursor, Antigravity, or Windsurf, search for
+**Super CLI**, and select **Install**.
 
 This extension is unofficial and is not affiliated with, endorsed by, or sponsored by Anthropic,
 OpenAI, GitHub, Google, or any other vendor. See the [third-party
@@ -30,27 +43,14 @@ The activity bar opens a status-aware list with vendor-specific agent icons. Rea
 top; CLIs not found on the active `PATH` are grouped under **Setup required**. The colored Router S in
 the editor toolbar opens the same launcher without leaving the current file.
 
-![Super CLI showing ready and setup-required coding agents beside the editor](media/screenshots/sidebar.png)
+![Super CLI AI coding agent launcher sidebar in VS Code with Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro and OpenClaw](media/screenshots/sidebar.png)
 
 ### Focused configuration
 
 All settings are available in one filtered view. Commands can be shared across platforms or
 defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the Linux command.
 
-![Super CLI settings for agents, favorites, terminal placement, built-ins, and WSL](media/screenshots/settings.png)
-
-## Install
-
-Install **Super CLI** from the
-[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli),
-or from the command line:
-
-```bash
-code --install-extension mikesoft.vscode-super-cli
-```
-
-You can also open the Extensions view in VS Code (or Cursor, Antigravity, Windsurf), search for
-**Super CLI**, and click **Install**.
+![Super CLI VS Code settings for AI agents, favorites, terminal placement, built-ins, and WSL](media/screenshots/settings.png)
 
 ## Features
 
@@ -175,20 +175,36 @@ settings.
 
 ## FAQ
 
-**How do I run Claude Code (or Codex, Copilot, Cursor, …) in VS Code?**
-Install Super CLI, open the **Super CLI** view in the activity bar, and click the agent — it opens in
-a terminal beside your editor. The toolbar button and the **Super CLI: Launch Coding Agent** command
-do the same. It also works in Cursor, Antigravity, and Windsurf.
+### How do I launch Claude Code in VS Code?
 
-**Which AI coding agents are supported?**
+Install Super CLI, open the **Super CLI** view in the activity bar, and select **Claude Code**. The
+official `claude` CLI opens in a native integrated terminal beside your editor. You can also set it as
+your favorite and launch it with `Ctrl+Alt+A` (`Cmd+Alt+A` on macOS).
+
+### How do I run Codex CLI or GitHub Copilot CLI in VS Code?
+
+Select **Codex CLI** or **GitHub Copilot CLI** from the Super CLI sidebar or run **Super CLI: Launch
+Coding Agent** from the Command Palette. Super CLI starts the official `codex` or `copilot` command
+in the current workspace.
+
+### Can I use Google Antigravity, Kiro CLI, and OpenClaw CLI in VS Code?
+
+Yes. Google Antigravity, Kiro CLI, and OpenClaw CLI are built-in presets. Super CLI detects their
+commands, links to official setup documentation when available, and launches them with the correct
+Windows, macOS, Linux, or WSL command variant.
+
+### Which AI coding agents are supported?
+
 Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command
 Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi, and Kimi Code CLI out of the box — plus any CLI you
 add in `settings.json`.
 
-**Does it work on Windows, macOS, and Linux?**
+### Does Super CLI work on Windows, macOS, Linux, and WSL?
+
 Yes. On Windows you can also launch agents inside WSL with `superCli.useWsl`.
 
-**Is it free? Does it collect data?**
+### Is Super CLI free, and does it collect data?
+
 Free and open-source (MIT), with no telemetry. It only runs the commands you configure, in your own
 integrated terminal.
 

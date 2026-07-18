@@ -46,6 +46,33 @@ test('package metadata uses Super CLI branding', () => {
   assert.equal(packageJson.contributes.configuration.title, 'Super CLI');
 });
 
+test('Marketplace discovery metadata stays concise, relevant, and non-duplicative', () => {
+  const packageJson = readPackageJson();
+  const requiredKeywords = [
+    'ai coding agent',
+    'claude code',
+    'codex cli',
+    'copilot cli',
+    'google antigravity',
+    'antigravity cli',
+    'kiro cli',
+    'openclaw cli',
+    'vscode ai',
+  ];
+
+  assert.ok(packageJson.displayName.length <= 60);
+  assert.match(packageJson.displayName, /Claude Code/);
+  assert.match(packageJson.displayName, /Codex/);
+  assert.ok(packageJson.description.length <= 160);
+  assert.match(packageJson.description, /VS Code/);
+  assert.ok(packageJson.keywords.length <= 30);
+  assert.equal(new Set(packageJson.keywords).size, packageJson.keywords.length);
+  for (const keyword of requiredKeywords) {
+    assert.ok(packageJson.keywords.includes(keyword), keyword);
+  }
+  assert.equal(packageJson.homepage, 'https://github.com/TheStreamCode/super-cli#readme');
+});
+
 test('release metadata uses one consistent version', () => {
   const packageJson = readPackageJson();
   const packageLock = JSON.parse(readText('package-lock.json'));
@@ -113,7 +140,7 @@ test('agents setting is machine-scoped and security restricted', () => {
   assert.deepEqual(packageJson.capabilities.untrustedWorkspaces.restrictedConfigurations, ['superCli.agents']);
   assert.match(properties['superCli.agents'].items.properties.id.description, /kimi/);
   assert.match(properties['superCli.useBuiltins'].description, /Kimi Code CLI/);
-  assert.ok(packageJson.keywords.includes('kimi'));
+  assert.ok(packageJson.keywords.includes('kimi code'));
   assert.ok(packageJson.keywords.includes('kiro'));
   assert.ok(packageJson.keywords.includes('openclaw'));
 });
@@ -205,6 +232,9 @@ test('documentation uses local images and VSIX packaging uses only .vscodeignore
   assert.doesNotMatch(readme, /!\[[^\]]*\]\(https?:\/\//i);
   assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/sidebar\.png\)/);
   assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/settings\.png\)/);
+  assert.match(readme, /^# Super CLI .*AI Coding Agent CLI Launcher for VS Code/m);
+  assert.match(readme, /Install Super CLI in VS Code/);
+  assert.match(readme, /How do I launch Claude Code in VS Code\?/);
   assert.match(contributing, /npm ci/);
   assert.match(contributing, /media\/agents\/ATTRIBUTION\.md/);
   assert.match(notices, /not affiliated with or endorsed\s+by \[Chutes\]\(https:\/\/chutes\.ai\/\)/i);
