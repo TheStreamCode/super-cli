@@ -5,6 +5,13 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-07-18
+
+### Changed
+
+- Sorted agents alphabetically within sidebar status groups, launcher sections, and the built-in
+  agent manager.
+
 ## [1.0.2] - 2026-07-18
 
 ### Fixed

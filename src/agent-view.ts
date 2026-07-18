@@ -14,21 +14,23 @@ export interface AgentSection {
   agents: Agent[];
 }
 
-function sortAgents(agents: readonly Agent[], favoriteId: string): Agent[] {
-  return [...agents].sort((left, right) => {
-    const leftFavorite = left.id === favoriteId ? 1 : 0;
-    const rightFavorite = right.id === favoriteId ? 1 : 0;
-    return rightFavorite - leftFavorite || left.label.localeCompare(right.label);
-  });
+export function compareAgentsByLabel(
+  left: Pick<Agent, 'id' | 'label'>,
+  right: Pick<Agent, 'id' | 'label'>,
+): number {
+  return left.label.localeCompare(right.label) || left.id.localeCompare(right.id);
 }
 
-/** Groups sidebar agents by installation state while keeping the favorite first. */
+function sortAgents(agents: readonly Agent[]): Agent[] {
+  return [...agents].sort(compareAgentsByLabel);
+}
+
+/** Groups sidebar agents by installation state and sorts each group alphabetically. */
 export function buildAgentGroups(
   agents: readonly Agent[],
-  favoriteId: string,
   getInstallStatus: (id: string) => AgentInstallStatus,
 ): AgentGroup[] {
-  const sorted = sortAgents(agents, favoriteId);
+  const sorted = sortAgents(agents);
   const groups: AgentGroup[] = [
     { id: 'ready', label: 'Ready', agents: sorted.filter((agent) => getInstallStatus(agent.id) === true) },
     { id: 'unknown', label: 'Agents', agents: sorted.filter((agent) => getInstallStatus(agent.id) === undefined) },
@@ -45,7 +47,7 @@ export function buildAgentSections(
   getInstallStatus: (id: string) => AgentInstallStatus,
 ): AgentSection[] {
   const favorite = agents.find((agent) => agent.id === favoriteId);
-  const remaining = sortAgents(agents.filter((agent) => agent.id !== favoriteId), '');
+  const remaining = sortAgents(agents.filter((agent) => agent.id !== favoriteId));
   const sections: AgentSection[] = [
     { id: 'favorite', label: 'Favorite', agents: favorite ? [favorite] : [] },
     { id: 'ready', label: 'Ready', agents: remaining.filter((agent) => getInstallStatus(agent.id) === true) },

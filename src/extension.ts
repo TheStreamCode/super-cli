@@ -10,7 +10,7 @@ import {
   resolveAgents,
   resolveCommandPlatform,
 } from './agents.js';
-import { buildAgentSections } from './agent-view.js';
+import { buildAgentSections, compareAgentsByLabel } from './agent-view.js';
 import { executableExistsOnPath } from './command-utils.js';
 import { buildDoctorReport, inspectAgents, type DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
@@ -106,12 +106,14 @@ export function activate(context: vscode.ExtensionContext): void {
   const manageBuiltins = async (): Promise<void> => {
     const configuration = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE);
     const hiddenIds = new Set(configuration.inspect<string[]>('hiddenBuiltins')?.globalValue ?? []);
-    const items = BUILTIN_AGENTS.map((agent) => ({
-      label: agent.label,
-      description: agent.id,
-      picked: !hiddenIds.has(agent.id),
-      agentId: agent.id,
-    }));
+    const items = [...BUILTIN_AGENTS]
+      .sort(compareAgentsByLabel)
+      .map((agent) => ({
+        label: agent.label,
+        description: agent.id,
+        picked: !hiddenIds.has(agent.id),
+        agentId: agent.id,
+      }));
     const selection = await vscode.window.showQuickPick(items, {
       canPickMany: true,
       placeHolder: 'Choose the built-in agents shown by Super CLI',

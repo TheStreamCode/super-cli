@@ -100,7 +100,7 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
       return [];
     }
 
-    return buildAgentGroups(this.getAgents(), this.getFavoriteId(), this.getInstallStatus)
+    return buildAgentGroups(this.getAgents(), this.getInstallStatus)
       .map((group) => ({ ...group, kind: 'group' }));
   }
 }
