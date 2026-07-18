@@ -25,12 +25,13 @@ function sortAgents(agents: readonly Agent[]): Agent[] {
   return [...agents].sort(compareAgentsByLabel);
 }
 
-/** Groups sidebar agents by installation state and sorts each group alphabetically. */
+/** Groups non-favorite sidebar agents by installation state and sorts each group alphabetically. */
 export function buildAgentGroups(
   agents: readonly Agent[],
+  favoriteId: string,
   getInstallStatus: (id: string) => AgentInstallStatus,
 ): AgentGroup[] {
-  const sorted = sortAgents(agents);
+  const sorted = sortAgents(agents.filter((agent) => agent.id !== favoriteId));
   const groups: AgentGroup[] = [
     { id: 'ready', label: 'Ready', agents: sorted.filter((agent) => getInstallStatus(agent.id) === true) },
     { id: 'unknown', label: 'Agents', agents: sorted.filter((agent) => getInstallStatus(agent.id) === undefined) },

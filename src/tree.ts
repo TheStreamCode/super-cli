@@ -40,7 +40,7 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
       const item = new vscode.TreeItem(node.label, collapsibleState);
       item.id = `group:${node.id}`;
       item.description = String(node.agents.length);
-      item.contextValue = 'agent-group';
+      item.contextValue = 'super-cli-group';
       item.iconPath = new vscode.ThemeIcon(
         node.id === 'ready' ? 'pass-filled' : node.id === 'setup' ? 'tools' : 'list-unordered',
       );
@@ -61,7 +61,10 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
           : doctorResult?.status === 'version-unavailable' ? 'version unavailable'
             : undefined);
 
-    const item = new vscode.TreeItem(agent.label, vscode.TreeItemCollapsibleState.None);
+    const item = new vscode.TreeItem(
+      isFavorite ? `★ ${agent.label}` : agent.label,
+      vscode.TreeItemCollapsibleState.None,
+    );
     item.id = agent.id;
     item.description = isMissing
       ? `setup required · ${agent.command}`
@@ -100,7 +103,12 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
       return [];
     }
 
-    return buildAgentGroups(this.getAgents(), this.getInstallStatus)
+    const agents = this.getAgents();
+    const favoriteId = this.getFavoriteId();
+    const favorite = agents.find((agent) => agent.id === favoriteId);
+    const groups: AgentGroupNode[] = buildAgentGroups(agents, favoriteId, this.getInstallStatus)
       .map((group) => ({ ...group, kind: 'group' }));
+
+    return favorite ? [{ kind: 'agent', agent: favorite }, ...groups] : groups;
   }
 }

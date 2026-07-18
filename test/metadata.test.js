@@ -125,6 +125,18 @@ test('package contributes the sidebar view and agents tree', () => {
   assert.match(packageJson.contributes.viewsWelcome[0].contents, /superCli\.enableBuiltins/);
 });
 
+test('sidebar inline actions never target status group headers', () => {
+  const packageJson = readPackageJson();
+  const inlineItems = packageJson.contributes.menus['view/item/context'];
+
+  for (const item of inlineItems) {
+    const regexSource = item.when.match(/viewItem =~ \/(.+)\/$/)?.[1];
+    assert.ok(regexSource, item.command);
+    assert.equal(new RegExp(regexSource).test('super-cli-group'), false, item.command);
+    assert.equal(new RegExp(regexSource).test('agent-group'), false, item.command);
+  }
+});
+
 test('agents setting is machine-scoped and security restricted', () => {
   const packageJson = readPackageJson();
   const properties = packageJson.contributes.configuration.properties;

@@ -40,9 +40,10 @@ notices](TRADEMARKS.md).
 ### Agent sidebar and editor launcher
 
 The activity bar opens a status-aware list with vendor-specific agent icons. Ready agents stay at the
-top; CLIs not found on the active `PATH` are grouped under **Setup required**. Agents are sorted
-alphabetically within each status group. The colored Router S in the editor toolbar opens the same
-launcher without leaving the current file.
+top; CLIs not found on the active `PATH` are grouped under **Setup required**. The favorite is pinned
+above the groups with an always-visible star, while the remaining agents are sorted alphabetically
+within each status group. The colored Router S in the editor toolbar opens the same launcher without
+leaving the current file.
 
 ![Super CLI AI coding agent launcher sidebar in VS Code with Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro and OpenClaw](media/screenshots/sidebar.png)
 
@@ -60,7 +61,8 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   **Super CLI: Launch Coding Agent** command open a quick pick of the same list.
 - **Favorite agent, one keystroke.** Set or remove the favorite from either the sidebar or launcher,
   then launch it anywhere with **`Ctrl+Alt+A`** (`Cmd+Alt+A` on macOS; remap it in Keyboard
-  Shortcuts). With no favorite set the shortcut opens the picker and offers to remember your choice.
+  Shortcuts). The favorite stays pinned above the sidebar groups with a visible ★. With no favorite
+  set the shortcut opens the picker and offers to remember your choice.
 - **Ready and setup states.** The sidebar groups ready agents, unknown WSL states, and CLIs that need
   setup. Agents are alphabetical within each section, while the launcher keeps the favorite in its
   own section.

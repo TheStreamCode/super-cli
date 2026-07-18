@@ -5,6 +5,14 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-07-18
+
+### Fixed
+
+- Prevented Launch and Favorite actions from appearing on the Ready and Setup required group headers.
+- Pinned the favorite agent above the sidebar groups with an always-visible star while keeping the
+  remaining agents alphabetical within their status groups.
+
 ## [1.0.4] - 2026-07-18
 
 ### Changed
