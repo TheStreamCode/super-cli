@@ -12,7 +12,7 @@
 <p align="center"><strong>One launcher. Every coding agent.</strong></p>
 
 Launch **Claude Code, OpenAI Codex CLI, GitHub Copilot CLI, Google Antigravity, OpenCode, Kiro CLI,
-OpenClaw CLI, Cursor Agent, and other AI coding agents** inside VS Code from one sidebar and the native
+OpenClaw CLI, Qoder CLI, Cursor Agent, and other AI coding agents** inside VS Code from one sidebar and the native
 integrated terminal. Super CLI keeps every supported agent one click away without replacing its
 official command-line experience.
 
@@ -75,8 +75,8 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
 - **Agent-specific artwork.** Built-ins use vendor-sourced CLI marks where suitable SVGs are
   available, with a documented compact fallback for Kimi and a ThemeIcon fallback for custom agents.
 - **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Cursor, Droid, Grok, Kilo, Kiro,
-  OpenClaw, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, Pi, and Kimi Code CLI are
-  available out of the box.
+  OpenClaw, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI, and
+  Qoder CLI are available out of the box.
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
 - **Update from the sidebar.** Agents with a known update command show an update button next to
@@ -201,8 +201,8 @@ Windows, macOS, Linux, or WSL command variant.
 ### Which AI coding agents are supported?
 
 Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command
-Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi, and Kimi Code CLI out of the box — plus any CLI you
-add in `settings.json`.
+Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI, and Qoder CLI out of the box — plus
+any CLI you add in `settings.json`.
 
 ### Does Super CLI work on Windows, macOS, Linux, and WSL?
 

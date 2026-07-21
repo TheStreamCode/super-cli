@@ -1,9 +1,9 @@
 {
   "name": "vscode-super-cli",
   "displayName": "Super CLI: Claude Code, Codex & AI Agent Launcher",
-  "description": "Launch Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro, OpenClaw and other AI coding agents from one VS Code sidebar.",
+  "description": "Launch Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro, OpenClaw, Qoder CLI and other AI coding agents from one VS Code sidebar.",
   "publisher": "mikesoft",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -47,10 +47,8 @@
     "coding agent",
     "ai agent",
     "ai coding agent",
-    "coding assistant",
     "cli",
     "cli launcher",
-    "terminal",
     "terminal launcher",
     "vscode",
     "vscode ai",
@@ -73,7 +71,9 @@
     "crush",
     "hermes",
     "kimi code",
-    "pi coding agent"
+    "pi coding agent",
+    "qoder",
+    "qoder cli"
   ],
   "main": "./out/extension.js",
   "activationEvents": [
@@ -295,7 +295,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, kiro, openclaw, antigravity, opencode, command-code, cursor, droid, crush, hermes, mimo, pi, kimi) to override that built-in."
+                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, kiro, openclaw, antigravity, opencode, command-code, cursor, droid, crush, hermes, mimo, pi, kimi, qoder) to override that built-in."
               },
               "label": {
                 "type": "string",
@@ -407,7 +407,7 @@
           "type": "boolean",
           "scope": "machine",
           "default": true,
-          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI) in the launcher."
+          "description": "Include the built-in agent presets (Claude Code, Codex, Copilot, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI) in the launcher."
         },
         "superCli.hiddenBuiltins": {
           "type": "array",
@@ -433,7 +433,8 @@
               "hermes",
               "mimo",
               "pi",
-              "kimi"
+              "kimi",
+              "qoder"
             ]
           },
           "markdownDescription": "Built-in agent ids hidden from the sidebar and launcher. Use **Super CLI: Manage Built-in Agents** instead of editing this list by hand."

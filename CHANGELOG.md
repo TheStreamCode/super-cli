@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-21
+
+### Added
+
+- Added Qoder CLI as a built-in preset with official light/dark SVG icons, verified installation
+  documentation, and the official `qodercli update` command.
+- Added verified official installation documentation links for Grok CLI, Antigravity CLI, Command Code,
+  and MiMo Code so every built-in preset now opens its official setup guide when the CLI is not found.
+
 ## [1.0.6] - 2026-07-18
 
 ### Fixed

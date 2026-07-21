@@ -178,6 +178,7 @@ test('agents with a known update command carry their official one', () => {
     droid: 'droid update',
     pi: 'pi update',
     kimi: 'kimi upgrade',
+    qoder: 'qodercli update',
   };
   for (const [id, cmd] of Object.entries(expected)) {
     for (const platform of SUPPORTED_PLATFORMS) {
@@ -220,6 +221,11 @@ test('built-ins expose only verified official installation documentation', () =>
     hermes: 'https://hermes-agent.nousresearch.com/docs/getting-started/installation',
     pi: 'https://pi.dev/docs/latest',
     kimi: 'https://www.kimi.com/code/docs/en/kimi-code-cli/guides/getting-started.html',
+    qoder: 'https://docs.qoder.com/en/cli/',
+    grok: 'https://docs.x.ai/build/overview',
+    antigravity: 'https://antigravity.google/docs/cli/install',
+    'command-code': 'https://commandcode.ai/docs',
+    mimo: 'https://mimo.xiaomi.com/mimocode/install',
   };
 
   for (const [id, url] of Object.entries(documentationUrls)) {
@@ -264,12 +270,12 @@ test('Antigravity ships a dedicated icon without an automatic installer', () => 
   const agy = BUILTIN_AGENTS.find((a) => a.id === 'antigravity');
   assert.ok(agy);
   assert.equal(agy.icon, 'star-full');
-  assert.equal(agy.installationDocumentationUrl, undefined);
+  assert.equal(agy.installationDocumentationUrl, 'https://antigravity.google/docs/cli/install');
 });
 
-test('Grok has no unverified installation documentation link', () => {
+test('Grok links to its official installation documentation', () => {
   const grok = BUILTIN_AGENTS.find((a) => a.id === 'grok');
-  assert.equal(grok.installationDocumentationUrl, undefined);
+  assert.equal(grok.installationDocumentationUrl, 'https://docs.x.ai/build/overview');
 });
 
 test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () => {
@@ -279,7 +285,8 @@ test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () 
   }));
   assert.equal(byId.cursor.command, 'cursor-agent');
   assert.equal(byId.droid.command, 'droid');
-  assert.equal(byId.mimo.installationDocumentationUrl, undefined);
+  assert.equal(byId.mimo.installationDocumentationUrl, 'https://mimo.xiaomi.com/mimocode/install');
+  assert.equal(byId['command-code'].installationDocumentationUrl, 'https://commandcode.ai/docs');
   assert.equal(byId.cursor.installationDocumentationUrl, 'https://cursor.com/docs/cli/overview');
   assert.equal(byId.hermes.installationDocumentationUrl, 'https://hermes-agent.nousresearch.com/docs/getting-started/installation');
 });
@@ -300,6 +307,27 @@ test('Kimi Code CLI ships as a built-in preset', () => {
     'https://www.kimi.com/code/docs/en/kimi-code-cli/guides/getting-started.html',
   );
   assert.equal(kimi.updateCommand, 'kimi upgrade');
+});
+
+test('Qoder CLI ships as a built-in preset', () => {
+  for (const platform of SUPPORTED_PLATFORMS) {
+    const qoder = resolveBuiltin('qoder', platform);
+    assert.equal(qoder.label, 'Qoder CLI', `${platform}:label`);
+    assert.equal(qoder.command, 'qodercli', `${platform}:command`);
+    assert.equal(qoder.icon, 'lightbulb', `${platform}:icon`);
+    assert.equal(qoder.updateCommand, 'qodercli update', `${platform}:updateCommand`);
+    assert.equal(qoder.versionCommand, 'qodercli --version', `${platform}:versionCommand`);
+    assert.equal(
+      qoder.installationDocumentationUrl,
+      'https://docs.qoder.com/en/cli/',
+      `${platform}:installationDocumentationUrl`,
+    );
+  }
+
+  const qoder = BUILTIN_AGENTS.find((a) => a.id === 'qoder');
+  assert.equal(typeof qoder.iconPath, 'object');
+  assert.equal(qoder.iconPath.light, 'media/agents/qoder-light.svg');
+  assert.equal(qoder.iconPath.dark, 'media/agents/qoder-dark.svg');
 });
 
 test('Kiro and OpenClaw ship as adaptive built-in presets', () => {

@@ -24,6 +24,7 @@ and are excluded from Super CLI's MIT license; see [`TRADEMARKS.md`](../../TRADE
 | Hermes | Official ACP registry mark | [Hermes Agent repository asset](https://github.com/NousResearch/hermes-agent/blob/main/acp_registry/icon.svg) |
 | MiMo Code | Xiaomi 2021 Mi mark | [Xiaomi logo SVG](https://upload.wikimedia.org/wikipedia/commons/a/ae/Xiaomi_logo_%282021-%29.svg) |
 | Pi | Official light/dark Pi mark | [Pi website artwork](https://pi.dev/logo-auto.svg) |
+| Qoder CLI | Official Qoder logomark, with React/web attributes removed and the `currentColor` token split into light/dark contrast variants | [Lobe Icons Qoder asset](https://github.com/lobehub/lobe-icons) |
 
 ## Project-drawn fallback
 
@@ -35,4 +36,6 @@ theme-aware/current-color mark, Super CLI provides black/white contrast variants
 its geometry. The Grok favicon's backdrop, blur, and shadow were omitted because VS Code extension
 icons must be static, safe SVGs with a transparent background. Factory's black tile was similarly
 removed, while the official logomark geometry was preserved. The Antigravity silhouette and Xiaomi
-Mi geometry are preserved from the sources above.
+Mi geometry are preserved from the sources above. The Qoder mark's `height`/`width`/`style` web
+attributes were dropped and its single `currentColor` token was replaced with explicit light/dark
+contrast fills, keeping the original two-path geometry intact.

@@ -103,6 +103,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
       light: 'media/agents/grok-light.svg',
       dark: 'media/agents/grok-dark.svg',
     },
+    installationDocumentationUrl: 'https://docs.x.ai/build/overview',
   },
   {
     id: 'kilo',
@@ -143,6 +144,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     command: onAllPlatforms('agy'),
     icon: 'star-full',
     iconPath: 'media/agents/antigravity.svg',
+    installationDocumentationUrl: 'https://antigravity.google/docs/cli/install',
   },
   {
     id: 'opencode',
@@ -165,6 +167,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     command: onAllPlatforms('command-code'),
     icon: 'terminal',
     iconPath: 'media/agents/command-code.svg',
+    installationDocumentationUrl: 'https://commandcode.ai/docs',
   },
   {
     id: 'cursor',
@@ -211,6 +214,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     command: onAllPlatforms('mimo'),
     icon: 'beaker',
     iconPath: 'media/agents/mimo.svg',
+    installationDocumentationUrl: 'https://mimo.xiaomi.com/mimocode/install',
   },
   {
     id: 'pi',
@@ -234,6 +238,19 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     installationDocumentationUrl: 'https://www.kimi.com/code/docs/en/kimi-code-cli/guides/getting-started.html',
     updateCommand: onAllPlatforms('kimi upgrade'),
     versionCommand: onAllPlatforms('kimi --version'),
+  },
+  {
+    id: 'qoder',
+    label: 'Qoder CLI',
+    command: onAllPlatforms('qodercli'),
+    icon: 'lightbulb',
+    iconPath: {
+      light: 'media/agents/qoder-light.svg',
+      dark: 'media/agents/qoder-dark.svg',
+    },
+    installationDocumentationUrl: 'https://docs.qoder.com/en/cli/',
+    updateCommand: onAllPlatforms('qodercli update'),
+    versionCommand: onAllPlatforms('qodercli --version'),
   },
 ];
 
