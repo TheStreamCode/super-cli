@@ -9,7 +9,12 @@ import {
   resolveAgents,
   resolveCommandPlatform,
 } from './agents.js';
-import { buildAgentSections, compareAgentsByLabel, shouldOfferFavoriteAfterLaunch } from './agent-view.js';
+import {
+  buildAgentSections,
+  compareAgentsByLabel,
+  shouldOfferFavoriteAfterLaunch,
+  shouldOfferRatingAfterLaunch,
+} from './agent-view.js';
 import { executableExistsOnPath, isExecutableFile } from './command-utils.js';
 import { buildDoctorReport, inspectAgents, type DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
@@ -197,9 +202,42 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
 
+  // Offers a one-time, local-only rating prompt once the user has launched agents enough to be a
+  // genuine fan. No usage data ever leaves the machine: the launch count and prompt-shown flag are
+  // both stored in this extension's own globalState. Fire-and-forget like the update-completion
+  // notice in terminal.ts, so a pending toast never blocks the launch command itself.
+  const maybeOfferRatingPrompt = (): void => {
+    const launchCount = context.globalState.get<number>('launchCount', 0) + 1;
+    void context.globalState.update('launchCount', launchCount);
+
+    const ratingPromptShown = context.globalState.get<boolean>('hasShownRatingPrompt', false);
+    if (!shouldOfferRatingAfterLaunch(launchCount, ratingPromptShown)) {
+      return;
+    }
+
+    void context.globalState.update('hasShownRatingPrompt', true);
+    void vscode.window.showInformationMessage(
+      'Enjoying Super CLI? A quick rating helps other developers find it.',
+      'Rate Super CLI',
+    ).then((choice) => {
+      if (choice === 'Rate Super CLI') {
+        void vscode.commands.executeCommand('extension.open', context.extension.id);
+      }
+    });
+  };
+
+  const launchAndMaybeOfferRating = async (agent: Agent): Promise<boolean> => {
+    const launched = await launchAgent(agent, context, terminalSequence++);
+    if (launched) {
+      maybeOfferRatingPrompt();
+    }
+
+    return launched;
+  };
+
   const launchWithStatusGuard = async (agent: Agent): Promise<boolean> => {
     if (installStatus.get(agent.id) !== false) {
-      return launchAgent(agent, context, terminalSequence++);
+      return launchAndMaybeOfferRating(agent);
     }
 
     const actions = agent.installationDocumentationUrl
@@ -215,7 +253,7 @@ export function activate(context: vscode.ExtensionContext): void {
     } else if (selection === 'Open Settings') {
       await openExtensionSettings(context);
     } else if (selection === 'Launch Anyway') {
-      return launchAgent(agent, context, terminalSequence++);
+      return launchAndMaybeOfferRating(agent);
     }
 
     return false;

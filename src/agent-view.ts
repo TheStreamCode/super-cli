@@ -31,6 +31,14 @@ export function shouldOfferFavoriteAfterLaunch(
   return offerFavorite && launched && selectedId !== favoriteId;
 }
 
+/** Successful launches before the one-time rating prompt is offered. */
+export const RATING_PROMPT_LAUNCH_THRESHOLD = 20;
+
+/** Returns whether a successful launch should trigger the one-time rating prompt. */
+export function shouldOfferRatingAfterLaunch(launchCount: number, ratingPromptShown: boolean): boolean {
+  return !ratingPromptShown && launchCount >= RATING_PROMPT_LAUNCH_THRESHOLD;
+}
+
 function sortAgents(agents: readonly Agent[]): Agent[] {
   return [...agents].sort(compareAgentsByLabel);
 }

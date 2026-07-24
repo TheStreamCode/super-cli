@@ -5,6 +5,19 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-07-24
+
+### Added
+
+- Added a one-time rating nudge shown after 20 successful launches, stored only in local extension
+  state and never repeated regardless of the response.
+
+### Fixed
+
+- Resolved all reported dependency vulnerabilities in the build/release toolchain (`fast-uri`,
+  `js-yaml`, `linkify-it`, `brace-expansion`, all transitive through `@vscode/vsce`); none of these
+  ship with or run inside the packaged extension.
+
 ## [1.2.0] - 2026-07-24
 
 ### Added

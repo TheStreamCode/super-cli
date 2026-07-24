@@ -89,6 +89,9 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   changes your shell profile.
 - **Native integrated terminal.** Each agent runs in a real VS Code terminal, inheriting your
   shell, `PATH`, and environment. No bundled emulator, no runtime dependencies.
+- **One-time rating nudge.** After 20 successful launches, Super CLI shows a single notification
+  asking for a Marketplace rating. It never repeats after that, however you respond, and the launch
+  count lives only in this extension's local state — nothing is sent anywhere.
 
 ## Adding or overriding an agent
 
@@ -223,7 +226,9 @@ Bug reports, feature requests, and contributions are welcome on
 
 This extension does not collect telemetry, analytics, or personal data. It never installs CLIs or
 modifies shell profiles; it only runs launch and user-requested update commands in your integrated
-terminal, plus bounded version commands when you explicitly run Agent Doctor.
+terminal, plus bounded version commands when you explicitly run Agent Doctor. The only state it
+keeps locally is your configuration (favorite, hidden built-ins) and a launch counter used solely to
+show the one-time rating nudge described above — neither is ever transmitted anywhere.
 
 Keep credentials in each CLI's supported credential store or environment configuration rather than
 embedding them directly in launch, update, or version command strings.

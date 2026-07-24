@@ -5,6 +5,8 @@ const {
   buildAgentGroups,
   buildAgentSections,
   shouldOfferFavoriteAfterLaunch,
+  shouldOfferRatingAfterLaunch,
+  RATING_PROMPT_LAUNCH_THRESHOLD,
 } = require('../out/agent-view.js');
 
 const agents = [
@@ -52,4 +54,11 @@ test('favorite prompt is offered only after a successful launch', () => {
   assert.equal(shouldOfferFavoriteAfterLaunch(true, false, 'codex', ''), false);
   assert.equal(shouldOfferFavoriteAfterLaunch(false, true, 'codex', ''), false);
   assert.equal(shouldOfferFavoriteAfterLaunch(true, true, 'codex', 'codex'), false);
+});
+
+test('rating prompt is offered exactly once, only once the launch threshold is reached', () => {
+  assert.equal(shouldOfferRatingAfterLaunch(RATING_PROMPT_LAUNCH_THRESHOLD - 1, false), false);
+  assert.equal(shouldOfferRatingAfterLaunch(RATING_PROMPT_LAUNCH_THRESHOLD, false), true);
+  assert.equal(shouldOfferRatingAfterLaunch(RATING_PROMPT_LAUNCH_THRESHOLD + 100, false), true);
+  assert.equal(shouldOfferRatingAfterLaunch(RATING_PROMPT_LAUNCH_THRESHOLD, true), false);
 });
