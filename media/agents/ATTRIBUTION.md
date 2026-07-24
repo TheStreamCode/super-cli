@@ -25,6 +25,7 @@ and are excluded from Super CLI's MIT license; see [`TRADEMARKS.md`](../../TRADE
 | MiMo Code | Xiaomi 2021 Mi mark | [Xiaomi logo SVG](https://upload.wikimedia.org/wikipedia/commons/a/ae/Xiaomi_logo_%282021-%29.svg) |
 | Pi | Official light/dark Pi mark | [Pi website artwork](https://pi.dev/logo-auto.svg) |
 | Qoder CLI | Official Qoder logomark, with React/web attributes removed and the `currentColor` token split into light/dark contrast variants | [Lobe Icons Qoder asset](https://github.com/lobehub/lobe-icons) |
+| Qwen Code CLI | Official Qwen logomark (Alibaba Cloud's Qwen brand), with React/web attributes removed, the auto-generated gradient id renamed, and the gradient stops flattened to full opacity | [Lobe Icons Qwen asset](https://github.com/lobehub/lobe-icons) |
 
 ## Project-drawn fallback
 
@@ -38,4 +39,7 @@ icons must be static, safe SVGs with a transparent background. Factory's black t
 removed, while the official logomark geometry was preserved. The Antigravity silhouette and Xiaomi
 Mi geometry are preserved from the sources above. The Qoder mark's `height`/`width`/`style` web
 attributes were dropped and its single `currentColor` token was replaced with explicit light/dark
-contrast fills, keeping the original two-path geometry intact.
+contrast fills, keeping the original two-path geometry intact. The Qwen mark's `height`/`width`/
+`style` web attributes were similarly dropped, its auto-generated gradient id was renamed, and its
+gradient stops' partial opacity was flattened to fully opaque, keeping the original path geometry
+and gradient colors intact.

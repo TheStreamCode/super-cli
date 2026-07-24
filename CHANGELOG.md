@@ -5,6 +5,23 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-24
+
+### Added
+
+- Added Qwen Code CLI as a built-in preset with an official SVG icon, verified installation
+  documentation, and the `qwen --version` check.
+- Added the official `kiro-cli update`, `command-code update`, `grok --version`,
+  `command-code --version`, `droid --version`, `crush --version`, `hermes --version`, and
+  `pi --version` commands, verified against each CLI's official reference documentation.
+
+### Fixed
+
+- Corrected Pi's update command from the ambiguous `pi update` to the documented, unambiguous
+  `pi update --self`, since bare `pi update` targets package sources rather than the pi CLI itself.
+- Updated the Codex CLI, GitHub Copilot CLI, and Kilo CLI installation documentation links to their
+  current canonical URLs after upstream redirects.
+
 ## [1.1.0] - 2026-07-21
 
 ### Added

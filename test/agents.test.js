@@ -171,14 +171,16 @@ test('agents with a known update command carry their official one', () => {
     codex: 'codex update',
     copilot: 'copilot update',
     kilo: 'kilo upgrade',
+    kiro: 'kiro-cli update',
     openclaw: 'openclaw update',
     hermes: 'hermes update',
     opencode: 'opencode upgrade',
     cursor: 'cursor-agent update',
     droid: 'droid update',
-    pi: 'pi update',
+    pi: 'pi update --self',
     kimi: 'kimi upgrade',
     qoder: 'qodercli update',
+    'command-code': 'command-code update',
   };
   for (const [id, cmd] of Object.entries(expected)) {
     for (const platform of SUPPORTED_PLATFORMS) {
@@ -189,7 +191,7 @@ test('agents with a known update command carry their official one', () => {
 });
 
 test('self-updating CLIs have no manual update command', () => {
-  for (const id of ['kiro', 'mimo', 'command-code']) {
+  for (const id of ['mimo', 'qwen']) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
     assert.equal(agent.updateCommand, undefined, id);
   }
@@ -203,15 +205,17 @@ test('Claude Code skips its IDE extension auto-install via env', () => {
 test('Command Code launches without modifying its configuration', () => {
   const cc = resolveBuiltin('command-code', 'windows');
   assert.equal(cc.command, 'command-code');
+  assert.equal(cc.updateCommand, 'command-code update');
+  assert.equal(cc.versionCommand, 'command-code --version');
   assert.equal(Object.hasOwn(cc, 'ensureConfig'), false);
 });
 
 test('built-ins expose only verified official installation documentation', () => {
   const documentationUrls = {
     claude: 'https://code.claude.com/docs/en/setup',
-    codex: 'https://developers.openai.com/codex/cli/',
-    copilot: 'https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli',
-    kilo: 'https://kilo.ai/docs/cli',
+    codex: 'https://learn.chatgpt.com/docs/codex/cli',
+    copilot: 'https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli',
+    kilo: 'https://kilo.ai/docs/code-with-ai/platforms/cli',
     kiro: 'https://kiro.dev/docs/cli/',
     openclaw: 'https://docs.openclaw.ai/install',
     opencode: 'https://opencode.ai/docs/',
@@ -222,6 +226,7 @@ test('built-ins expose only verified official installation documentation', () =>
     pi: 'https://pi.dev/docs/latest',
     kimi: 'https://www.kimi.com/code/docs/en/kimi-code-cli/guides/getting-started.html',
     qoder: 'https://docs.qoder.com/en/cli/',
+    qwen: 'https://qwenlm.github.io/qwen-code-docs/en/users/quickstart',
     grok: 'https://docs.x.ai/build/overview',
     antigravity: 'https://antigravity.google/docs/cli/install',
     'command-code': 'https://commandcode.ai/docs',
@@ -276,6 +281,7 @@ test('Antigravity ships a dedicated icon without an automatic installer', () => 
 test('Grok links to its official installation documentation', () => {
   const grok = BUILTIN_AGENTS.find((a) => a.id === 'grok');
   assert.equal(grok.installationDocumentationUrl, 'https://docs.x.ai/build/overview');
+  assert.equal(resolveBuiltin('grok').versionCommand, 'grok --version');
 });
 
 test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () => {
@@ -285,16 +291,21 @@ test('Cursor, Droid, Crush, Hermes, and MiMo Code ship as built-in presets', () 
   }));
   assert.equal(byId.cursor.command, 'cursor-agent');
   assert.equal(byId.droid.command, 'droid');
+  assert.equal(byId.droid.versionCommand, 'droid --version');
+  assert.equal(byId.crush.versionCommand, 'crush --version');
   assert.equal(byId.mimo.installationDocumentationUrl, 'https://mimo.xiaomi.com/mimocode/install');
   assert.equal(byId['command-code'].installationDocumentationUrl, 'https://commandcode.ai/docs');
   assert.equal(byId.cursor.installationDocumentationUrl, 'https://cursor.com/docs/cli/overview');
   assert.equal(byId.hermes.installationDocumentationUrl, 'https://hermes-agent.nousresearch.com/docs/getting-started/installation');
+  assert.equal(byId.hermes.versionCommand, 'hermes --version');
 });
 
 test('Pi ships as a built-in preset', () => {
   const pi = resolveBuiltin('pi');
   assert.equal(pi.command, 'pi');
   assert.equal(pi.installationDocumentationUrl, 'https://pi.dev/docs/latest');
+  assert.equal(pi.updateCommand, 'pi update --self');
+  assert.equal(pi.versionCommand, 'pi --version');
 });
 
 test('Kimi Code CLI ships as a built-in preset', () => {
@@ -330,11 +341,31 @@ test('Qoder CLI ships as a built-in preset', () => {
   assert.equal(qoder.iconPath.dark, 'media/agents/qoder-dark.svg');
 });
 
+test('Qwen Code CLI ships as a built-in preset', () => {
+  for (const platform of SUPPORTED_PLATFORMS) {
+    const qwen = resolveBuiltin('qwen', platform);
+    assert.equal(qwen.label, 'Qwen Code CLI', `${platform}:label`);
+    assert.equal(qwen.command, 'qwen', `${platform}:command`);
+    assert.equal(qwen.icon, 'globe', `${platform}:icon`);
+    assert.equal(qwen.versionCommand, 'qwen --version', `${platform}:versionCommand`);
+    assert.equal(qwen.updateCommand, undefined, `${platform}:updateCommand`);
+    assert.equal(
+      qwen.installationDocumentationUrl,
+      'https://qwenlm.github.io/qwen-code-docs/en/users/quickstart',
+      `${platform}:installationDocumentationUrl`,
+    );
+  }
+
+  const qwen = BUILTIN_AGENTS.find((a) => a.id === 'qwen');
+  assert.equal(qwen.iconPath, 'media/agents/qwen.svg');
+});
+
 test('Kiro and OpenClaw ship as adaptive built-in presets', () => {
   for (const platform of SUPPORTED_PLATFORMS) {
     const kiro = resolveBuiltin('kiro', platform);
     assert.equal(kiro.command, 'kiro-cli');
     assert.equal(kiro.versionCommand, 'kiro-cli --version');
+    assert.equal(kiro.updateCommand, 'kiro-cli update');
 
     const openclaw = resolveBuiltin('openclaw', platform);
     assert.equal(openclaw.command, 'openclaw chat');

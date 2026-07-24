@@ -77,7 +77,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     command: onAllPlatforms('codex'),
     icon: 'rocket',
     iconPath: 'media/agents/codex.svg',
-    installationDocumentationUrl: 'https://developers.openai.com/codex/cli/',
+    installationDocumentationUrl: 'https://learn.chatgpt.com/docs/codex/cli',
     updateCommand: onAllPlatforms('codex update'),
     versionCommand: onAllPlatforms('codex --version'),
   },
@@ -90,7 +90,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
       light: 'media/agents/copilot-light.svg',
       dark: 'media/agents/copilot-dark.svg',
     },
-    installationDocumentationUrl: 'https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli',
+    installationDocumentationUrl: 'https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli',
     updateCommand: onAllPlatforms('copilot update'),
     versionCommand: onAllPlatforms('copilot --version'),
   },
@@ -104,6 +104,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
       dark: 'media/agents/grok-dark.svg',
     },
     installationDocumentationUrl: 'https://docs.x.ai/build/overview',
+    versionCommand: onAllPlatforms('grok --version'),
   },
   {
     id: 'kilo',
@@ -114,7 +115,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
       light: 'media/agents/kilo-light.svg',
       dark: 'media/agents/kilo-dark.svg',
     },
-    installationDocumentationUrl: 'https://kilo.ai/docs/cli',
+    installationDocumentationUrl: 'https://kilo.ai/docs/code-with-ai/platforms/cli',
     updateCommand: onAllPlatforms('kilo upgrade'),
     versionCommand: onAllPlatforms('kilo --version'),
   },
@@ -125,7 +126,9 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     icon: 'sparkle-filled',
     iconPath: 'media/agents/kiro.svg',
     installationDocumentationUrl: 'https://kiro.dev/docs/cli/',
-    // Kiro downloads updates in the background and installs them when the CLI exits.
+    // Kiro also downloads updates in the background and installs them when the CLI exits,
+    // but it exposes this official command for an explicit, immediate update too.
+    updateCommand: onAllPlatforms('kiro-cli update'),
     versionCommand: onAllPlatforms('kiro-cli --version'),
   },
   {
@@ -168,6 +171,11 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     icon: 'terminal',
     iconPath: 'media/agents/command-code.svg',
     installationDocumentationUrl: 'https://commandcode.ai/docs',
+    // The npm package registers `cmd`, `cmdc`, `command-code`, and `commandcode` as identical
+    // aliases for the same script, so `command-code update`/`--version` work like the docs'
+    // `cmd update`/`cmd --version` without risking the Windows `cmd.exe` collision above.
+    updateCommand: onAllPlatforms('command-code update'),
+    versionCommand: onAllPlatforms('command-code --version'),
   },
   {
     id: 'cursor',
@@ -187,6 +195,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     iconPath: 'media/agents/droid.svg',
     installationDocumentationUrl: 'https://docs.factory.ai/cli/getting-started',
     updateCommand: onAllPlatforms('droid update'),
+    versionCommand: onAllPlatforms('droid --version'),
   },
   {
     id: 'crush',
@@ -195,6 +204,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     icon: 'flame',
     iconPath: 'media/agents/crush.svg',
     installationDocumentationUrl: 'https://github.com/charmbracelet/crush',
+    versionCommand: onAllPlatforms('crush --version'),
   },
   {
     id: 'hermes',
@@ -207,6 +217,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     },
     installationDocumentationUrl: 'https://hermes-agent.nousresearch.com/docs/getting-started/installation',
     updateCommand: onAllPlatforms('hermes update'),
+    versionCommand: onAllPlatforms('hermes --version'),
   },
   {
     id: 'mimo',
@@ -226,8 +237,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
       dark: 'media/agents/pi-dark.svg',
     },
     installationDocumentationUrl: 'https://pi.dev/docs/latest',
-    // Pi exposes an official self-update command (`pi update` updates pi only).
-    updateCommand: onAllPlatforms('pi update'),
+    // Bare `pi update` targets package sources; `--self` is Pi's documented, unambiguous
+    // form for updating the pi CLI binary itself.
+    updateCommand: onAllPlatforms('pi update --self'),
+    versionCommand: onAllPlatforms('pi --version'),
   },
   {
     id: 'kimi',
@@ -251,6 +264,17 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     installationDocumentationUrl: 'https://docs.qoder.com/en/cli/',
     updateCommand: onAllPlatforms('qodercli update'),
     versionCommand: onAllPlatforms('qodercli --version'),
+  },
+  {
+    id: 'qwen',
+    label: 'Qwen Code CLI',
+    command: onAllPlatforms('qwen'),
+    icon: 'globe',
+    iconPath: 'media/agents/qwen.svg',
+    installationDocumentationUrl: 'https://qwenlm.github.io/qwen-code-docs/en/users/quickstart',
+    versionCommand: onAllPlatforms('qwen --version'),
+    // Qwen Code updates itself via its own interactive `/update` slash command, not an
+    // external CLI subcommand, so there is no updateCommand to run from a fresh terminal.
   },
 ];
 
