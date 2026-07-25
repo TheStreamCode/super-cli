@@ -10,6 +10,7 @@ const {
   normalizeTerminalName,
   buildExtensionSettingsQuery,
   resolveTerminalCwd,
+  isTerminalCwdAmbiguous,
   extractExecutable,
   shouldPromptToInstall,
   executableExistsOnPath,
@@ -133,6 +134,42 @@ test('resolveTerminalCwd returns undefined when no workspace is open', () => {
   };
 
   assert.equal(resolveTerminalCwd(undefined, workspace), undefined);
+});
+
+// isTerminalCwdAmbiguous
+test('isTerminalCwdAmbiguous is false for single-root workspaces regardless of the active editor', () => {
+  const workspace = {
+    workspaceFolders: [{ uri: 'workspace-a' }],
+    getWorkspaceFolder() {
+      return undefined;
+    },
+  };
+
+  assert.equal(isTerminalCwdAmbiguous(undefined, workspace), false);
+  assert.equal(isTerminalCwdAmbiguous({ document: { uri: 'external' } }, workspace), false);
+});
+
+test('isTerminalCwdAmbiguous is false for multi-root workspaces when the active editor resolves a folder', () => {
+  const workspace = {
+    workspaceFolders: [{ uri: 'workspace-a' }, { uri: 'workspace-b' }],
+    getWorkspaceFolder(uri) {
+      return uri === 'file-b' ? { uri: 'workspace-b' } : undefined;
+    },
+  };
+
+  assert.equal(isTerminalCwdAmbiguous({ document: { uri: 'file-b' } }, workspace), false);
+});
+
+test('isTerminalCwdAmbiguous is true for multi-root workspaces with no active-editor-derived folder', () => {
+  const workspace = {
+    workspaceFolders: [{ uri: 'workspace-a' }, { uri: 'workspace-b' }],
+    getWorkspaceFolder() {
+      return undefined;
+    },
+  };
+
+  assert.equal(isTerminalCwdAmbiguous(undefined, workspace), true);
+  assert.equal(isTerminalCwdAmbiguous({ document: { uri: 'external' } }, workspace), true);
 });
 
 // executableExistsOnPath

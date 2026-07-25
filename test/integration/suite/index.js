@@ -38,6 +38,18 @@ async function waitForCondition(predicate, message, timeoutMs = 3000) {
   throw new Error(message);
 }
 
+// Disposing and immediately creating another terminal back-to-back is unreliable in this test host --
+// the new terminal can silently take well over waitForNewTerminal's default timeout to appear. Every
+// dispose that is directly followed by expecting a fresh terminal waits here for the close to land first.
+async function disposeAndWaitClosed(terminal, timeoutMs = 3000) {
+  terminal.dispose();
+  await waitForCondition(
+    () => !vscode.window.terminals.includes(terminal),
+    'Expected the terminal to close before continuing.',
+    timeoutMs,
+  );
+}
+
 /** Runs the VS Code smoke tests for the extension host. */
 async function run() {
   const extension = vscode.extensions.getExtension('mikesoft.vscode-super-cli');
@@ -55,6 +67,8 @@ async function run() {
   assert.ok(commands.includes('superCli.openAgentDocumentation'));
   assert.ok(commands.includes('superCli.revealSession'));
   assert.ok(commands.includes('superCli.stopSession'));
+  assert.ok(commands.includes('superCli.restartSession'));
+  assert.ok(commands.includes('superCli.stopAllSessions'));
   assert.ok(commands.includes('superCli.enableBuiltins'));
   assert.ok(commands.includes('superCli.manageBuiltins'));
   assert.ok(commands.includes('superCli.runDoctor'));
@@ -75,12 +89,16 @@ async function run() {
   const configuration = vscode.workspace.getConfiguration('superCli');
   const originalAgents = configuration.inspect('agents')?.globalValue;
   const originalFavorites = configuration.inspect('favoriteAgents')?.globalValue;
+  const originalUseBuiltins = configuration.inspect('useBuiltins')?.globalValue;
 
   try {
     // launchFavorite cross-references getEffectiveAgents(), so the test agents need to be
     // registered for real, not just passed as ad-hoc command arguments like the other commands below.
+    // Built-ins are disabled so superCli.updateAllAgents (below) only ever sees testAgent's safe
+    // "node --version" update command, never a real built-in's actual (network-touching) one.
     await configuration.update('agents', [testAgent, testAgent2], vscode.ConfigurationTarget.Global);
     await configuration.update('favoriteAgents', [], vscode.ConfigurationTarget.Global);
+    await configuration.update('useBuiltins', false, vscode.ConfigurationTarget.Global);
 
     await vscode.commands.executeCommand('superCli.setFavorite', treeNode);
     assert.deepEqual(configuration.inspect('favoriteAgents')?.globalValue, [testAgent.id]);
@@ -113,7 +131,13 @@ async function run() {
     assert.match(terminal.name, /^Super CLI Test/);
 
     const distraction = vscode.window.createTerminal({ name: 'Distraction' });
-    const fakeSession = { sessionId: 'integration-test-session', agent: testAgent, terminal, startedAt: Date.now() };
+    const fakeSession = {
+      sessionId: 'integration-test-session',
+      agent: testAgent,
+      terminal,
+      startedAt: Date.now(),
+      cwd: undefined,
+    };
 
     // Tree rows pass the raw session as item.command's argument — see tree.ts's getTreeItem.
     distraction.show();
@@ -137,15 +161,85 @@ async function run() {
       'Expected superCli.stopSession to dispose the terminal.',
     );
 
+    // superCli.restartSession disposes the old terminal and relaunches the same agent, reusing its
+    // exact cwd (here captured from the first launch) rather than re-resolving or prompting for one.
+    const beforeRestartLaunch = vscode.window.terminals.length;
+    await vscode.commands.executeCommand('superCli.launchAgent', treeNode);
+    const restartTerminal = await waitForNewTerminal(beforeRestartLaunch);
+    const originalCwd = restartTerminal.creationOptions?.cwd;
+    const restartSession = {
+      sessionId: 'integration-test-restart-session',
+      agent: testAgent,
+      terminal: restartTerminal,
+      startedAt: Date.now(),
+      cwd: originalCwd,
+    };
+
+    const beforeRestart = vscode.window.terminals.length;
+    await vscode.commands.executeCommand('superCli.restartSession', restartSession);
+    await waitForCondition(
+      () => !vscode.window.terminals.includes(restartTerminal) && vscode.window.terminals.length === beforeRestart,
+      'Expected superCli.restartSession to dispose the original terminal and relaunch a replacement.',
+    );
+
+    const relaunchedTerminal = vscode.window.terminals[vscode.window.terminals.length - 1];
+    assert.match(relaunchedTerminal.name, /^Super CLI Test/);
+    assert.deepEqual(relaunchedTerminal.creationOptions?.cwd, originalCwd);
+    await disposeAndWaitClosed(relaunchedTerminal);
+
     const beforeUpdateCount = vscode.window.terminals.length;
     await vscode.commands.executeCommand('superCli.updateAgent', treeNode);
 
     const updateTerminal = await waitForNewTerminal(beforeUpdateCount);
     assert.match(updateTerminal.name, /^Update Super CLI Test/);
-    updateTerminal.dispose();
+    await disposeAndWaitClosed(updateTerminal);
+
+    // superCli.updateAllAgents runs every updatable agent's update command in sequence. With builtins
+    // disabled above, only testAgent has an updateCommand ("node --version"), so exactly one terminal
+    // opens here, not one per agent -- testAgent2 (no updateCommand) must be skipped entirely.
+    const beforeUpdateAllCount = vscode.window.terminals.length;
+    await vscode.commands.executeCommand('superCli.updateAllAgents');
+    const updateAllTerminal = await waitForNewTerminal(beforeUpdateAllCount);
+    assert.match(updateAllTerminal.name, /^Update Super CLI Test/);
+    assert.equal(vscode.window.terminals.length, beforeUpdateAllCount + 1);
+    await disposeAndWaitClosed(updateAllTerminal);
+
+    // superCli.stopAllSessions disposes every running session's terminal in one shot. A command that
+    // never exits on its own keeps each session tracked as "running" until explicitly stopped.
+    const longRunningAgent = {
+      id: 'integration-test-long-1',
+      label: 'Super CLI Long 1',
+      command: 'node -e "setInterval(() => {}, 1000)"',
+    };
+    const longRunningAgent2 = {
+      id: 'integration-test-long-2',
+      label: 'Super CLI Long 2',
+      command: 'node -e "setInterval(() => {}, 1000)"',
+    };
+    const beforeBulkLaunch = vscode.window.terminals.length;
+    await vscode.commands.executeCommand('superCli.launchAgent', { kind: 'agent', agent: longRunningAgent });
+    const bulkTerminal1 = await waitForNewTerminal(beforeBulkLaunch);
+    await vscode.commands.executeCommand('superCli.launchAgent', { kind: 'agent', agent: longRunningAgent2 });
+    const bulkTerminal2 = await waitForNewTerminal(beforeBulkLaunch + 1);
+
+    try {
+      await vscode.commands.executeCommand('superCli.stopAllSessions');
+      await waitForCondition(
+        () => !vscode.window.terminals.includes(bulkTerminal1) && !vscode.window.terminals.includes(bulkTerminal2),
+        'Expected superCli.stopAllSessions to dispose every running session terminal.',
+      );
+    } finally {
+      if (vscode.window.terminals.includes(bulkTerminal1)) {
+        bulkTerminal1.dispose();
+      }
+      if (vscode.window.terminals.includes(bulkTerminal2)) {
+        bulkTerminal2.dispose();
+      }
+    }
   } finally {
     await configuration.update('agents', originalAgents, vscode.ConfigurationTarget.Global);
     await configuration.update('favoriteAgents', originalFavorites, vscode.ConfigurationTarget.Global);
+    await configuration.update('useBuiltins', originalUseBuiltins, vscode.ConfigurationTarget.Global);
   }
 
   // Exercises AgentSessionRegistry and the sidebar's tree shaping directly against the real vscode
@@ -198,6 +292,38 @@ async function run() {
     } finally {
       treeProbeTerminal.dispose();
     }
+
+    // Tree shaping: favorites get their own leading group (a distinct section, not merely pinned
+    // rows), with a star icon and the ★ prefix carried onto each row; non-favorites land in their
+    // usual status group and are never duplicated into Favorites.
+    const favoritesProvider = new AgentTreeDataProvider(
+      () => [testAgent, testAgent2],
+      () => [testAgent.id],
+      () => undefined,
+      () => undefined,
+      () => [],
+      extension.extensionUri,
+    );
+
+    const favoritesRoots = favoritesProvider.getChildren();
+    assert.equal(favoritesRoots[0].kind, 'group');
+    assert.equal(favoritesRoots[0].id, 'favorite');
+    const favoritesGroupItem = favoritesProvider.getTreeItem(favoritesRoots[0]);
+    assert.equal(favoritesGroupItem.label, 'Favorites');
+    assert.equal(favoritesGroupItem.iconPath.id, 'star-full');
+    assert.equal(favoritesGroupItem.collapsibleState, vscode.TreeItemCollapsibleState.Expanded);
+
+    const favoriteAgentNodes = favoritesProvider.getChildren(favoritesRoots[0]);
+    assert.equal(favoriteAgentNodes.length, 1);
+    assert.equal(favoriteAgentNodes[0].agent.id, testAgent.id);
+    assert.equal(favoritesProvider.getTreeItem(favoriteAgentNodes[0]).label, `★ ${testAgent.label}`);
+
+    const unknownGroupNode = favoritesRoots.find((node) => node.kind === 'group' && node.id === 'unknown');
+    assert.ok(unknownGroupNode, 'Expected a separate group for the non-favorite agent');
+    assert.deepEqual(
+      favoritesProvider.getChildren(unknownGroupNode).map((node) => node.agent.id),
+      [testAgent2.id],
+    );
 
     // Shell-execution-end path: the launched CLI command exits (here, `node --version` returns
     // immediately) but the terminal itself stays open at a bare shell prompt.

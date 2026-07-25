@@ -166,6 +166,24 @@
         "icon": "$(debug-stop)"
       },
       {
+        "command": "superCli.restartSession",
+        "title": "Restart",
+        "category": "Super CLI",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "superCli.stopAllSessions",
+        "title": "Stop All Running Agents",
+        "category": "Super CLI",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "superCli.updateAllAgents",
+        "title": "Update All Agents",
+        "category": "Super CLI",
+        "icon": "$(arrow-circle-up)"
+      },
+      {
         "command": "superCli.enableBuiltins",
         "title": "Enable Built-in Agents",
         "category": "Super CLI"
@@ -209,19 +227,24 @@
           "group": "navigation@1"
         },
         {
-          "command": "superCli.manageBuiltins",
+          "command": "superCli.updateAllAgents",
           "when": "view == superCli.agents",
           "group": "navigation@2"
         },
         {
-          "command": "superCli.refresh",
+          "command": "superCli.manageBuiltins",
           "when": "view == superCli.agents",
           "group": "navigation@3"
         },
         {
-          "command": "superCli.openSettings",
+          "command": "superCli.refresh",
           "when": "view == superCli.agents",
           "group": "navigation@4"
+        },
+        {
+          "command": "superCli.openSettings",
+          "when": "view == superCli.agents",
+          "group": "navigation@5"
         }
       ],
       "view/item/context": [
@@ -251,8 +274,18 @@
           "group": "inline@4"
         },
         {
+          "command": "superCli.restartSession",
+          "when": "view == superCli.agents && viewItem =~ /^session-running/",
+          "group": "inline@1"
+        },
+        {
           "command": "superCli.stopSession",
           "when": "view == superCli.agents && viewItem =~ /^session-running/",
+          "group": "inline@2"
+        },
+        {
+          "command": "superCli.stopAllSessions",
+          "when": "view == superCli.agents && viewItem =~ /^super-cli-running-group$/",
           "group": "inline@1"
         }
       ],
@@ -283,6 +316,10 @@
         },
         {
           "command": "superCli.stopSession",
+          "when": "false"
+        },
+        {
+          "command": "superCli.restartSession",
           "when": "false"
         },
         {

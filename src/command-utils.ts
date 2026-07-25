@@ -116,6 +116,19 @@ export function resolveTerminalCwd<T>(
   return activeWorkspaceFolder?.uri ?? workspace.workspaceFolders?.[0]?.uri;
 }
 
+/**
+ * Returns true when `resolveTerminalCwd` would otherwise fall back to the first workspace folder
+ * arbitrarily — i.e. there is no active-editor-derived folder, and there is more than one candidate
+ * to choose from. Callers can use this to prompt instead of guessing.
+ */
+export function isTerminalCwdAmbiguous<T>(
+  activeEditor: ActiveEditorLike<T> | undefined,
+  workspace: WorkspaceLike<T>,
+): boolean {
+  const activeWorkspaceFolder = activeEditor ? workspace.getWorkspaceFolder(activeEditor.document.uri) : undefined;
+  return !activeWorkspaceFolder && (workspace.workspaceFolders?.length ?? 0) > 1;
+}
+
 const DEFAULT_PATHEXT = '.COM;.EXE;.BAT;.CMD';
 
 /** Returns the executable extensions to try on Windows (the bare name plus each PATHEXT entry). */

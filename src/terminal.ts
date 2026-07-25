@@ -6,6 +6,7 @@ import {
   appendBoundedText,
   buildExtensionSettingsQuery,
   buildTerminalName,
+  isTerminalCwdAmbiguous,
   resolveTerminalCwd,
   shouldPromptToInstall,
 } from './command-utils.js';
@@ -30,11 +31,15 @@ function collectShellExecutionOutput(execution: vscode.TerminalShellExecution): 
 }
 
 /** Runs a command in the terminal, reading output via shell integration with a sendText fallback. */
-function executeCommandWithOptionalShellIntegration(
+export function executeCommandWithOptionalShellIntegration(
   terminal: vscode.Terminal,
   command: string,
   context: vscode.ExtensionContext,
   onShellExecutionEnd?: (event: vscode.TerminalShellExecutionEndEvent, output: string) => void | Promise<void>,
+  // Called instead of onShellExecutionEnd when shell integration never attached in time: sendText has
+  // no completion signal at all, so callers that need to resolve (e.g. a bulk operation awaiting each
+  // step) can treat "we sent it" as done rather than waiting forever for an end event that never comes.
+  onFallback?: () => void,
 ): void {
   let executionStarted = false;
 
@@ -83,6 +88,7 @@ function executeCommandWithOptionalShellIntegration(
     executionStarted = true;
     shellIntegrationListener.dispose();
     terminal.sendText(command, true);
+    onFallback?.();
   }, 3000);
 
   if (terminal.shellIntegration) {
@@ -106,6 +112,24 @@ function resolveTerminalEnvironment(): { useWsl: boolean } {
   const useWsl = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<boolean>('useWsl', false)
     && process.platform === 'win32';
   return { useWsl };
+}
+
+// Only prompts when resolveTerminalCwd would otherwise guess arbitrarily (a multi-root workspace
+// with no active-editor-derived folder). Canceling the picker falls back to that same guess rather
+// than aborting the launch, so declining the extra choice never blocks the command.
+async function resolveLaunchCwd(): Promise<vscode.Uri | undefined> {
+  const activeEditor = vscode.window.activeTextEditor;
+
+  if (isTerminalCwdAmbiguous(activeEditor, vscode.workspace)) {
+    const picked = await vscode.window.showWorkspaceFolderPick({
+      placeHolder: 'Select a workspace folder to launch in',
+    });
+    if (picked) {
+      return picked.uri;
+    }
+  }
+
+  return resolveTerminalCwd(activeEditor, vscode.workspace);
 }
 
 async function handleMissingAgent(agent: Agent): Promise<void> {
@@ -150,6 +174,9 @@ export async function launchAgent(
   context: vscode.ExtensionContext,
   sequence: number,
   sessions: AgentSessionRegistry,
+  // When set (e.g. a restart reusing a session's original cwd), resolution — and its workspace-folder
+  // picker for ambiguous multi-root cases — is skipped entirely in favor of this exact cwd.
+  cwdOverride?: vscode.Uri,
 ): Promise<boolean> {
   if (!vscode.workspace.isTrusted) {
     const selection = await vscode.window.showWarningMessage(
@@ -175,7 +202,7 @@ export async function launchAgent(
 
   const location = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<string>('terminalLocation', 'beside');
   const { useWsl } = resolveTerminalEnvironment();
-  const cwd = resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace);
+  const cwd = cwdOverride ?? await resolveLaunchCwd();
 
   const terminal = vscode.window.createTerminal({
     name: buildTerminalName(agent.label, sequence, agent.label),
@@ -186,14 +213,19 @@ export async function launchAgent(
     shellPath: useWsl ? 'wsl.exe' : undefined,
   });
   terminal.show();
-  const session = sessions.start(agent, terminal);
+  const session = sessions.start(agent, terminal, cwd);
   watchAgentLifecycle(terminal, agent, context, command, sessions, session.sessionId);
   void vscode.window.setStatusBarMessage(`Started ${agent.label}`, 2500);
   return true;
 }
 
-/** Runs the agent's official update command in a dedicated terminal (without launching the agent). */
-export async function updateAgent(agent: Agent, context: vscode.ExtensionContext): Promise<void> {
+/**
+ * Runs the agent's official update command in a dedicated terminal (without launching the agent).
+ * Resolves true/false on the update's real exit code once shell integration reports it; if shell
+ * integration never attaches, resolves true as soon as the command is sent, since sendText has no
+ * completion signal to wait for (see executeCommandWithOptionalShellIntegration's onFallback).
+ */
+export async function updateAgent(agent: Agent, context: vscode.ExtensionContext): Promise<boolean> {
   if (!vscode.workspace.isTrusted) {
     const selection = await vscode.window.showWarningMessage(
       `Super CLI runs terminal commands in the current workspace. Trust this workspace before updating ${agent.label}.`,
@@ -204,7 +236,7 @@ export async function updateAgent(agent: Agent, context: vscode.ExtensionContext
       await vscode.commands.executeCommand('workbench.trust.manage');
     }
 
-    return;
+    return false;
   }
 
   const { useWsl } = resolveTerminalEnvironment();
@@ -212,9 +244,12 @@ export async function updateAgent(agent: Agent, context: vscode.ExtensionContext
 
   if (!updateCommand) {
     void vscode.window.showInformationMessage(`${agent.label} has no configured update command — it likely updates itself.`);
-    return;
+    return false;
   }
 
+  // No workspace-folder picker here (unlike launchAgent): an update command is typically a global
+  // package-manager invocation that doesn't depend on which folder it runs in, so prompting once per
+  // agent in superCli.updateAllAgents would be pure friction for no benefit.
   const cwd = resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace);
   const terminal = vscode.window.createTerminal({
     name: `Update ${agent.label}`,
@@ -225,30 +260,32 @@ export async function updateAgent(agent: Agent, context: vscode.ExtensionContext
     shellPath: useWsl ? 'wsl.exe' : undefined,
   });
   terminal.show();
-  executeCommandWithOptionalShellIntegration(
-    terminal,
-    updateCommand,
-    context,
-    async (endEvent) => {
-      if (endEvent.exitCode === 0) {
-        const selection = await vscode.window.showInformationMessage(
-          `${agent.label} update completed.`,
-          'Show Terminal',
-        );
-        if (selection === 'Show Terminal') {
-          terminal.show();
-        }
-        return;
-      }
-
-      const selection = await vscode.window.showErrorMessage(
-        `${agent.label} update failed${endEvent.exitCode === undefined ? '' : ` with exit code ${endEvent.exitCode}`}.`,
-        'Show Terminal',
-      );
-      if (selection === 'Show Terminal') {
-        terminal.show();
-      }
-    },
-  );
   void vscode.window.setStatusBarMessage(`Updating ${agent.label}`, 2500);
+
+  return new Promise<boolean>((resolve) => {
+    executeCommandWithOptionalShellIntegration(
+      terminal,
+      updateCommand,
+      context,
+      (endEvent) => {
+        // Resolved as soon as the exit code is known, independent of the notification below: a caller
+        // awaiting every agent in a bulk update must not block on the user dismissing a toast.
+        const succeeded = endEvent.exitCode === 0;
+        resolve(succeeded);
+
+        const notification = succeeded
+          ? vscode.window.showInformationMessage(`${agent.label} update completed.`, 'Show Terminal')
+          : vscode.window.showErrorMessage(
+            `${agent.label} update failed${endEvent.exitCode === undefined ? '' : ` with exit code ${endEvent.exitCode}`}.`,
+            'Show Terminal',
+          );
+        void notification.then((selection) => {
+          if (selection === 'Show Terminal') {
+            terminal.show();
+          }
+        });
+      },
+      () => resolve(true),
+    );
+  });
 }

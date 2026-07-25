@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { Agent } from './agents.js';
-import { buildAgentGroups, compareAgentsByLabel, formatSessionElapsed, type AgentGroup } from './agent-view.js';
+import { buildAgentGroups, formatSessionElapsed, type AgentGroup } from './agent-view.js';
 import type { DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
 import type { AgentSession } from './sessions.js';
@@ -54,7 +54,10 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
       item.description = String(node.agents.length);
       item.contextValue = 'super-cli-group';
       item.iconPath = new vscode.ThemeIcon(
-        node.id === 'ready' ? 'pass-filled' : node.id === 'setup' ? 'tools' : 'list-unordered',
+        node.id === 'favorite' ? 'star-full'
+          : node.id === 'ready' ? 'pass-filled'
+            : node.id === 'setup' ? 'tools'
+              : 'list-unordered',
       );
       item.accessibilityInformation = {
         label: `${node.label}, ${node.agents.length} ${node.agents.length === 1 ? 'agent' : 'agents'}`,
@@ -67,7 +70,7 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
       const item = new vscode.TreeItem('Running', vscode.TreeItemCollapsibleState.Expanded);
       item.id = 'group:running';
       item.description = String(count);
-      item.contextValue = 'super-cli-group';
+      item.contextValue = 'super-cli-running-group';
       item.iconPath = new vscode.ThemeIcon('loading~spin');
       item.accessibilityInformation = {
         label: `Running, ${count} ${count === 1 ? 'session' : 'sessions'}`,
@@ -155,13 +158,11 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
 
     const agents = this.getAgents();
     const favoriteIds = this.getFavoriteIds();
-    const favorites = agents.filter((agent) => favoriteIds.includes(agent.id)).sort(compareAgentsByLabel);
     const groups: AgentGroupNode[] = buildAgentGroups(agents, favoriteIds, this.getInstallStatus)
       .map((group) => ({ ...group, kind: 'group' }));
     const sessions = this.getSessions();
     const runningGroup: RunningGroupNode[] = sessions.length > 0 ? [{ kind: 'running-group', sessions }] : [];
-    const favoriteNodes: AgentItemNode[] = favorites.map((agent) => ({ kind: 'agent', agent }));
 
-    return [...runningGroup, ...favoriteNodes, ...groups];
+    return [...runningGroup, ...groups];
   }
 }

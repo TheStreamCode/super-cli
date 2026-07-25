@@ -99,6 +99,9 @@ test('package declares the launcher commands', () => {
     'superCli.openAgentDocumentation',
     'superCli.revealSession',
     'superCli.stopSession',
+    'superCli.restartSession',
+    'superCli.stopAllSessions',
+    'superCli.updateAllAgents',
     'superCli.enableBuiltins',
     'superCli.manageBuiltins',
     'superCli.runDoctor',
@@ -137,6 +140,19 @@ test('sidebar inline actions never target status group headers', () => {
     assert.equal(new RegExp(regexSource).test('super-cli-group'), false, item.command);
     assert.equal(new RegExp(regexSource).test('agent-group'), false, item.command);
   }
+});
+
+test('running-group bulk actions and session actions target the right context values', () => {
+  const packageJson = readPackageJson();
+  const inlineItems = packageJson.contributes.menus['view/item/context'];
+  const byCommand = (command) => inlineItems.find((item) => item.command === command);
+  const regexFor = (command) => new RegExp(byCommand(command).when.match(/viewItem =~ \/(.+)\/$/)[1]);
+
+  assert.ok(regexFor('superCli.stopAllSessions').test('super-cli-running-group'));
+  assert.ok(regexFor('superCli.restartSession').test('session-running'));
+  assert.ok(regexFor('superCli.stopSession').test('session-running'));
+  assert.equal(regexFor('superCli.stopAllSessions').test('session-running'), false);
+  assert.equal(regexFor('superCli.restartSession').test('super-cli-running-group'), false);
 });
 
 test('agents setting is machine-scoped and security restricted', () => {

@@ -494,6 +494,78 @@ export function activate(context: vscode.ExtensionContext): void {
     session?.terminal.dispose();
   });
 
+  // Reuses the session's original cwd as-is (bypassing launchAgent's own resolution and its
+  // workspace-folder picker) so a restart lands in exactly the same place, without asking again.
+  // Launches the replacement BEFORE disposing the original: launchAgent returns false without
+  // creating a terminal for an untrusted workspace or an agent with no command configured, and the
+  // original session must survive that — a restart that fails should never be a silent stop.
+  const restartSessionCommand = vscode.commands.registerCommand('superCli.restartSession', async (argument?: unknown) => {
+    const session = resolveCommandSessionArgument(argument);
+    if (!session) {
+      return;
+    }
+
+    const launched = await launchAgent(session.agent, context, terminalSequence++, sessions, session.cwd);
+    if (launched) {
+      session.terminal.dispose();
+    }
+  });
+
+  // Each dispose() triggers AgentSessionRegistry's own onDidCloseTerminal listener individually, same
+  // as stopping one session at a time — there is no separate bulk code path in the registry itself.
+  const stopAllSessionsCommand = vscode.commands.registerCommand('superCli.stopAllSessions', () => {
+    for (const session of sessions.list()) {
+      session.terminal.dispose();
+    }
+  });
+
+  // Runs updates one at a time (awaiting each agent's real completion, or its fallback signal — see
+  // updateAgent) rather than firing them all concurrently, which would otherwise open one terminal per
+  // updatable agent at once, all running a network-fetching package manager simultaneously. Agents
+  // confirmed missing from PATH are skipped, same as launchWithStatusGuard's default guard — asking
+  // "Launch Anyway?" once per missing agent would be as much friction as the picker this avoids above.
+  const updateAllAgentsCommand = vscode.commands.registerCommand('superCli.updateAllAgents', async () => {
+    const withUpdateCommand = getEffectiveAgents().filter((agent) => agent.updateCommand);
+    const updatable = withUpdateCommand.filter((agent) => installStatus.get(agent.id) !== false);
+    const skipped = withUpdateCommand.length - updatable.length;
+
+    if (updatable.length === 0) {
+      void vscode.window.showInformationMessage(
+        skipped > 0
+          ? 'No installed agents have an update command configured.'
+          : 'No agents have an update command configured.',
+      );
+      return;
+    }
+
+    let succeeded = 0;
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Super CLI: updating agents',
+        cancellable: false,
+      },
+      async (progress) => {
+        for (const [index, agent] of updatable.entries()) {
+          progress.report({
+            message: `${agent.label} (${index + 1}/${updatable.length})`,
+            increment: 100 / updatable.length,
+          });
+          if (await updateAgent(agent, context)) {
+            succeeded++;
+          }
+        }
+      },
+    );
+
+    void vscode.window.setStatusBarMessage(
+      skipped > 0
+        ? `Updated ${succeeded}/${updatable.length} agents (${skipped} not installed, skipped)`
+        : `Updated ${succeeded}/${updatable.length} agents`,
+      3000,
+    );
+  });
+
   const openAgentDocumentationCommand = vscode.commands.registerCommand(
     'superCli.openAgentDocumentation',
     async (argument?: unknown) => {
@@ -556,6 +628,9 @@ export function activate(context: vscode.ExtensionContext): void {
     openAgentDocumentationCommand,
     revealSessionCommand,
     stopSessionCommand,
+    restartSessionCommand,
+    stopAllSessionsCommand,
+    updateAllAgentsCommand,
     enableBuiltinsCommand,
     manageBuiltinsCommand,
     runDoctorCommand,

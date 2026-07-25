@@ -7,6 +7,8 @@ export interface AgentSession {
   readonly agent: Agent;
   readonly terminal: vscode.Terminal;
   readonly startedAt: number;
+  /** The cwd the terminal was launched with, if any — reused as-is by a restart, skipping the picker. */
+  readonly cwd: vscode.Uri | undefined;
 }
 
 function isAgentSession(value: unknown): value is AgentSession {
@@ -53,12 +55,13 @@ export class AgentSessionRegistry implements vscode.Disposable {
   }
 
   /** Registers a newly launched agent terminal as a running session. */
-  start(agent: Agent, terminal: vscode.Terminal): AgentSession {
+  start(agent: Agent, terminal: vscode.Terminal, cwd: vscode.Uri | undefined): AgentSession {
     const session: AgentSession = {
       sessionId: `session-${this.nextSessionId++}`,
       agent,
       terminal,
       startedAt: Date.now(),
+      cwd,
     };
 
     this.sessions.set(session.sessionId, session);
