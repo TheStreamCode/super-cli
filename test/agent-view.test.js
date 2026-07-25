@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const {
   buildAgentGroups,
   buildAgentSections,
+  formatSessionElapsed,
   shouldOfferFavoriteAfterLaunch,
   shouldOfferRatingAfterLaunch,
   RATING_PROMPT_LAUNCH_THRESHOLD,
@@ -61,4 +62,22 @@ test('rating prompt is offered exactly once, only once the launch threshold is r
   assert.equal(shouldOfferRatingAfterLaunch(RATING_PROMPT_LAUNCH_THRESHOLD, false), true);
   assert.equal(shouldOfferRatingAfterLaunch(RATING_PROMPT_LAUNCH_THRESHOLD + 100, false), true);
   assert.equal(shouldOfferRatingAfterLaunch(RATING_PROMPT_LAUNCH_THRESHOLD, true), false);
+});
+
+test('formatSessionElapsed renders a compact duration', () => {
+  const startedAt = 1_000_000;
+
+  assert.equal(formatSessionElapsed(startedAt, startedAt), '<1m');
+  assert.equal(formatSessionElapsed(startedAt, startedAt + 45_000), '<1m');
+  assert.equal(formatSessionElapsed(startedAt, startedAt + 59_999), '<1m');
+  assert.equal(formatSessionElapsed(startedAt, startedAt + 60_000), '1m');
+  assert.equal(formatSessionElapsed(startedAt, startedAt + 5 * 60_000), '5m');
+  assert.equal(formatSessionElapsed(startedAt, startedAt + 60 * 60_000), '1h');
+  assert.equal(formatSessionElapsed(startedAt, startedAt + 72 * 60_000), '1h 12m');
+});
+
+test('formatSessionElapsed never goes negative for clock skew', () => {
+  const startedAt = 1_000_000;
+
+  assert.equal(formatSessionElapsed(startedAt, startedAt - 5_000), '<1m');
 });

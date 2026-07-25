@@ -18,6 +18,7 @@ import {
 import { executableExistsOnPath, isExecutableFile } from './command-utils.js';
 import { buildDoctorReport, inspectAgents, type DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
+import { AgentSessionRegistry, resolveCommandSessionArgument } from './sessions.js';
 import { AgentTreeDataProvider } from './tree.js';
 import { launchAgent, openExtensionSettings, updateAgent } from './terminal.js';
 
@@ -74,14 +75,18 @@ export function activate(context: vscode.ExtensionContext): void {
     provideTextDocumentContent: () => doctorReport,
   };
 
+  const sessions = new AgentSessionRegistry();
+
   const treeProvider = new AgentTreeDataProvider(
     getEffectiveAgents,
     getFavoriteId,
     (id) => installStatus.get(id),
     (id) => doctorResults.get(id),
+    () => sessions.list(),
     context.extensionUri,
   );
   const treeView = vscode.window.createTreeView('superCli.agents', { treeDataProvider: treeProvider });
+  const sessionsChangeListener = sessions.onDidChange(() => treeProvider.refresh());
 
   // Recomputes install status off the activation path. Under WSL the host PATH is not representative,
   // so status is left unknown rather than reported as missing.
@@ -227,7 +232,7 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   const launchAndMaybeOfferRating = async (agent: Agent): Promise<boolean> => {
-    const launched = await launchAgent(agent, context, terminalSequence++);
+    const launched = await launchAgent(agent, context, terminalSequence++, sessions);
     if (launched) {
       maybeOfferRatingPrompt();
     }
@@ -414,6 +419,18 @@ export function activate(context: vscode.ExtensionContext): void {
     await updateAgent(agent, context);
   });
 
+  const revealSessionCommand = vscode.commands.registerCommand('superCli.revealSession', (argument?: unknown) => {
+    const session = resolveCommandSessionArgument(argument);
+    session?.terminal.show();
+  });
+
+  // Disposing the terminal triggers AgentSessionRegistry's own onDidCloseTerminal listener, so the
+  // session clears itself the same way it would if the user had closed the terminal directly.
+  const stopSessionCommand = vscode.commands.registerCommand('superCli.stopSession', (argument?: unknown) => {
+    const session = resolveCommandSessionArgument(argument);
+    session?.terminal.dispose();
+  });
+
   const openAgentDocumentationCommand = vscode.commands.registerCommand(
     'superCli.openAgentDocumentation',
     async (argument?: unknown) => {
@@ -463,6 +480,8 @@ export function activate(context: vscode.ExtensionContext): void {
   refreshInstallStatus();
 
   context.subscriptions.push(
+    sessions,
+    sessionsChangeListener,
     treeView,
     launchCommand,
     launchFavoriteCommand,
@@ -471,6 +490,8 @@ export function activate(context: vscode.ExtensionContext): void {
     unsetFavoriteCommand,
     updateAgentCommand,
     openAgentDocumentationCommand,
+    revealSessionCommand,
+    stopSessionCommand,
     enableBuiltinsCommand,
     manageBuiltinsCommand,
     runDoctorCommand,

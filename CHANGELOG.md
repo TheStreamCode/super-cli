@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-07-25
+
+### Added
+
+- Added a live "Running" section to the sidebar showing every active agent session and how long it
+  has been running, with a click to bring its terminal back into focus and an inline button to stop
+  it. It tracks only terminal lifecycle (open/close, and when the launched CLI command itself exits)
+  and never reads terminal content.
+
 ## [1.3.0] - 2026-07-24
 
 ### Added

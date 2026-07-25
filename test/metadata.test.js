@@ -97,6 +97,8 @@ test('package declares the launcher commands', () => {
     'superCli.unsetFavorite',
     'superCli.updateAgent',
     'superCli.openAgentDocumentation',
+    'superCli.revealSession',
+    'superCli.stopSession',
     'superCli.enableBuiltins',
     'superCli.manageBuiltins',
     'superCli.runDoctor',

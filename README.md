@@ -66,6 +66,11 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
 - **Ready and setup states.** The sidebar groups ready agents, unknown WSL states, and CLIs that need
   setup. Agents are alphabetical within each section, while the launcher keeps the favorite in its
   own section.
+- **Running sessions, live.** A **Running** group appears at the top of the sidebar the moment you
+  launch an agent, showing every active session and how long it has been running; click one to bring
+  its terminal back into focus, or use the inline stop button to end it. It clears itself as soon as
+  the CLI exits (with terminal shell integration available) and always when the terminal closes.
+  Super CLI never reads terminal content to show this — only the terminal's own lifecycle.
 - **Agent Manager.** Choose exactly which built-in CLIs appear from the sidebar toolbar or with
   **Super CLI: Manage Built-in Agents**. Hiding a favorite safely clears the favorite selection.
 - **Agent Doctor.** Run an explicit, bounded local diagnostic to see detected CLI versions and
@@ -180,6 +185,14 @@ settings.
 - **Companion editor extensions.** Super CLI does not modify agent configuration files or shell
   profiles. It launches **Claude Code** with the official `CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=1`
   environment variable so its companion extension is not installed automatically.
+- **I don't see a "Running" section.** It only appears once at least one agent has an active
+  terminal session — launch an agent from the sidebar and it appears at the top instantly. It
+  disappears once that terminal closes, or sooner when the CLI itself exits — the latter needs
+  terminal shell integration, so without it (or on a shell that doesn't support it) the row stays
+  until you close the terminal.
+- **I updated the extension but nothing changed.** Reload the window (**Developer: Reload Window**
+  from the Command Palette) or restart your editor. Extension code loaded into a running window
+  is not replaced until the window reloads, even after a newer version finishes installing.
 
 ## FAQ
 

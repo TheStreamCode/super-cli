@@ -59,6 +59,26 @@ export function buildAgentGroups(
   return groups.filter((group) => group.agents.length > 0);
 }
 
+// The sidebar only ticks this display every 30s (see AgentSessionRegistry), so it reports whole
+// minutes rather than seconds — exact seconds would visibly freeze between ticks instead of counting.
+/** Formats how long a session has been running, in a compact form like "<1m", "5m", or "1h 12m". */
+export function formatSessionElapsed(startedAtMs: number, nowMs: number): string {
+  const elapsedSeconds = Math.max(0, Math.floor((nowMs - startedAtMs) / 1000));
+
+  if (elapsedSeconds < 60) {
+    return '<1m';
+  }
+
+  const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+  if (elapsedMinutes < 60) {
+    return `${elapsedMinutes}m`;
+  }
+
+  const hours = Math.floor(elapsedMinutes / 60);
+  const minutes = elapsedMinutes % 60;
+  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
+}
+
 /** Builds non-duplicated Quick Pick sections with the favorite promoted to its own section. */
 export function buildAgentSections(
   agents: readonly Agent[],

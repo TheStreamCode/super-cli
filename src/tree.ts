@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import type { Agent } from './agents.js';
-import { buildAgentGroups, type AgentGroup } from './agent-view.js';
+import { buildAgentGroups, formatSessionElapsed, type AgentGroup } from './agent-view.js';
 import type { DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
+import type { AgentSession } from './sessions.js';
 
 export interface AgentGroupNode extends AgentGroup {
   kind: 'group';
@@ -13,7 +14,17 @@ export interface AgentItemNode {
   agent: Agent;
 }
 
-export type AgentTreeNode = AgentGroupNode | AgentItemNode;
+export interface RunningGroupNode {
+  kind: 'running-group';
+  sessions: AgentSession[];
+}
+
+export interface SessionItemNode {
+  kind: 'session';
+  session: AgentSession;
+}
+
+export type AgentTreeNode = AgentGroupNode | AgentItemNode | RunningGroupNode | SessionItemNode;
 
 /** Lists the configured coding agents in the Super CLI sidebar. */
 export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeNode> {
@@ -25,6 +36,7 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
     private readonly getFavoriteId: () => string,
     private readonly getInstallStatus: (id: string) => boolean | undefined,
     private readonly getDoctorResult: (id: string) => DoctorResult | undefined,
+    private readonly getSessions: () => AgentSession[],
     private readonly extensionUri: vscode.Uri,
   ) {}
 
@@ -46,6 +58,39 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
       );
       item.accessibilityInformation = {
         label: `${node.label}, ${node.agents.length} ${node.agents.length === 1 ? 'agent' : 'agents'}`,
+      };
+      return item;
+    }
+
+    if (node.kind === 'running-group') {
+      const count = node.sessions.length;
+      const item = new vscode.TreeItem('Running', vscode.TreeItemCollapsibleState.Expanded);
+      item.id = 'group:running';
+      item.description = String(count);
+      item.contextValue = 'super-cli-group';
+      item.iconPath = new vscode.ThemeIcon('loading~spin');
+      item.accessibilityInformation = {
+        label: `Running, ${count} ${count === 1 ? 'session' : 'sessions'}`,
+      };
+      return item;
+    }
+
+    if (node.kind === 'session') {
+      const { session } = node;
+      const elapsed = formatSessionElapsed(session.startedAt, Date.now());
+      const item = new vscode.TreeItem(session.agent.label, vscode.TreeItemCollapsibleState.None);
+      item.id = session.sessionId;
+      item.description = elapsed;
+      item.tooltip = `${session.agent.label} · running for ${elapsed} · click to reveal its terminal`;
+      item.contextValue = 'session-running';
+      item.iconPath = resolveAgentIcon(session.agent, this.extensionUri);
+      item.accessibilityInformation = {
+        label: `${session.agent.label}, running for ${elapsed}`,
+      };
+      item.command = {
+        command: 'superCli.revealSession',
+        title: 'Reveal Terminal',
+        arguments: [session],
       };
       return item;
     }
@@ -99,7 +144,11 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
       return node.agents.map((agent) => ({ kind: 'agent', agent }));
     }
 
-    if (node?.kind === 'agent') {
+    if (node?.kind === 'running-group') {
+      return node.sessions.map((session) => ({ kind: 'session', session }));
+    }
+
+    if (node?.kind === 'agent' || node?.kind === 'session') {
       return [];
     }
 
@@ -108,7 +157,10 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
     const favorite = agents.find((agent) => agent.id === favoriteId);
     const groups: AgentGroupNode[] = buildAgentGroups(agents, favoriteId, this.getInstallStatus)
       .map((group) => ({ ...group, kind: 'group' }));
+    const sessions = this.getSessions();
+    const runningGroup: RunningGroupNode[] = sessions.length > 0 ? [{ kind: 'running-group', sessions }] : [];
+    const favoriteNode: AgentItemNode[] = favorite ? [{ kind: 'agent', agent: favorite }] : [];
 
-    return favorite ? [{ kind: 'agent', agent: favorite }, ...groups] : groups;
+    return [...runningGroup, ...favoriteNode, ...groups];
   }
 }

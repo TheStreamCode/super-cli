@@ -1,5 +1,7 @@
 .github/**
 docs/**
+AGENTS.md
+CLAUDE.md
 .vscode/**
 .vscode-test/**
 .vsce/**

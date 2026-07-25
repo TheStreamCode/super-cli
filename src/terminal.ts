@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getMissingAgentGuidance, type Agent } from './agents.js';
 import { resolveAgentIcon } from './icons.js';
+import type { AgentSessionRegistry } from './sessions.js';
 import {
   appendBoundedText,
   buildExtensionSettingsQuery,
@@ -118,17 +119,24 @@ async function handleMissingAgent(agent: Agent): Promise<void> {
   }
 }
 
-function watchForMissingAgent(
+// Watches the agent command started in `terminal`: ends its tracked session once that command exits
+// (the terminal itself may stay open at a bare shell prompt), and separately flags a likely-missing
+// CLI. Both share one shell-integration listener since the agent command is the first and only thing
+// this terminal runs.
+function watchAgentLifecycle(
   terminal: vscode.Terminal,
   agent: Agent,
   context: vscode.ExtensionContext,
   runCommand: string,
+  sessions: AgentSessionRegistry,
+  sessionId: string,
 ): void {
   executeCommandWithOptionalShellIntegration(
     terminal,
     runCommand,
     context,
     async (endEvent, output) => {
+      sessions.end(sessionId);
       if (shouldPromptToInstall(agent.command, endEvent.exitCode, output)) {
         await handleMissingAgent(agent);
       }
@@ -136,8 +144,13 @@ function watchForMissingAgent(
   );
 }
 
-/** Opens a side terminal and launches the given agent, watching for a missing CLI. */
-export async function launchAgent(agent: Agent, context: vscode.ExtensionContext, sequence: number): Promise<boolean> {
+/** Opens a side terminal and launches the given agent, tracking it as a running session. */
+export async function launchAgent(
+  agent: Agent,
+  context: vscode.ExtensionContext,
+  sequence: number,
+  sessions: AgentSessionRegistry,
+): Promise<boolean> {
   if (!vscode.workspace.isTrusted) {
     const selection = await vscode.window.showWarningMessage(
       `Super CLI runs terminal commands in the current workspace. Trust this workspace before launching ${agent.label}.`,
@@ -173,7 +186,8 @@ export async function launchAgent(agent: Agent, context: vscode.ExtensionContext
     shellPath: useWsl ? 'wsl.exe' : undefined,
   });
   terminal.show();
-  watchForMissingAgent(terminal, agent, context, command);
+  const session = sessions.start(agent, terminal);
+  watchAgentLifecycle(terminal, agent, context, command, sessions, session.sessionId);
   void vscode.window.setStatusBarMessage(`Started ${agent.label}`, 2500);
   return true;
 }

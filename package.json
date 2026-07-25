@@ -3,7 +3,7 @@
   "displayName": "Super CLI: Claude Code, Codex & AI Agent Launcher",
   "description": "Launch Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro, OpenClaw, Qoder CLI and other AI coding agents from one VS Code sidebar.",
   "publisher": "mikesoft",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -154,6 +154,18 @@
         "icon": "$(book)"
       },
       {
+        "command": "superCli.revealSession",
+        "title": "Reveal Terminal",
+        "category": "Super CLI",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "superCli.stopSession",
+        "title": "Stop",
+        "category": "Super CLI",
+        "icon": "$(debug-stop)"
+      },
+      {
         "command": "superCli.enableBuiltins",
         "title": "Enable Built-in Agents",
         "category": "Super CLI"
@@ -237,6 +249,11 @@
           "command": "superCli.openAgentDocumentation",
           "when": "view == superCli.agents && viewItem =~ /^agent-missing.*documented/",
           "group": "inline@4"
+        },
+        {
+          "command": "superCli.stopSession",
+          "when": "view == superCli.agents && viewItem =~ /^session-running/",
+          "group": "inline@1"
         }
       ],
       "commandPalette": [
@@ -258,6 +275,14 @@
         },
         {
           "command": "superCli.openAgentDocumentation",
+          "when": "false"
+        },
+        {
+          "command": "superCli.revealSession",
+          "when": "false"
+        },
+        {
+          "command": "superCli.stopSession",
           "when": "false"
         },
         {
