@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { Agent } from './agents.js';
-import { buildAgentGroups, formatSessionElapsed, type AgentGroup } from './agent-view.js';
+import { buildAgentGroups, compareAgentsByLabel, formatSessionElapsed, type AgentGroup } from './agent-view.js';
 import type { DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
 import type { AgentSession } from './sessions.js';
@@ -33,7 +33,7 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
 
   constructor(
     private readonly getAgents: () => Agent[],
-    private readonly getFavoriteId: () => string,
+    private readonly getFavoriteIds: () => string[],
     private readonly getInstallStatus: (id: string) => boolean | undefined,
     private readonly getDoctorResult: (id: string) => DoctorResult | undefined,
     private readonly getSessions: () => AgentSession[],
@@ -96,7 +96,8 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
     }
 
     const agent = node.agent;
-    const isFavorite = agent.id === this.getFavoriteId();
+    const favoriteIds = this.getFavoriteIds();
+    const isFavorite = favoriteIds.includes(agent.id);
     const installStatus = this.getInstallStatus(agent.id);
     const doctorResult = this.getDoctorResult(agent.id);
     const isMissing = installStatus === false;
@@ -115,7 +116,7 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
       ? `setup required · ${agent.command}`
       : doctorDescription ? `${doctorDescription} · ${agent.command}` : agent.command;
     item.tooltip = `Launch ${agent.label} (${agent.command})`
-      + (isFavorite ? ' · Favorite (Ctrl+Alt+A)' : '')
+      + (isFavorite ? (favoriteIds.length === 1 ? ' · Favorite (Ctrl+Alt+A)' : ' · Favorite') : '')
       + (installStatus === true ? ' · ready' : isMissing ? ' · not found on PATH' : ' · status unknown')
       + (doctorResult?.version ? ` · ${doctorResult.version}` : '')
       + (doctorResult?.detail ? ` · ${doctorResult.detail}` : '');
@@ -153,14 +154,14 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
     }
 
     const agents = this.getAgents();
-    const favoriteId = this.getFavoriteId();
-    const favorite = agents.find((agent) => agent.id === favoriteId);
-    const groups: AgentGroupNode[] = buildAgentGroups(agents, favoriteId, this.getInstallStatus)
+    const favoriteIds = this.getFavoriteIds();
+    const favorites = agents.filter((agent) => favoriteIds.includes(agent.id)).sort(compareAgentsByLabel);
+    const groups: AgentGroupNode[] = buildAgentGroups(agents, favoriteIds, this.getInstallStatus)
       .map((group) => ({ ...group, kind: 'group' }));
     const sessions = this.getSessions();
     const runningGroup: RunningGroupNode[] = sessions.length > 0 ? [{ kind: 'running-group', sessions }] : [];
-    const favoriteNode: AgentItemNode[] = favorite ? [{ kind: 'agent', agent: favorite }] : [];
+    const favoriteNodes: AgentItemNode[] = favorites.map((agent) => ({ kind: 'agent', agent }));
 
-    return [...runningGroup, ...favoriteNode, ...groups];
+    return [...runningGroup, ...favoriteNodes, ...groups];
   }
 }

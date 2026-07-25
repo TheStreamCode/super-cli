@@ -148,8 +148,11 @@ test('agents setting is machine-scoped and security restricted', () => {
   assert.equal(properties['superCli.useBuiltins'].default, true);
   assert.equal(properties['superCli.hiddenBuiltins'].scope, 'machine');
   assert.ok(properties['superCli.hiddenBuiltins'].items.enum.includes('openclaw'));
+  assert.equal(properties['superCli.favoriteAgents'].type, 'array');
+  assert.equal(properties['superCli.favoriteAgents'].scope, 'machine');
   assert.equal(properties['superCli.favoriteAgent'].type, 'string');
   assert.equal(properties['superCli.favoriteAgent'].scope, 'machine');
+  assert.ok(properties['superCli.favoriteAgent'].markdownDeprecationMessage.includes('favoriteAgents'));
   assert.deepEqual(properties['superCli.agents'].items.required, ['id', 'label', 'command']);
   assert.deepEqual(packageJson.capabilities.untrustedWorkspaces.restrictedConfigurations, ['superCli.agents']);
   assert.match(properties['superCli.agents'].items.properties.id.description, /kimi/);

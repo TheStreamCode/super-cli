@@ -5,6 +5,17 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-07-25
+
+### Added
+
+- Added support for multiple favorite agents. Star as many as you like from the sidebar or launcher;
+  `Ctrl+Alt+A` launches directly with exactly one favorite, opens a quick pick scoped to your
+  favorites with several, or the full picker with none. The setting moved from
+  `superCli.favoriteAgent` (a single id) to `superCli.favoriteAgents` (an array); an existing
+  favorite is migrated automatically, and the old setting is left in place — never cleared — so
+  Settings Sync can't drop it on a machine still running an older version.
+
 ## [1.4.0] - 2026-07-25
 
 ### Added

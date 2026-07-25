@@ -12,6 +12,7 @@ import {
 import {
   buildAgentSections,
   compareAgentsByLabel,
+  resolveMigratedFavorites,
   shouldOfferFavoriteAfterLaunch,
   shouldOfferRatingAfterLaunch,
 } from './agent-view.js';
@@ -46,16 +47,27 @@ function getEffectiveAgents(): Agent[] {
     .map((agent) => resolveAgentCommands(agent, commandPlatform));
 }
 
-/** Returns the id of the user's favorite agent, or '' when none is set. */
-function getFavoriteId(): string {
-  return vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<string>('favoriteAgent', '');
+/** Returns the ids of the user's favorite agents. */
+function getFavoriteIds(): string[] {
+  return vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<string[]>('favoriteAgents', []);
 }
 
-/** Persists the favorite agent id (or clears it when empty) at the user (global) level. */
-async function setFavoriteId(id: string): Promise<void> {
+/** Persists the full favorites list at the user (global) level. */
+async function updateFavorites(ids: string[]): Promise<void> {
   await vscode.workspace
     .getConfiguration(SETTINGS_NAMESPACE)
-    .update('favoriteAgent', id || undefined, vscode.ConfigurationTarget.Global);
+    .update('favoriteAgents', ids, vscode.ConfigurationTarget.Global);
+}
+
+async function addFavorite(id: string): Promise<void> {
+  const current = getFavoriteIds();
+  if (!current.includes(id)) {
+    await updateFavorites([...current, id]);
+  }
+}
+
+async function removeFavorite(id: string): Promise<void> {
+  await updateFavorites(getFavoriteIds().filter((existing) => existing !== id));
 }
 
 interface AgentQuickPickItem extends vscode.QuickPickItem {
@@ -79,7 +91,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const treeProvider = new AgentTreeDataProvider(
     getEffectiveAgents,
-    getFavoriteId,
+    getFavoriteIds,
     (id) => installStatus.get(id),
     (id) => doctorResults.get(id),
     () => sessions.list(),
@@ -87,6 +99,22 @@ export function activate(context: vscode.ExtensionContext): void {
   );
   const treeView = vscode.window.createTreeView('superCli.agents', { treeDataProvider: treeProvider });
   const sessionsChangeListener = sessions.onDidChange(() => treeProvider.refresh());
+
+  // One-time migration from the legacy single-favorite setting. The legacy setting is deliberately
+  // left in place (never cleared) rather than being wiped after copying it over: clearing it would
+  // propagate through Settings Sync and could erase the favorite on another machine still running
+  // an older version that only reads the legacy key.
+  const migrateLegacyFavorite = async (): Promise<void> => {
+    const configuration = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE);
+    const legacyFavoriteId = configuration.inspect<string>('favoriteAgent')?.globalValue;
+    const currentFavoriteIds = configuration.inspect<string[]>('favoriteAgents')?.globalValue;
+    const migrated = resolveMigratedFavorites(legacyFavoriteId, currentFavoriteIds);
+
+    if (migrated) {
+      await updateFavorites(migrated);
+      treeProvider.refresh();
+    }
+  };
 
   // Recomputes install status off the activation path. Under WSL the host PATH is not representative,
   // so status is left unknown rather than reported as missing.
@@ -146,10 +174,15 @@ export function activate(context: vscode.ExtensionContext): void {
     await configuration.update('useBuiltins', selection.length > 0, vscode.ConfigurationTarget.Global);
     await configuration.update('hiddenBuiltins', nextHiddenIds, vscode.ConfigurationTarget.Global);
 
-    const favoriteId = getFavoriteId();
-    if (favoriteId && nextHiddenIds.includes(favoriteId)) {
-      await setFavoriteId('');
-      void vscode.window.showInformationMessage('The hidden agent was removed as your favorite.');
+    const favoriteIds = getFavoriteIds();
+    const removedFavorites = favoriteIds.filter((id) => nextHiddenIds.includes(id));
+    if (removedFavorites.length > 0) {
+      await updateFavorites(favoriteIds.filter((id) => !nextHiddenIds.includes(id)));
+      void vscode.window.showInformationMessage(
+        removedFavorites.length === 1
+          ? 'The hidden agent was removed from your favorites.'
+          : `${removedFavorites.length} hidden agents were removed from your favorites.`,
+      );
     }
   };
 
@@ -266,22 +299,23 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const buildQuickPickItems = (): AgentQuickPickItem[] => {
     const agents = getEffectiveAgents();
-    const favoriteId = getFavoriteId();
-    const sections = buildAgentSections(agents, favoriteId, (id) => installStatus.get(id));
+    const favoriteIds = getFavoriteIds();
+    const sections = buildAgentSections(agents, favoriteIds, (id) => installStatus.get(id));
     const items: AgentQuickPickItem[] = [];
 
     for (const section of sections) {
       items.push({ label: section.label, kind: vscode.QuickPickItemKind.Separator });
       for (const agent of section.agents) {
         const status = installStatus.get(agent.id);
+        const isFavorite = favoriteIds.includes(agent.id);
         items.push({
           label: agent.label,
           description: agent.command,
           detail: status === false ? 'Setup required' : status === true ? 'Ready to launch' : 'Installation status unknown',
           iconPath: resolveAgentIcon(agent, context.extensionUri),
           buttons: [{
-            iconPath: new vscode.ThemeIcon(agent.id === favoriteId ? 'star-full' : 'star-empty'),
-            tooltip: agent.id === favoriteId ? 'Remove favorite' : 'Set as favorite',
+            iconPath: new vscode.ThemeIcon(isFavorite ? 'star-full' : 'star-empty'),
+            tooltip: isFavorite ? 'Remove favorite' : 'Set as favorite',
           }],
           agent,
         });
@@ -332,7 +366,12 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        await setFavoriteId(agent.id === getFavoriteId() ? '' : agent.id);
+        if (getFavoriteIds().includes(agent.id)) {
+          await removeFavorite(agent.id);
+        } else {
+          await addFavorite(agent.id);
+        }
+
         quickPick.items = buildQuickPickItems();
         treeProvider.refresh();
       });
@@ -355,14 +394,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
     const launched = await launchWithStatusGuard(picked);
 
-    if (shouldOfferFavoriteAfterLaunch(offerFavorite, launched, picked.id, getFavoriteId())) {
+    if (shouldOfferFavoriteAfterLaunch(offerFavorite, launched, picked.id, getFavoriteIds())) {
       const choice = await vscode.window.showInformationMessage(
         `Set "${picked.label}" as your favorite agent? You can then launch it with Ctrl+Alt+A.`,
         'Set Favorite',
       );
 
       if (choice === 'Set Favorite') {
-        await setFavoriteId(picked.id);
+        await addFavorite(picked.id);
       }
     }
   };
@@ -370,15 +409,38 @@ export function activate(context: vscode.ExtensionContext): void {
   const launchCommand = vscode.commands.registerCommand('superCli.launch', () => runLaunchQuickPick(false));
 
   const launchFavoriteCommand = vscode.commands.registerCommand('superCli.launchFavorite', async () => {
-    const favoriteId = getFavoriteId();
-    const favorite = favoriteId ? getEffectiveAgents().find((agent) => agent.id === favoriteId) : undefined;
+    const favoriteIds = getFavoriteIds();
+    const favorites = getEffectiveAgents().filter((agent) => favoriteIds.includes(agent.id));
 
-    if (favorite) {
-      await launchWithStatusGuard(favorite);
+    if (favorites.length === 1) {
+      await launchWithStatusGuard(favorites[0]);
       return;
     }
 
-    // No favorite set (or it no longer exists): let the user pick one and offer to remember it.
+    if (favorites.length > 1) {
+      const sorted = [...favorites].sort(compareAgentsByLabel);
+      const picked = await vscode.window.showQuickPick<AgentQuickPickItem>(
+        sorted.map((agent) => {
+          const status = installStatus.get(agent.id);
+          return {
+            label: agent.label,
+            description: agent.command,
+            detail: status === false ? 'Setup required' : status === true ? 'Ready to launch' : 'Installation status unknown',
+            iconPath: resolveAgentIcon(agent, context.extensionUri),
+            agent,
+          };
+        }),
+        { placeHolder: 'Select a favorite agent to launch' },
+      );
+
+      if (picked?.agent) {
+        await launchWithStatusGuard(picked.agent);
+      }
+
+      return;
+    }
+
+    // No favorites set: let the user pick one from the full list and offer to remember it.
     await runLaunchQuickPick(true);
   });
 
@@ -397,8 +459,8 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
 
-    await setFavoriteId(agent.id);
-    void vscode.window.setStatusBarMessage(`${agent.label} is now the favorite agent`, 2500);
+    await addFavorite(agent.id);
+    void vscode.window.setStatusBarMessage(`${agent.label} added to favorites`, 2500);
   });
 
   const unsetFavoriteCommand = vscode.commands.registerCommand('superCli.unsetFavorite', async (argument?: unknown) => {
@@ -407,7 +469,8 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
 
-    await setFavoriteId('');
+    await removeFavorite(agent.id);
+    void vscode.window.setStatusBarMessage(`${agent.label} removed from favorites`, 2500);
   });
 
   const updateAgentCommand = vscode.commands.registerCommand('superCli.updateAgent', async (argument?: unknown) => {
@@ -468,7 +531,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     if (event.affectsConfiguration('superCli.agents') || event.affectsConfiguration('superCli.useBuiltins')
       || event.affectsConfiguration('superCli.hiddenBuiltins')
-      || event.affectsConfiguration('superCli.favoriteAgent')) {
+      || event.affectsConfiguration('superCli.favoriteAgents')) {
       treeProvider.refresh();
     }
   });
@@ -478,6 +541,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   refreshInstallStatus();
+  void migrateLegacyFavorite();
 
   context.subscriptions.push(
     sessions,

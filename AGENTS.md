@@ -93,6 +93,19 @@ The shell-integration path in `executeCommandWithOptionalShellIntegration` (`ter
 to `terminal.sendText` after a 3-second timeout when shell integration doesn't attach in time; that
 fallback has no completion signal at all, which is a known, accepted gap.
 
+### Renaming or retyping a setting: migrate additively, never clear the old key
+
+`superCli.favoriteAgents` (array) replaced `superCli.favoriteAgent` (single id) this way: the old
+key stays declared in `package.json` (marked `markdownDeprecationMessage`, not deleted), a pure
+`resolveMigratedFavorites` (`agent-view.ts`) decides whether to seed the new key from the old one,
+and `extension.ts` runs that once at activation — but it **never writes `undefined` back to the old
+key**. `superCli.*` settings are `scope: "machine"`, so a value written on one machine can propagate
+to another via Settings Sync; a machine still running an older version only reads the old key, so
+clearing it during migration would look like the favorite silently vanishing there. The cost of
+leaving it in place is one stale, harmless entry in `settings.json` behind a deprecation notice.
+Apply the same pattern (declare + deprecate + additive migration, never clear) to any future
+`superCli.*` setting rename.
+
 ### Icon/branding workflow
 
 Adding a built-in agent's icon requires a vendor-sourced static SVG (or an approved project-drawn

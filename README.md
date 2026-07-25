@@ -40,7 +40,7 @@ notices](TRADEMARKS.md).
 ### Agent sidebar and editor launcher
 
 The activity bar opens a status-aware list with vendor-specific agent icons. Ready agents stay at the
-top; CLIs not found on the active `PATH` are grouped under **Setup required**. The favorite is pinned
+top; CLIs not found on the active `PATH` are grouped under **Setup required**. Favorites are pinned
 above the groups with an always-visible star, while the remaining agents are sorted alphabetically
 within each status group. The colored Router S in the editor toolbar opens the same launcher without
 leaving the current file.
@@ -59,12 +59,13 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
 - **One launcher for every agent.** A **Super CLI** view in the activity bar lists all configured
   agents; click one to open it in a terminal beside your editor. A toolbar button and the
   **Super CLI: Launch Coding Agent** command open a quick pick of the same list.
-- **Favorite agent, one keystroke.** Set or remove the favorite from either the sidebar or launcher,
-  then launch it anywhere with **`Ctrl+Alt+A`** (`Cmd+Alt+A` on macOS; remap it in Keyboard
-  Shortcuts). The favorite stays pinned above the sidebar groups with a visible ★. With no favorite
-  set the shortcut opens the picker and offers to remember your choice.
+- **Favorites, one keystroke.** Star as many agents as you like from either the sidebar or launcher;
+  each stays pinned above the sidebar groups with a visible ★. Launch with **`Ctrl+Alt+A`**
+  (`Cmd+Alt+A` on macOS; remap it in Keyboard Shortcuts): with exactly one favorite it launches
+  directly, with several it opens a quick pick scoped to just your favorites, and with none it opens
+  the full picker and offers to remember your choice.
 - **Ready and setup states.** The sidebar groups ready agents, unknown WSL states, and CLIs that need
-  setup. Agents are alphabetical within each section, while the launcher keeps the favorite in its
+  setup. Agents are alphabetical within each section, while the launcher keeps favorites in their
   own section.
 - **Running sessions, live.** A **Running** group appears at the top of the sidebar the moment you
   launch an agent, showing every active session and how long it has been running; click one to bring
@@ -72,7 +73,8 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   the CLI exits (with terminal shell integration available) and always when the terminal closes.
   Super CLI never reads terminal content to show this — only the terminal's own lifecycle.
 - **Agent Manager.** Choose exactly which built-in CLIs appear from the sidebar toolbar or with
-  **Super CLI: Manage Built-in Agents**. Hiding a favorite safely clears the favorite selection.
+  **Super CLI: Manage Built-in Agents**. Hiding a favorited agent safely removes just that one from
+  your favorites, leaving the rest untouched.
 - **Agent Doctor.** Run an explicit, bounded local diagnostic to see detected CLI versions and
   missing or failing version checks. It does not perform network update checks and its report omits
   environment variables, `PATH` contents, launch commands, and raw diagnostic output. The report is
@@ -159,7 +161,7 @@ an untrusted repository cannot inject commands.
 | `superCli.agents` | `[]` | Your agents (added to or overriding the built-ins). |
 | `superCli.useBuiltins` | `true` | Include the built-in agent presets. |
 | `superCli.hiddenBuiltins` | `[]` | Built-in ids hidden by **Manage Built-in Agents**. Prefer the manager over editing this list. |
-| `superCli.favoriteAgent` | `""` | Id of the agent launched by `Ctrl+Alt+A`. Set it with the ★ button in the sidebar rather than by hand. |
+| `superCli.favoriteAgents` | `[]` | Ids of the agents launched by `Ctrl+Alt+A`. Set them with the ★ button in the sidebar rather than by hand. |
 | `superCli.terminalLocation` | `beside` | Open the terminal `beside` the editor or in the `panel`. |
 | `superCli.useWsl` | `false` | On Windows, open agents in WSL and use their Linux command variants. Ignored on macOS/Linux. |
 
@@ -240,7 +242,7 @@ Bug reports, feature requests, and contributions are welcome on
 This extension does not collect telemetry, analytics, or personal data. It never installs CLIs or
 modifies shell profiles; it only runs launch and user-requested update commands in your integrated
 terminal, plus bounded version commands when you explicitly run Agent Doctor. The only state it
-keeps locally is your configuration (favorite, hidden built-ins) and a launch counter used solely to
+keeps locally is your configuration (favorites, hidden built-ins) and a launch counter used solely to
 show the one-time rating nudge described above — neither is ever transmitted anywhere.
 
 Keep credentials in each CLI's supported credential store or environment configuration rather than

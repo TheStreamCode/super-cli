@@ -66,17 +66,45 @@ async function run() {
     command: 'node --version',
     updateCommand: 'node --version',
   };
+  const testAgent2 = {
+    id: 'integration-test-2',
+    label: 'Super CLI Test 2',
+    command: 'node --version',
+  };
   const treeNode = { kind: 'agent', agent: testAgent };
   const configuration = vscode.workspace.getConfiguration('superCli');
-  const originalFavorite = configuration.inspect('favoriteAgent')?.globalValue;
+  const originalAgents = configuration.inspect('agents')?.globalValue;
+  const originalFavorites = configuration.inspect('favoriteAgents')?.globalValue;
 
   try {
-    await configuration.update('favoriteAgent', undefined, vscode.ConfigurationTarget.Global);
+    // launchFavorite cross-references getEffectiveAgents(), so the test agents need to be
+    // registered for real, not just passed as ad-hoc command arguments like the other commands below.
+    await configuration.update('agents', [testAgent, testAgent2], vscode.ConfigurationTarget.Global);
+    await configuration.update('favoriteAgents', [], vscode.ConfigurationTarget.Global);
+
     await vscode.commands.executeCommand('superCli.setFavorite', treeNode);
-    assert.equal(configuration.inspect('favoriteAgent')?.globalValue, testAgent.id);
+    assert.deepEqual(configuration.inspect('favoriteAgents')?.globalValue, [testAgent.id]);
+
+    // Adds to the favorites list rather than replacing it -- the actual new behavior here.
+    const treeNode2 = { kind: 'agent', agent: testAgent2 };
+    await vscode.commands.executeCommand('superCli.setFavorite', treeNode2);
+    assert.deepEqual(configuration.inspect('favoriteAgents')?.globalValue, [testAgent.id, testAgent2.id]);
+
+    await vscode.commands.executeCommand('superCli.unsetFavorite', treeNode2);
+    assert.deepEqual(configuration.inspect('favoriteAgents')?.globalValue, [testAgent.id]);
+
+    // With exactly one favorite, launchFavorite launches it directly, same as before multi-favorite
+    // support existed. The N>1 case opens an interactive QuickPick, which (matching the pre-existing
+    // "no favorite set" fallback below, itself never driven through its own picker) isn't automated
+    // here -- driving VS Code's real QuickPick UI isn't exposed to this test harness.
+    const beforeFavoriteLaunch = vscode.window.terminals.length;
+    await vscode.commands.executeCommand('superCli.launchFavorite');
+    const favoriteTerminal = await waitForNewTerminal(beforeFavoriteLaunch);
+    assert.match(favoriteTerminal.name, /^Super CLI Test/);
+    favoriteTerminal.dispose();
 
     await vscode.commands.executeCommand('superCli.unsetFavorite', treeNode);
-    assert.equal(configuration.inspect('favoriteAgent')?.globalValue, undefined);
+    assert.deepEqual(configuration.inspect('favoriteAgents')?.globalValue, []);
 
     const beforeCount = vscode.window.terminals.length;
     await vscode.commands.executeCommand('superCli.launchAgent', treeNode);
@@ -116,7 +144,8 @@ async function run() {
     assert.match(updateTerminal.name, /^Update Super CLI Test/);
     updateTerminal.dispose();
   } finally {
-    await configuration.update('favoriteAgent', originalFavorite, vscode.ConfigurationTarget.Global);
+    await configuration.update('agents', originalAgents, vscode.ConfigurationTarget.Global);
+    await configuration.update('favoriteAgents', originalFavorites, vscode.ConfigurationTarget.Global);
   }
 
   // Exercises AgentSessionRegistry and the sidebar's tree shaping directly against the real vscode
@@ -145,7 +174,7 @@ async function run() {
       const treeProbeSession = registry.start(testAgent, treeProbeTerminal);
       const provider = new AgentTreeDataProvider(
         () => [],
-        () => '',
+        () => [],
         () => undefined,
         () => undefined,
         () => registry.list(),

@@ -3,7 +3,7 @@
   "displayName": "Super CLI: Claude Code, Codex & AI Agent Launcher",
   "description": "Launch Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro, OpenClaw, Qoder CLI and other AI coding agents from one VS Code sidebar.",
   "publisher": "mikesoft",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -465,11 +465,21 @@
           },
           "markdownDescription": "Built-in agent ids hidden from the sidebar and launcher. Use **Super CLI: Manage Built-in Agents** instead of editing this list by hand."
         },
+        "superCli.favoriteAgents": {
+          "type": "array",
+          "scope": "machine",
+          "default": [],
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Ids of your favorite agents, launched by the `Launch Favorite Agent` command (default keybinding `Ctrl+Alt+A`, `Cmd+Alt+A` on macOS; remap it from Keyboard Shortcuts) — directly when there is exactly one, or from a quick pick scoped to your favorites when there are several. Set these with the star (★) button next to an agent in the sidebar rather than editing this list by hand."
+        },
         "superCli.favoriteAgent": {
           "type": "string",
           "scope": "machine",
           "default": "",
-          "markdownDescription": "Id of the favorite agent launched by the `Launch Favorite Agent` command (default keybinding `Ctrl+Alt+A`, `Cmd+Alt+A` on macOS; remap it from Keyboard Shortcuts). Set this with the star (★) button next to an agent in the sidebar rather than editing it by hand."
+          "markdownDeprecationMessage": "Replaced by `#superCli.favoriteAgents#`, which supports more than one favorite. An existing value here is copied into the new setting automatically the first time you use this version; this setting itself is left as-is (never cleared) so that Settings Sync can't lose it on a machine still running an older version."
         },
         "superCli.terminalLocation": {
           "type": "string",

@@ -5,6 +5,7 @@ const {
   buildAgentGroups,
   buildAgentSections,
   formatSessionElapsed,
+  resolveMigratedFavorites,
   shouldOfferFavoriteAfterLaunch,
   shouldOfferRatingAfterLaunch,
   RATING_PROMPT_LAUNCH_THRESHOLD,
@@ -22,26 +23,32 @@ const statuses = new Map([
 const getStatus = (id) => statuses.get(id);
 
 test('buildAgentGroups separates ready, unknown, and setup-required agents', () => {
-  const groups = buildAgentGroups(agents, '', getStatus);
+  const groups = buildAgentGroups(agents, [], getStatus);
 
   assert.deepEqual(groups.map((group) => group.id), ['ready', 'unknown', 'setup']);
   assert.deepEqual(groups.map((group) => group.agents[0].id), ['alpha', 'charlie', 'bravo']);
 });
 
 test('buildAgentGroups sorts agents alphabetically within each status group', () => {
-  const groups = buildAgentGroups(agents, '', (id) => id === 'bravo' ? false : true);
+  const groups = buildAgentGroups(agents, [], (id) => id === 'bravo' ? false : true);
 
   assert.deepEqual(groups.find((group) => group.id === 'ready').agents.map((agent) => agent.id), ['alpha', 'charlie']);
 });
 
-test('buildAgentGroups excludes the pinned favorite without duplicating it', () => {
-  const groups = buildAgentGroups(agents, 'charlie', () => true);
+test('buildAgentGroups excludes a single pinned favorite without duplicating it', () => {
+  const groups = buildAgentGroups(agents, ['charlie'], () => true);
 
   assert.deepEqual(groups.flatMap((group) => group.agents.map((agent) => agent.id)), ['alpha', 'bravo']);
 });
 
-test('buildAgentSections promotes the favorite and alphabetizes the remaining agents without duplicates', () => {
-  const sections = buildAgentSections(agents, 'bravo', () => true);
+test('buildAgentGroups excludes multiple pinned favorites without duplicating them', () => {
+  const groups = buildAgentGroups(agents, ['charlie', 'alpha'], () => true);
+
+  assert.deepEqual(groups.flatMap((group) => group.agents.map((agent) => agent.id)), ['bravo']);
+});
+
+test('buildAgentSections promotes a single favorite and alphabetizes the remaining agents without duplicates', () => {
+  const sections = buildAgentSections(agents, ['bravo'], () => true);
   const flattened = sections.flatMap((section) => section.agents.map((agent) => agent.id));
 
   assert.equal(sections[0].id, 'favorite');
@@ -50,11 +57,38 @@ test('buildAgentSections promotes the favorite and alphabetizes the remaining ag
   assert.deepEqual(flattened.sort(), ['alpha', 'bravo', 'charlie']);
 });
 
-test('favorite prompt is offered only after a successful launch', () => {
-  assert.equal(shouldOfferFavoriteAfterLaunch(true, true, 'codex', ''), true);
-  assert.equal(shouldOfferFavoriteAfterLaunch(true, false, 'codex', ''), false);
-  assert.equal(shouldOfferFavoriteAfterLaunch(false, true, 'codex', ''), false);
-  assert.equal(shouldOfferFavoriteAfterLaunch(true, true, 'codex', 'codex'), false);
+test('buildAgentSections promotes multiple favorites, alphabetized, without duplicates', () => {
+  const sections = buildAgentSections(agents, ['charlie', 'alpha'], () => true);
+
+  assert.equal(sections[0].id, 'favorite');
+  assert.deepEqual(sections[0].agents.map((agent) => agent.id), ['alpha', 'charlie']);
+  assert.deepEqual(sections[1].agents.map((agent) => agent.id), ['bravo']);
+});
+
+test('buildAgentSections omits the favorite section when there are no favorites', () => {
+  const sections = buildAgentSections(agents, [], () => true);
+
+  assert.equal(sections.some((section) => section.id === 'favorite'), false);
+});
+
+test('favorite prompt is offered only after a successful launch, for an agent not already favorited', () => {
+  assert.equal(shouldOfferFavoriteAfterLaunch(true, true, 'codex', []), true);
+  assert.equal(shouldOfferFavoriteAfterLaunch(true, false, 'codex', []), false);
+  assert.equal(shouldOfferFavoriteAfterLaunch(false, true, 'codex', []), false);
+  assert.equal(shouldOfferFavoriteAfterLaunch(true, true, 'codex', ['codex']), false);
+  assert.equal(shouldOfferFavoriteAfterLaunch(true, true, 'codex', ['claude', 'codex']), false);
+  assert.equal(shouldOfferFavoriteAfterLaunch(true, true, 'codex', ['claude']), true);
+});
+
+test('resolveMigratedFavorites seeds the array from a legacy single favorite', () => {
+  assert.deepEqual(resolveMigratedFavorites('claude', undefined), ['claude']);
+  assert.deepEqual(resolveMigratedFavorites('claude', []), ['claude']);
+});
+
+test('resolveMigratedFavorites does nothing without a legacy value, or once favorites already exist', () => {
+  assert.equal(resolveMigratedFavorites(undefined, undefined), undefined);
+  assert.equal(resolveMigratedFavorites('', undefined), undefined);
+  assert.equal(resolveMigratedFavorites('claude', ['codex']), undefined);
 });
 
 test('rating prompt is offered exactly once, only once the launch threshold is reached', () => {

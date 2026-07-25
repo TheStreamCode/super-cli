@@ -26,9 +26,30 @@ export function shouldOfferFavoriteAfterLaunch(
   offerFavorite: boolean,
   launched: boolean,
   selectedId: string,
-  favoriteId: string,
+  favoriteIds: readonly string[],
 ): boolean {
-  return offerFavorite && launched && selectedId !== favoriteId;
+  return offerFavorite && launched && !favoriteIds.includes(selectedId);
+}
+
+/**
+ * Decides the array to migrate the legacy single-favorite setting into, or undefined when no
+ * migration is needed (no legacy value, or the new setting already has favorites of its own).
+ * Never signals clearing the legacy setting — that's left in place so Settings Sync can't drop a
+ * favorite on a machine still running an older version that only reads the legacy key.
+ */
+export function resolveMigratedFavorites(
+  legacyFavoriteId: string | undefined,
+  currentFavoriteIds: readonly string[] | undefined,
+): string[] | undefined {
+  if (!legacyFavoriteId) {
+    return undefined;
+  }
+
+  if (currentFavoriteIds && currentFavoriteIds.length > 0) {
+    return undefined;
+  }
+
+  return [legacyFavoriteId];
 }
 
 /** Successful launches before the one-time rating prompt is offered. */
@@ -46,10 +67,10 @@ function sortAgents(agents: readonly Agent[]): Agent[] {
 /** Groups non-favorite sidebar agents by installation state and sorts each group alphabetically. */
 export function buildAgentGroups(
   agents: readonly Agent[],
-  favoriteId: string,
+  favoriteIds: readonly string[],
   getInstallStatus: (id: string) => AgentInstallStatus,
 ): AgentGroup[] {
-  const sorted = sortAgents(agents.filter((agent) => agent.id !== favoriteId));
+  const sorted = sortAgents(agents.filter((agent) => !favoriteIds.includes(agent.id)));
   const groups: AgentGroup[] = [
     { id: 'ready', label: 'Ready', agents: sorted.filter((agent) => getInstallStatus(agent.id) === true) },
     { id: 'unknown', label: 'Agents', agents: sorted.filter((agent) => getInstallStatus(agent.id) === undefined) },
@@ -79,16 +100,16 @@ export function formatSessionElapsed(startedAtMs: number, nowMs: number): string
   return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
 }
 
-/** Builds non-duplicated Quick Pick sections with the favorite promoted to its own section. */
+/** Builds non-duplicated Quick Pick sections with favorites promoted to their own section. */
 export function buildAgentSections(
   agents: readonly Agent[],
-  favoriteId: string,
+  favoriteIds: readonly string[],
   getInstallStatus: (id: string) => AgentInstallStatus,
 ): AgentSection[] {
-  const favorite = agents.find((agent) => agent.id === favoriteId);
-  const remaining = sortAgents(agents.filter((agent) => agent.id !== favoriteId));
+  const favorites = sortAgents(agents.filter((agent) => favoriteIds.includes(agent.id)));
+  const remaining = sortAgents(agents.filter((agent) => !favoriteIds.includes(agent.id)));
   const sections: AgentSection[] = [
-    { id: 'favorite', label: 'Favorite', agents: favorite ? [favorite] : [] },
+    { id: 'favorite', label: 'Favorites', agents: favorites },
     { id: 'ready', label: 'Ready', agents: remaining.filter((agent) => getInstallStatus(agent.id) === true) },
     { id: 'unknown', label: 'Agents', agents: remaining.filter((agent) => getInstallStatus(agent.id) === undefined) },
     { id: 'setup', label: 'Setup required', agents: remaining.filter((agent) => getInstallStatus(agent.id) === false) },
