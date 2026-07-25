@@ -3,7 +3,7 @@ import type { Agent } from './agents.js';
 export type AgentInstallStatus = boolean | undefined;
 
 export interface AgentGroup {
-  id: 'ready' | 'unknown' | 'setup';
+  id: 'favorite' | 'ready' | 'unknown' | 'setup';
   label: string;
   agents: Agent[];
 }
@@ -64,14 +64,20 @@ function sortAgents(agents: readonly Agent[]): Agent[] {
   return [...agents].sort(compareAgentsByLabel);
 }
 
-/** Groups non-favorite sidebar agents by installation state and sorts each group alphabetically. */
+/**
+ * Groups sidebar agents for the tree: favorites get their own group, promoted above the
+ * installation-state groups (which exclude favorites, so no agent is ever listed twice). Each group
+ * is sorted alphabetically.
+ */
 export function buildAgentGroups(
   agents: readonly Agent[],
   favoriteIds: readonly string[],
   getInstallStatus: (id: string) => AgentInstallStatus,
 ): AgentGroup[] {
+  const favorites = sortAgents(agents.filter((agent) => favoriteIds.includes(agent.id)));
   const sorted = sortAgents(agents.filter((agent) => !favoriteIds.includes(agent.id)));
   const groups: AgentGroup[] = [
+    { id: 'favorite', label: 'Favorites', agents: favorites },
     { id: 'ready', label: 'Ready', agents: sorted.filter((agent) => getInstallStatus(agent.id) === true) },
     { id: 'unknown', label: 'Agents', agents: sorted.filter((agent) => getInstallStatus(agent.id) === undefined) },
     { id: 'setup', label: 'Setup required', agents: sorted.filter((agent) => getInstallStatus(agent.id) === false) },

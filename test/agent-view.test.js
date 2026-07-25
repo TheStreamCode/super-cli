@@ -35,16 +35,29 @@ test('buildAgentGroups sorts agents alphabetically within each status group', ()
   assert.deepEqual(groups.find((group) => group.id === 'ready').agents.map((agent) => agent.id), ['alpha', 'charlie']);
 });
 
-test('buildAgentGroups excludes a single pinned favorite without duplicating it', () => {
+test('buildAgentGroups promotes a single favorite into its own leading group without duplicating it', () => {
   const groups = buildAgentGroups(agents, ['charlie'], () => true);
 
-  assert.deepEqual(groups.flatMap((group) => group.agents.map((agent) => agent.id)), ['alpha', 'bravo']);
+  assert.equal(groups[0].id, 'favorite');
+  assert.deepEqual(groups[0].agents.map((agent) => agent.id), ['charlie']);
+  assert.deepEqual(groups.flatMap((group) => group.agents.map((agent) => agent.id)), ['charlie', 'alpha', 'bravo']);
 });
 
-test('buildAgentGroups excludes multiple pinned favorites without duplicating them', () => {
+test('buildAgentGroups promotes multiple favorites, alphabetized, without duplicating them', () => {
   const groups = buildAgentGroups(agents, ['charlie', 'alpha'], () => true);
 
-  assert.deepEqual(groups.flatMap((group) => group.agents.map((agent) => agent.id)), ['bravo']);
+  assert.equal(groups[0].id, 'favorite');
+  assert.deepEqual(groups[0].agents.map((agent) => agent.id), ['alpha', 'charlie']);
+  assert.deepEqual(
+    groups.flatMap((group) => group.agents.map((agent) => agent.id)).sort(),
+    ['alpha', 'bravo', 'charlie'],
+  );
+});
+
+test('buildAgentGroups omits the favorite group entirely when there are no favorites', () => {
+  const groups = buildAgentGroups(agents, [], () => true);
+
+  assert.equal(groups.some((group) => group.id === 'favorite'), false);
 });
 
 test('buildAgentSections promotes a single favorite and alphabetizes the remaining agents without duplicates', () => {
