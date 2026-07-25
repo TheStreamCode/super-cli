@@ -350,6 +350,47 @@ async function run() {
     registry.dispose();
   }
 
+  // sendText fallback path (Windows only): VS Code docs confirm cmd.exe does not support shell
+  // integration, making it a reliable, deterministic way to force executeCommandWithOptionalShellIntegration
+  // past its 3s timeout into the fallback branch, rather than racing a real shell's integration hooks.
+  // Exported from terminal.js solely for this — see AGENTS.md.
+  if (process.platform === 'win32') {
+    const { executeCommandWithOptionalShellIntegration } = require(path.join(extension.extensionPath, 'out', 'terminal.js'));
+    const cmdTerminal = vscode.window.createTerminal({ name: 'Cmd fallback probe', shellPath: 'cmd.exe' });
+
+    try {
+      let shellExecutionEndFired = false;
+      let fallbackFired = false;
+
+      executeCommandWithOptionalShellIntegration(
+        cmdTerminal,
+        'ver',
+        { subscriptions: [] },
+        () => {
+          shellExecutionEndFired = true;
+        },
+        () => {
+          fallbackFired = true;
+        },
+      );
+
+      await waitForCondition(
+        () => fallbackFired,
+        'Expected the sendText fallback to fire for a cmd.exe terminal.',
+        5000,
+      );
+
+      assert.equal(cmdTerminal.shellIntegration, undefined, 'Expected cmd.exe to never report shell integration.');
+      assert.equal(shellExecutionEndFired, false, 'Expected the fallback path to never invoke onShellExecutionEnd.');
+      assert.ok(
+        vscode.window.terminals.includes(cmdTerminal),
+        'Expected the terminal to survive taking the fallback path.',
+      );
+    } finally {
+      cmdTerminal.dispose();
+    }
+  }
+
   await vscode.commands.executeCommand('superCli.runDoctor');
   const firstDoctorDocument = vscode.workspace.textDocuments.find(
     (document) => document.uri.toString() === 'super-cli:/agent-doctor.md',

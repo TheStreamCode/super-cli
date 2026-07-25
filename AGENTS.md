@@ -90,8 +90,14 @@ stance changes deliberately. The one existing exception predates it: `collectShe
 Treat that as a narrow, bounded, already-reviewed exception, not a precedent for reading more.
 
 The shell-integration path in `executeCommandWithOptionalShellIntegration` (`terminal.ts`) falls back
-to `terminal.sendText` after a 3-second timeout when shell integration doesn't attach in time; that
-fallback has no completion signal at all, which is a known, accepted gap.
+to `terminal.sendText` after a 3-second timeout when shell integration doesn't attach in time. sendText
+itself has no completion signal at all — callers that need to resolve regardless (`updateAgent`, so a
+bulk update never blocks forever on one agent) pass the function's `onFallback` callback and treat
+"we sent it" as done. `executeCommandWithOptionalShellIntegration` is exported only so
+`test/integration/suite/index.js` can force this branch deterministically, by launching it against a
+`cmd.exe` terminal — VS Code's own docs confirm cmd.exe doesn't support shell integration, unlike a
+real interactive shell where the fallback would be a timing race. It has no other caller outside
+`terminal.ts`; don't remove the export as unused without checking that test first.
 
 ### Renaming or retyping a setting: migrate additively, never clear the old key
 
