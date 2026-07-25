@@ -5,6 +5,23 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-07-25
+
+### Added
+
+- Added a workspace-folder picker for new launches when the working directory can't be inferred (no
+  active editor, more than one folder in the workspace); canceling it falls back to the previous
+  first-folder default, same as before this existed.
+- Added a **Restart** button to each running session: stops it and relaunches the same agent in
+  exactly the folder it originally started in, reusing that folder directly rather than re-resolving
+  it, so it never re-prompts even in a multi-root workspace.
+- Added **Stop All** to the Running group header, ending every active session in one action.
+- Added **Super CLI: Update All Agents** to the sidebar toolbar, running every updatable agent's
+  update command in sequence — never more than one at a time — and skipping agents currently believed
+  to be missing from `PATH`.
+- Promoted favorites to their own **Favorites** group at the top of the sidebar tree, alongside
+  Running, Ready, and Setup required, instead of being pinned as unlabeled individual rows.
+
 ## [1.5.0] - 2026-07-25
 
 ### Added

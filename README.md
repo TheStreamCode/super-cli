@@ -39,11 +39,11 @@ notices](TRADEMARKS.md).
 
 ### Agent sidebar and editor launcher
 
-The activity bar opens a status-aware list with vendor-specific agent icons. Ready agents stay at the
-top; CLIs not found on the active `PATH` are grouped under **Setup required**. Favorites are pinned
-above the groups with an always-visible star, while the remaining agents are sorted alphabetically
-within each status group. The colored Router S in the editor toolbar opens the same launcher without
-leaving the current file.
+The activity bar opens a status-aware list with vendor-specific agent icons. A live **Running** group
+leads the list the moment you launch an agent, followed by your own **Favorites** group, then **Ready**
+agents; CLIs not found on the active `PATH` are grouped under **Setup required**. Agents are sorted
+alphabetically within each group. The colored Router S in the editor toolbar opens the same launcher
+without leaving the current file.
 
 ![Super CLI AI coding agent launcher sidebar in VS Code with Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro and OpenClaw](media/screenshots/sidebar.png)
 
@@ -60,18 +60,19 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   agents; click one to open it in a terminal beside your editor. A toolbar button and the
   **Super CLI: Launch Coding Agent** command open a quick pick of the same list.
 - **Favorites, one keystroke.** Star as many agents as you like from either the sidebar or launcher;
-  each stays pinned above the sidebar groups with a visible ★. Launch with **`Ctrl+Alt+A`**
-  (`Cmd+Alt+A` on macOS; remap it in Keyboard Shortcuts): with exactly one favorite it launches
-  directly, with several it opens a quick pick scoped to just your favorites, and with none it opens
-  the full picker and offers to remember your choice.
+  they lead the sidebar in their own **Favorites** group, matching the same launcher section. Launch
+  with **`Ctrl+Alt+A`** (`Cmd+Alt+A` on macOS; remap it in Keyboard Shortcuts): with exactly one
+  favorite it launches directly, with several it opens a quick pick scoped to just your favorites, and
+  with none it opens the full picker and offers to remember your choice.
 - **Ready and setup states.** The sidebar groups ready agents, unknown WSL states, and CLIs that need
-  setup. Agents are alphabetical within each section, while the launcher keeps favorites in their
-  own section.
+  setup, each its own section below Favorites. Agents are alphabetical within each section.
 - **Running sessions, live.** A **Running** group appears at the top of the sidebar the moment you
-  launch an agent, showing every active session and how long it has been running; click one to bring
-  its terminal back into focus, or use the inline stop button to end it. It clears itself as soon as
-  the CLI exits (with terminal shell integration available) and always when the terminal closes.
-  Super CLI never reads terminal content to show this — only the terminal's own lifecycle.
+  launch an agent, showing every active session and how long it has been running. Click one to bring
+  its terminal back into focus, use the inline restart button to stop and relaunch it in the exact
+  same folder, the inline stop button to end it, or **Stop All** on the group header to end every
+  running session at once. It clears itself as soon as the CLI exits (with terminal shell integration
+  available) and always when the terminal closes. Super CLI never reads terminal content to show
+  this — only the terminal's own lifecycle.
 - **Agent Manager.** Choose exactly which built-in CLIs appear from the sidebar toolbar or with
   **Super CLI: Manage Built-in Agents**. Hiding a favorited agent safely removes just that one from
   your favorites, leaving the rest untouched.
@@ -90,12 +91,16 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   Launch, which runs the CLI's official update (e.g. `codex update`, `kilo upgrade`, `cursor-agent
   update`, `opencode upgrade`, `droid update`, `openclaw update`, `kimi upgrade`). CLIs that update themselves don't
   show one. With terminal shell integration available, Super CLI reports whether the update completed
-  or failed and can bring the update terminal back into focus.
+  or failed and can bring the update terminal back into focus. **Super CLI: Update All Agents** in the
+  sidebar toolbar runs every updatable agent's update in sequence, one at a time, skipping any agent
+  currently believed to be missing from `PATH`.
 - **Official installation docs.** If a supported CLI isn't found, Super CLI opens that agent's verified
   official installation documentation in your browser. It never installs a CLI, runs an installer, or
   changes your shell profile.
 - **Native integrated terminal.** Each agent runs in a real VS Code terminal, inheriting your
-  shell, `PATH`, and environment. No bundled emulator, no runtime dependencies.
+  shell, `PATH`, and environment. No bundled emulator, no runtime dependencies. The working directory
+  follows the active editor's folder; in a multi-root workspace with no active editor, Super CLI asks
+  which folder to use instead of guessing — declining the prompt falls back to the first folder.
 - **One-time rating nudge.** After 20 successful launches, Super CLI shows a single notification
   asking for a Marketplace rating. It never repeats after that, however you respond, and the launch
   count lives only in this extension's local state — nothing is sent anywhere.
@@ -192,6 +197,10 @@ settings.
   disappears once that terminal closes, or sooner when the CLI itself exits — the latter needs
   terminal shell integration, so without it (or on a shell that doesn't support it) the row stays
   until you close the terminal.
+- **Super CLI asks which folder to launch in.** This only happens when it genuinely can't tell on its
+  own — no active editor, and more than one folder open in a multi-root workspace. Press Escape to
+  fall back to the first folder instead, same as every launch before this existed. Restarting a
+  running session never asks — it reuses that session's original folder directly.
 - **I updated the extension but nothing changed.** Reload the window (**Developer: Reload Window**
   from the Command Palette) or restart your editor. Extension code loaded into a running window
   is not replaced until the window reloads, even after a newer version finishes installing.
