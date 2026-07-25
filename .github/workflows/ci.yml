@@ -12,6 +12,10 @@ permissions:
 jobs:
   check:
     strategy:
+      # Without this, the first failing leg cancels the others: the last three red
+      # runs on main show macOS failed and Windows/Linux `cancelled`, so there is no
+      # record of whether the other two platforms were fine. Keep every leg reporting.
+      fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
 
