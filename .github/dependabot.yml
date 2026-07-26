@@ -5,7 +5,25 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Majors are deliberately left out of every group: they stay individual pull
+    # requests so a breaking bump is never bundled with routine ones.
+    groups:
+      npm-development:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      npm-production:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        update-types:
+          - minor
+          - patch
