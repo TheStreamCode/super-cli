@@ -105,8 +105,8 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   a single read-only virtual document that is replaced on every run and is never written to disk.
 - **Agent-specific artwork.** Built-ins use vendor-sourced CLI marks where suitable SVGs are
   available, with a documented compact fallback for Kimi and a ThemeIcon fallback for custom agents.
-- **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Cursor, Droid, Grok, Kilo, Kiro,
-  OpenClaw, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI,
+- **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Cursor, Devin CLI, Droid, Grok, Kilo,
+  Kiro, OpenClaw, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI,
   Qoder CLI, and Qwen Code CLI are available out of the box.
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
@@ -265,8 +265,8 @@ Windows, macOS, Linux, or WSL command variant.
 ### Which AI coding agents are supported?
 
 Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command
-Code, Cursor, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI, and Qwen Code CLI out of
-the box — plus any CLI you add in `settings.json`.
+Code, Cursor, Devin CLI, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI, and Qwen Code
+CLI out of the box — plus any CLI you add in `settings.json`.
 
 ### Does Super CLI work on Windows, macOS, Linux, and WSL?
 

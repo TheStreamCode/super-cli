@@ -5,6 +5,25 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-07-26
+
+### Added
+
+- Added Devin CLI (Cognition) as a built-in preset, launched with `devin`, with its official
+  installation documentation and the official Devin logomark.
+
+  It intentionally ships without an update button or a version check. Devin's docs only document an
+  update path for Homebrew (`brew upgrade --cask devin-cli`) while the CLI also installs via a curl
+  script or winget — the correct command depends on how it was installed, not on the platform, so an
+  update button would fail for anyone who installed it another way. No `--version` is documented
+  either, so Agent Doctor reports the version as unavailable rather than guessing.
+
+### Changed
+
+- Replaced the redundant `antigravity` Marketplace keyword with `devin`; the more specific
+  `google antigravity` and `antigravity cli` keywords already cover that search, and the keyword list
+  was at its 30-entry limit.
+
 ## [1.7.0] - 2026-07-26
 
 ### Added
