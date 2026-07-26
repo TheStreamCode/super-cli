@@ -92,8 +92,10 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   update`, `opencode upgrade`, `droid update`, `openclaw update`, `kimi upgrade`). CLIs that update themselves don't
   show one. With terminal shell integration available, Super CLI reports whether the update completed
   or failed and can bring the update terminal back into focus. **Super CLI: Update All Agents** in the
-  sidebar toolbar runs every updatable agent's update in sequence, one at a time, skipping any agent
-  currently believed to be missing from `PATH`.
+  sidebar toolbar runs every updatable agent's update in sequence, one at a time, in a single shared
+  **Super CLI: updates** terminal, skipping any agent currently believed to be missing from `PATH`. It
+  is cancellable at any point, and closing the terminal stops the run — so an update waiting on an
+  interactive prompt can never strand the rest.
 - **Official installation docs.** If a supported CLI isn't found, Super CLI opens that agent's verified
   official installation documentation in your browser. It never installs a CLI, runs an installer, or
   changes your shell profile.
@@ -201,6 +203,11 @@ settings.
   own — no active editor, and more than one folder open in a multi-root workspace. Press Escape to
   fall back to the first folder instead, same as every launch before this existed. Restarting a
   running session never asks — it reuses that session's original folder directly.
+- **Update All Agents seems stuck on one agent.** An update command that waits for input (a
+  confirmation prompt, a credential) can't complete on its own. Cancel the progress notification, or
+  close the **Super CLI: updates** terminal — either one ends the run and reports how far it got.
+  Cancelling stops Super CLI from starting further updates; a command already running in the terminal
+  keeps going, so check that terminal before closing it.
 - **I updated the extension but nothing changed.** Reload the window (**Developer: Reload Window**
   from the Command Palette) or restart your editor. Extension code loaded into a running window
   is not replaced until the window reloads, even after a newer version finishes installing.

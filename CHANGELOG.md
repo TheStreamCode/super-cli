@@ -5,6 +5,31 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-07-26
+
+### Fixed
+
+- **Update All Agents could hang indefinitely.** An update command that never exits on its own (one
+  waiting on an interactive prompt, or a stalled download) left the run stuck behind a progress
+  notification that couldn't be cancelled, silently skipping every remaining agent. Each update now
+  also settles when its terminal is closed, the progress notification is cancellable, and the run
+  stops rather than firing the remaining commands into a terminal that is gone. Cancelling stops
+  Super CLI from starting further updates; a command already running in the terminal is left alone
+  for you to deal with, which is why the terminal stays open.
+
+### Changed
+
+- **Update All Agents now uses one shared `Super CLI: updates` terminal** instead of opening a
+  separate terminal per agent, which previously left up to 14 terminals behind on a default install.
+  An agent configured with its own `env` still gets a dedicated terminal, so its update keeps running
+  exactly as configured.
+- The completion summary now reports failures and early stops, not just the success count.
+
+### Internal
+
+- Unified the sidebar tree and quick pick onto one `buildAgentGroups`, replacing two grouping
+  functions that had become identical implementations of the same logic.
+
 ## [1.6.0] - 2026-07-25
 
 ### Added

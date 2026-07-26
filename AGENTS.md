@@ -60,6 +60,16 @@ This split is why some files under `src/` have unit tests and others don't:
 When adding logic, prefer putting anything that doesn't strictly need the `vscode` API into a pure
 module so it's covered by the fast unit suite — the integration suite is comparatively expensive.
 
+`buildAgentGroups` (`agent-view.ts`) is the single source of grouping for **both** the sidebar tree
+(group nodes) and the quick pick (separators). It used to be duplicated as a near-identical
+`buildAgentSections`, and the two silently drifted; keep the one function and let each surface render
+it, so the picker and the tree can't disagree about what belongs where.
+
+Integration tests must not assume an ordering for `vscode.window.terminals`. Asserting on
+"the last terminal" is flaky — `superCli.restartSession` deliberately overlaps two terminals, and the
+array is not ordered for a test's convenience. Find terminals by name/identity instead, and prefer
+`waitForCondition`'s lazy message form to report the actual open terminals when a wait times out.
+
 ### `metadata.test.js` guards `package.json`
 
 Many of its assertions are exact `deepEqual` checks against `package.json`'s `contributes` block
@@ -94,13 +104,24 @@ Treat that as a narrow, bounded, already-reviewed exception, not a precedent for
 
 The shell-integration path in `executeCommandWithOptionalShellIntegration` (`terminal.ts`) falls back
 to `terminal.sendText` after a 3-second timeout when shell integration doesn't attach in time. sendText
-itself has no completion signal at all — callers that need to resolve regardless (`updateAgent`, so a
-bulk update never blocks forever on one agent) pass the function's `onFallback` callback and treat
-"we sent it" as done. `executeCommandWithOptionalShellIntegration` is exported only so
-`test/integration/suite/index.js` can force this branch deterministically, by launching it against a
-`cmd.exe` terminal — VS Code's own docs confirm cmd.exe doesn't support shell integration, unlike a
-real interactive shell where the fallback would be a timing race. It has no other caller outside
-`terminal.ts`; don't remove the export as unused without checking that test first.
+itself has no completion signal at all, so callers that must resolve regardless pass the function's
+`onFallback` callback and treat "we sent it" as done. `executeCommandWithOptionalShellIntegration` is
+exported only so `test/integration/suite/index.js` can force this branch deterministically, by
+launching it against a `cmd.exe` terminal — VS Code's own docs confirm cmd.exe doesn't support shell
+integration, unlike a real interactive shell where the fallback would be a timing race. It has no
+other caller outside `terminal.ts`; don't remove the export as unused without checking that test first.
+
+### Anything awaiting a terminal command must have a non-shell-integration way out
+
+`runAgentUpdate` (`terminal.ts`) resolves on three independent signals: the shell-integration end
+event, the `onFallback` path above, and `vscode.window.onDidCloseTerminal`. That third one is not
+redundant. Once shell integration attaches, `startExecution` clears the fallback timer, so the *only*
+remaining signal is an end event — and a command that never exits (an interactive prompt, a stalled
+download) never produces one. Without the close listener the promise stayed pending forever, which is
+exactly how `superCli.updateAllAgents` once stranded itself behind a non-cancellable progress
+notification (fixed in 1.6.1, regression-tested in the integration suite). Any future code that
+`await`s a terminal command needs the same escape hatch, plus a cancellable progress if it loops.
+When adding one, verify the test fails without the fix — a test for a hang passes trivially otherwise.
 
 ### Renaming or retyping a setting: migrate additively, never clear the old key
 
