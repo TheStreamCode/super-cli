@@ -35,10 +35,15 @@ npm run compile && node --test test/agents.test.js
 
 The integration suite downloads/caches VS Code builds under `.vscode-test/` (gitignored) via
 `@vscode/test-electron`, launches a real Extension Development Host, and needs a display on Linux
-(CI starts Xvfb for it). Locally on an interactive desktop, its `waitForActiveTerminal` assertions
-need the test window to hold real OS focus; a failure there with another VS Code window open on the
-same desktop is very likely that, not a regression — retry, or compare against `main` with the same
-window state before assuming your change broke it. CI runners don't have this problem.
+(CI starts Xvfb for it).
+
+`vscode.window.activeTerminal` only follows `terminal.show()` when the window holds real OS focus.
+A headless macOS runner never grants it, and a local desktop can steal it mid-run, so anything
+asserting on `activeTerminal` must go behind `detectsActiveTerminalFocus()`, which probes the
+environment once at runtime instead of hard-coding a platform. This is not hypothetical: for several
+releases the macOS leg failed on exactly this while Windows and Linux passed, and because macOS was
+not among the required status checks nobody noticed. Never "fix" a red macOS leg by assuming it is
+just flaky — read the log first.
 
 ## Architecture
 
