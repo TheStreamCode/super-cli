@@ -10,7 +10,7 @@ import {
   resolveCommandPlatform,
 } from './agents.js';
 import {
-  buildAgentSections,
+  buildAgentGroups,
   compareAgentsByLabel,
   resolveMigratedFavorites,
   shouldOfferFavoriteAfterLaunch,
@@ -21,7 +21,14 @@ import { buildDoctorReport, inspectAgents, type DoctorResult } from './doctor.js
 import { resolveAgentIcon } from './icons.js';
 import { AgentSessionRegistry, resolveCommandSessionArgument } from './sessions.js';
 import { AgentTreeDataProvider } from './tree.js';
-import { launchAgent, openExtensionSettings, updateAgent } from './terminal.js';
+import {
+  createSharedUpdateTerminal,
+  launchAgent,
+  openExtensionSettings,
+  runAgentUpdate,
+  updateAgent,
+  type UpdateOutcome,
+} from './terminal.js';
 
 const SETTINGS_NAMESPACE = 'superCli';
 
@@ -300,12 +307,13 @@ export function activate(context: vscode.ExtensionContext): void {
   const buildQuickPickItems = (): AgentQuickPickItem[] => {
     const agents = getEffectiveAgents();
     const favoriteIds = getFavoriteIds();
-    const sections = buildAgentSections(agents, favoriteIds, (id) => installStatus.get(id));
+    // Same grouping the sidebar tree renders, shown here as quick-pick separators.
+    const groups = buildAgentGroups(agents, favoriteIds, (id) => installStatus.get(id));
     const items: AgentQuickPickItem[] = [];
 
-    for (const section of sections) {
-      items.push({ label: section.label, kind: vscode.QuickPickItemKind.Separator });
-      for (const agent of section.agents) {
+    for (const group of groups) {
+      items.push({ label: group.label, kind: vscode.QuickPickItemKind.Separator });
+      for (const agent of group.agents) {
         const status = installStatus.get(agent.id);
         const isFavorite = favoriteIds.includes(agent.id);
         items.push({
@@ -519,19 +527,28 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
-  // Runs updates one at a time (awaiting each agent's real completion, or its fallback signal — see
-  // updateAgent) rather than firing them all concurrently, which would otherwise open one terminal per
-  // updatable agent at once, all running a network-fetching package manager simultaneously. Agents
-  // confirmed missing from PATH are skipped, same as launchWithStatusGuard's default guard — asking
-  // "Launch Anyway?" once per missing agent would be as much friction as the picker this avoids above.
+  // Runs updates one at a time in a single shared terminal, rather than firing them all concurrently
+  // (which would run a dozen network-fetching package managers at once) or opening one terminal per
+  // agent (which would leave a dozen terminals behind). Agents confirmed missing from PATH are
+  // skipped, same as launchWithStatusGuard's default guard — asking "Launch Anyway?" once per missing
+  // agent would be as much friction as the picker launchAgent avoids.
+  //
+  // Every await here must be escapable, or one update that never finishes (an interactive prompt, a
+  // hung network call) would strand the whole run behind a progress notification: runAgentUpdate
+  // settles when its terminal closes, the loop stops outright if the shared terminal goes away, and
+  // the progress is cancellable so the user can abandon a stuck update. Cancelling stops Super CLI
+  // from issuing further commands; it can't kill a command already running in the terminal, which is
+  // why the terminal is left open for the user to see and deal with.
   const updateAllAgentsCommand = vscode.commands.registerCommand('superCli.updateAllAgents', async () => {
-    const withUpdateCommand = getEffectiveAgents().filter((agent) => agent.updateCommand);
-    const updatable = withUpdateCommand.filter((agent) => installStatus.get(agent.id) !== false);
-    const skipped = withUpdateCommand.length - updatable.length;
+    // Paired with its resolved command so the loop below never has to assert it is still defined.
+    const withUpdateCommand = getEffectiveAgents()
+      .flatMap((agent) => agent.updateCommand ? [{ agent, updateCommand: agent.updateCommand }] : []);
+    const updatable = withUpdateCommand.filter(({ agent }) => installStatus.get(agent.id) !== false);
+    const notInstalled = withUpdateCommand.length - updatable.length;
 
     if (updatable.length === 0) {
       void vscode.window.showInformationMessage(
-        skipped > 0
+        notInstalled > 0
           ? 'No installed agents have an update command configured.'
           : 'No agents have an update command configured.',
       );
@@ -539,31 +556,65 @@ export function activate(context: vscode.ExtensionContext): void {
     }
 
     let succeeded = 0;
+    let failed = 0;
+    let stoppedEarly = false;
+    let sharedTerminal: vscode.Terminal | undefined;
+
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
         title: 'Super CLI: updating agents',
-        cancellable: false,
+        cancellable: true,
       },
-      async (progress) => {
-        for (const [index, agent] of updatable.entries()) {
-          progress.report({
-            message: `${agent.label} (${index + 1}/${updatable.length})`,
-            increment: 100 / updatable.length,
-          });
-          if (await updateAgent(agent, context)) {
+      async (progress, token) => {
+        const cancelled = new Promise<'cancelled'>((resolve) => {
+          token.onCancellationRequested(() => resolve('cancelled'));
+        });
+
+        for (const [index, { agent, updateCommand }] of updatable.entries()) {
+          if (token.isCancellationRequested) {
+            stoppedEarly = true;
+            return;
+          }
+
+          progress.report({ message: `${agent.label} (${index + 1}/${updatable.length})` });
+
+          // An agent carrying its own env can't share a terminal that was created without it, so it
+          // gets a dedicated one (updateAgent's own path) to keep its update running as configured.
+          let outcome: UpdateOutcome | 'cancelled';
+          if (agent.env && Object.keys(agent.env).length > 0) {
+            outcome = await Promise.race([updateAgent(agent, context), cancelled]);
+          } else {
+            sharedTerminal ??= createSharedUpdateTerminal();
+            outcome = await Promise.race([
+              runAgentUpdate(agent, updateCommand, sharedTerminal, context, { notify: false }),
+              cancelled,
+            ]);
+          }
+
+          progress.report({ increment: 100 / updatable.length });
+
+          if (outcome === 'succeeded') {
             succeeded++;
+          } else if (outcome === 'failed') {
+            failed++;
+          }
+
+          // The shared terminal is gone (or the user cancelled): stop instead of firing the remaining
+          // commands into a dead terminal, or behind an update the user just walked away from.
+          if (outcome === 'cancelled' || outcome === 'terminal-closed') {
+            stoppedEarly = true;
+            return;
           }
         }
       },
     );
 
-    void vscode.window.setStatusBarMessage(
-      skipped > 0
-        ? `Updated ${succeeded}/${updatable.length} agents (${skipped} not installed, skipped)`
-        : `Updated ${succeeded}/${updatable.length} agents`,
-      3000,
-    );
+    const summary = `Updated ${succeeded}/${updatable.length} agents`
+      + (failed > 0 ? `, ${failed} failed` : '')
+      + (stoppedEarly ? ', stopped early' : '')
+      + (notInstalled > 0 ? ` (${notInstalled} not installed, skipped)` : '');
+    void vscode.window.setStatusBarMessage(summary, 4000);
   });
 
   const openAgentDocumentationCommand = vscode.commands.registerCommand(

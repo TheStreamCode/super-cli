@@ -23,7 +23,10 @@ async function waitForActiveTerminal(expected, timeoutMs = 3000) {
   await waitForCondition(() => vscode.window.activeTerminal === expected, 'Expected the terminal to become active.', timeoutMs);
 }
 
-/** Polls a predicate until it is true or the timeout elapses. */
+/**
+ * Polls a predicate until it is true or the timeout elapses. `message` may be a function, so a
+ * caller can report the state that actually caused the failure without paying for it on every poll.
+ */
 async function waitForCondition(predicate, message, timeoutMs = 3000) {
   const startedAt = Date.now();
 
@@ -35,7 +38,7 @@ async function waitForCondition(predicate, message, timeoutMs = 3000) {
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
-  throw new Error(message);
+  throw new Error(typeof message === 'function' ? message() : message);
 }
 
 // Disposing and immediately creating another terminal back-to-back is unreliable in this test host --
@@ -175,15 +178,24 @@ async function run() {
       cwd: originalCwd,
     };
 
+    // Identified by name and identity rather than by array position: vscode.window.terminals is not
+    // ordered in a way this test may rely on, and restartSession deliberately overlaps the two
+    // terminals (it launches the replacement before disposing the original), so "the last one" is not
+    // dependably the replacement.
     const beforeRestart = vscode.window.terminals.length;
     await vscode.commands.executeCommand('superCli.restartSession', restartSession);
+    const findRelaunched = () => vscode.window.terminals.find(
+      (candidate) => candidate !== restartTerminal && /^Super CLI Test/.test(candidate.name),
+    );
     await waitForCondition(
-      () => !vscode.window.terminals.includes(restartTerminal) && vscode.window.terminals.length === beforeRestart,
-      'Expected superCli.restartSession to dispose the original terminal and relaunch a replacement.',
+      () => !vscode.window.terminals.includes(restartTerminal)
+        && vscode.window.terminals.length === beforeRestart
+        && findRelaunched() !== undefined,
+      () => 'Expected superCli.restartSession to dispose the original terminal and relaunch a replacement. '
+        + `Open terminals: ${JSON.stringify(vscode.window.terminals.map((candidate) => candidate.name))}`,
     );
 
-    const relaunchedTerminal = vscode.window.terminals[vscode.window.terminals.length - 1];
-    assert.match(relaunchedTerminal.name, /^Super CLI Test/);
+    const relaunchedTerminal = findRelaunched();
     assert.deepEqual(relaunchedTerminal.creationOptions?.cwd, originalCwd);
     await disposeAndWaitClosed(relaunchedTerminal);
 
@@ -194,13 +206,13 @@ async function run() {
     assert.match(updateTerminal.name, /^Update Super CLI Test/);
     await disposeAndWaitClosed(updateTerminal);
 
-    // superCli.updateAllAgents runs every updatable agent's update command in sequence. With builtins
-    // disabled above, only testAgent has an updateCommand ("node --version"), so exactly one terminal
-    // opens here, not one per agent -- testAgent2 (no updateCommand) must be skipped entirely.
+    // superCli.updateAllAgents runs every updatable agent's update command in sequence, in ONE shared
+    // "Super CLI: updates" terminal rather than one terminal per agent. With builtins disabled above,
+    // only testAgent has an updateCommand ("node --version"); testAgent2 must be skipped entirely.
     const beforeUpdateAllCount = vscode.window.terminals.length;
     await vscode.commands.executeCommand('superCli.updateAllAgents');
     const updateAllTerminal = await waitForNewTerminal(beforeUpdateAllCount);
-    assert.match(updateAllTerminal.name, /^Update Super CLI Test/);
+    assert.equal(updateAllTerminal.name, 'Super CLI: updates');
     assert.equal(vscode.window.terminals.length, beforeUpdateAllCount + 1);
     await disposeAndWaitClosed(updateAllTerminal);
 
@@ -349,6 +361,40 @@ async function run() {
   } finally {
     registry.dispose();
   }
+
+  // Regression: runAgentUpdate must ALWAYS settle. An update command that never exits on its own (an
+  // interactive prompt, a hung download) used to leave the promise pending forever, stranding
+  // superCli.updateAllAgents behind a non-cancellable progress notification with no way out but
+  // reloading the window. Closing the terminal is now a real escape hatch, and this asserts it.
+  const { runAgentUpdate, createSharedUpdateTerminal } = require(path.join(extension.extensionPath, 'out', 'terminal.js'));
+  const hangingUpdateCommand = 'node -e "setInterval(() => {}, 1000)"';
+  const hangingAgent = {
+    id: 'integration-test-hang',
+    label: 'Super CLI Hang',
+    command: 'node --version',
+    updateCommand: hangingUpdateCommand,
+  };
+  const hangTerminal = createSharedUpdateTerminal();
+  assert.equal(hangTerminal.name, 'Super CLI: updates');
+
+  const hangOutcome = runAgentUpdate(
+    hangingAgent,
+    hangingUpdateCommand,
+    hangTerminal,
+    { extensionUri: extension.extensionUri, subscriptions: [] },
+    { notify: false },
+  );
+
+  // Closed well inside the 3s shell-integration fallback window, so the terminal-close path under
+  // test is the only thing that can settle this promise.
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  hangTerminal.dispose();
+
+  const hangSettled = await Promise.race([
+    hangOutcome,
+    new Promise((resolve) => setTimeout(() => resolve('still-pending'), 5000)),
+  ]);
+  assert.equal(hangSettled, 'terminal-closed', 'Expected runAgentUpdate to settle once its terminal closed.');
 
   // sendText fallback path (Windows only): VS Code docs confirm cmd.exe does not support shell
   // integration, making it a reliable, deterministic way to force executeCommandWithOptionalShellIntegration

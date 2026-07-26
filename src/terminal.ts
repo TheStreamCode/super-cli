@@ -220,58 +220,89 @@ export async function launchAgent(
 }
 
 /**
- * Runs the agent's official update command in a dedicated terminal (without launching the agent).
- * Resolves true/false on the update's real exit code once shell integration reports it; if shell
- * integration never attaches, resolves true as soon as the command is sent, since sendText has no
- * completion signal to wait for (see executeCommandWithOptionalShellIntegration's onFallback).
+ * How one agent's update finished. `terminal-closed` means the terminal went away before the command
+ * reported an exit code — the update's real fate is unknown, and a bulk caller should stop rather than
+ * keep sending commands to a dead terminal.
  */
-export async function updateAgent(agent: Agent, context: vscode.ExtensionContext): Promise<boolean> {
-  if (!vscode.workspace.isTrusted) {
-    const selection = await vscode.window.showWarningMessage(
-      `Super CLI runs terminal commands in the current workspace. Trust this workspace before updating ${agent.label}.`,
-      'Manage Workspace Trust',
-    );
+export type UpdateOutcome = 'succeeded' | 'failed' | 'unsupported' | 'terminal-closed';
 
-    if (selection === 'Manage Workspace Trust') {
-      await vscode.commands.executeCommand('workbench.trust.manage');
-    }
-
-    return false;
-  }
-
+/** The shared terminal that superCli.updateAllAgents runs every update in, one after another. */
+export function createSharedUpdateTerminal(): vscode.Terminal {
   const { useWsl } = resolveTerminalEnvironment();
-  const updateCommand = agent.updateCommand;
+  const terminal = vscode.window.createTerminal({
+    name: 'Super CLI: updates',
+    location: vscode.TerminalLocation.Panel,
+    cwd: resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace),
+    iconPath: new vscode.ThemeIcon('arrow-circle-up'),
+    shellPath: useWsl ? 'wsl.exe' : undefined,
+  });
+  terminal.show();
+  return terminal;
+}
 
-  if (!updateCommand) {
-    void vscode.window.showInformationMessage(`${agent.label} has no configured update command — it likely updates itself.`);
-    return false;
-  }
-
+/** Creates the single-agent update terminal used when updating one agent on its own. */
+function createAgentUpdateTerminal(agent: Agent, context: vscode.ExtensionContext): vscode.Terminal {
+  const { useWsl } = resolveTerminalEnvironment();
   // No workspace-folder picker here (unlike launchAgent): an update command is typically a global
   // package-manager invocation that doesn't depend on which folder it runs in, so prompting once per
   // agent in superCli.updateAllAgents would be pure friction for no benefit.
-  const cwd = resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace);
   const terminal = vscode.window.createTerminal({
     name: `Update ${agent.label}`,
     location: vscode.TerminalLocation.Panel,
-    cwd,
+    cwd: resolveTerminalCwd(vscode.window.activeTextEditor, vscode.workspace),
     env: agent.env,
     iconPath: resolveAgentIcon(agent, context.extensionUri),
     shellPath: useWsl ? 'wsl.exe' : undefined,
   });
   terminal.show();
-  void vscode.window.setStatusBarMessage(`Updating ${agent.label}`, 2500);
+  return terminal;
+}
 
-  return new Promise<boolean>((resolve) => {
+/**
+ * Runs one agent's update command in `terminal` and resolves once its fate is known. There are three
+ * ways it can settle, and every one of them must resolve, or a bulk caller awaiting this would hang
+ * forever: the command reports an exit code, shell integration never attached so `sendText` was used
+ * (no completion signal exists, so sending counts as done), or the terminal is closed first — which
+ * also covers an update that never finishes on its own, e.g. one stuck on an interactive prompt.
+ */
+export function runAgentUpdate(
+  agent: Agent,
+  updateCommand: string,
+  terminal: vscode.Terminal,
+  context: vscode.ExtensionContext,
+  options: { notify: boolean },
+): Promise<UpdateOutcome> {
+  return new Promise<UpdateOutcome>((resolve) => {
+    let settled = false;
+    const settle = (outcome: UpdateOutcome): void => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      closeListener.dispose();
+      resolve(outcome);
+    };
+
+    const closeListener = vscode.window.onDidCloseTerminal((closed) => {
+      if (closed === terminal) {
+        settle('terminal-closed');
+      }
+    });
+
     executeCommandWithOptionalShellIntegration(
       terminal,
       updateCommand,
       context,
       (endEvent) => {
-        // Resolved as soon as the exit code is known, independent of the notification below: a caller
+        // Settled as soon as the exit code is known, independent of the notification below: a caller
         // awaiting every agent in a bulk update must not block on the user dismissing a toast.
         const succeeded = endEvent.exitCode === 0;
-        resolve(succeeded);
+        settle(succeeded ? 'succeeded' : 'failed');
+
+        if (!options.notify) {
+          return;
+        }
 
         const notification = succeeded
           ? vscode.window.showInformationMessage(`${agent.label} update completed.`, 'Show Terminal')
@@ -285,7 +316,34 @@ export async function updateAgent(agent: Agent, context: vscode.ExtensionContext
           }
         });
       },
-      () => resolve(true),
+      () => settle('succeeded'),
     );
   });
+}
+
+/** Runs the agent's official update command in a dedicated terminal (without launching the agent). */
+export async function updateAgent(agent: Agent, context: vscode.ExtensionContext): Promise<UpdateOutcome> {
+  if (!vscode.workspace.isTrusted) {
+    const selection = await vscode.window.showWarningMessage(
+      `Super CLI runs terminal commands in the current workspace. Trust this workspace before updating ${agent.label}.`,
+      'Manage Workspace Trust',
+    );
+
+    if (selection === 'Manage Workspace Trust') {
+      await vscode.commands.executeCommand('workbench.trust.manage');
+    }
+
+    return 'unsupported';
+  }
+
+  const updateCommand = agent.updateCommand;
+
+  if (!updateCommand) {
+    void vscode.window.showInformationMessage(`${agent.label} has no configured update command — it likely updates itself.`);
+    return 'unsupported';
+  }
+
+  const terminal = createAgentUpdateTerminal(agent, context);
+  void vscode.window.setStatusBarMessage(`Updating ${agent.label}`, 2500);
+  return runAgentUpdate(agent, updateCommand, terminal, context, { notify: true });
 }
