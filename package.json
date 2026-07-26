@@ -3,7 +3,7 @@
   "displayName": "Super CLI: Claude Code, Codex & AI Agent Launcher",
   "description": "Launch Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro, OpenClaw, Qoder CLI and other AI coding agents from one VS Code sidebar.",
   "publisher": "mikesoft",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -27,7 +27,7 @@
   },
   "pricing": "Free",
   "engines": {
-    "vscode": "^1.103.0"
+    "vscode": "^1.93.0"
   },
   "capabilities": {
     "untrustedWorkspaces": {
@@ -553,7 +553,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@types/vscode": "1.103.0",
+    "@types/vscode": "1.93.0",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.0.0",
     "typescript": "^7.0.2"
