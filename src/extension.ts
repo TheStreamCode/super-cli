@@ -16,7 +16,7 @@ import {
   shouldOfferFavoriteAfterLaunch,
   shouldOfferRatingAfterLaunch,
 } from './agent-view.js';
-import { executableExistsOnPath, isExecutableFile } from './command-utils.js';
+import { executableExistsOnPath, findAgentByTerminalName, isExecutableFile } from './command-utils.js';
 import { buildDoctorReport, inspectAgents, type DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
 import { AgentSessionRegistry, resolveCommandSessionArgument } from './sessions.js';
@@ -31,6 +31,11 @@ import {
 } from './terminal.js';
 
 const SETTINGS_NAMESPACE = 'superCli';
+
+// How long after activation a newly opened terminal is still treated as a possible reload survivor.
+// Long enough for VS Code to finish reconnecting terminals, short enough that terminals the user
+// opens themselves a moment later are never mistaken for agents.
+const TERMINAL_ADOPTION_GRACE_MS = 10_000;
 
 let terminalSequence = 1;
 
@@ -106,6 +111,33 @@ export function activate(context: vscode.ExtensionContext): void {
   );
   const treeView = vscode.window.createTreeView('superCli.agents', { treeDataProvider: treeProvider });
   const sessionsChangeListener = sessions.onDidChange(() => treeProvider.refresh());
+
+  // Recovers sessions after a window reload. VS Code reconnects terminal processes across a reload
+  // (terminal.integrated.enablePersistentSessions), but the extension host restarts with an empty
+  // registry, so agents that are still running would silently vanish from the Running group. The only
+  // surviving link is the terminal's name, which buildTerminalName derived from the agent's label.
+  //
+  // A terminal the user happens to have named exactly like an agent would be adopted too. That is
+  // accepted: the visible consequence is one extra row whose Stop button closes a terminal the user
+  // named after an agent, which is a far smaller problem than losing track of real running agents.
+  const adoptTerminal = (terminal: vscode.Terminal): void => {
+    const agent = findAgentByTerminalName(terminal.name, getEffectiveAgents());
+    if (!agent) {
+      return;
+    }
+
+    // creationOptions is not typed for reconnected terminals, so the cwd is only reused when it
+    // really is a Uri; otherwise a restart resolves the folder afresh instead of trusting a string.
+    const options = terminal.creationOptions as { cwd?: unknown };
+    const cwd = options.cwd instanceof vscode.Uri ? options.cwd : undefined;
+    sessions.adopt(agent, terminal, cwd);
+  };
+
+  const adoptExistingTerminals = (): void => {
+    for (const terminal of vscode.window.terminals) {
+      adoptTerminal(terminal);
+    }
+  };
 
   // One-time migration from the legacy single-favorite setting. The legacy setting is deliberately
   // left in place (never cleared) rather than being wiped after copying it over: clearing it would
@@ -666,9 +698,25 @@ export function activate(context: vscode.ExtensionContext): void {
   refreshInstallStatus();
   void migrateLegacyFavorite();
 
+  // Terminals reconnected by a reload can surface a little after activation, so the sweep runs once
+  // now and then again for anything opened during a short grace period. Once that closes, a new
+  // terminal is either one of our own launches (already registered, and start() would supersede an
+  // adoption anyway) or genuinely the user's, and is left alone.
+  adoptExistingTerminals();
+  const adoptionDeadline = Date.now() + TERMINAL_ADOPTION_GRACE_MS;
+  const adoptionListener = vscode.window.onDidOpenTerminal((terminal) => {
+    if (Date.now() > adoptionDeadline) {
+      adoptionListener.dispose();
+      return;
+    }
+
+    adoptTerminal(terminal);
+  });
+
   context.subscriptions.push(
     sessions,
     sessionsChangeListener,
+    adoptionListener,
     treeView,
     launchCommand,
     launchFavoriteCommand,

@@ -80,15 +80,21 @@ export class AgentTreeDataProvider implements vscode.TreeDataProvider<AgentTreeN
 
     if (node.kind === 'session') {
       const { session } = node;
+      // An adopted session's real start time died with the previous extension host, so it reports how
+      // long Super CLI has been watching it again rather than inventing a runtime for it.
       const elapsed = formatSessionElapsed(session.startedAt, Date.now());
+      const description = session.adopted ? `reconnected · ${elapsed}` : elapsed;
+      const runtime = session.adopted
+        ? `reconnected after a window reload, tracked for ${elapsed}`
+        : `running for ${elapsed}`;
       const item = new vscode.TreeItem(session.agent.label, vscode.TreeItemCollapsibleState.None);
       item.id = session.sessionId;
-      item.description = elapsed;
-      item.tooltip = `${session.agent.label} · running for ${elapsed} · click to reveal its terminal`;
+      item.description = description;
+      item.tooltip = `${session.agent.label} · ${runtime} · click to reveal its terminal`;
       item.contextValue = 'session-running';
       item.iconPath = resolveAgentIcon(session.agent, this.extensionUri);
       item.accessibilityInformation = {
-        label: `${session.agent.label}, running for ${elapsed}`,
+        label: `${session.agent.label}, ${runtime}`,
       };
       item.command = {
         command: 'superCli.revealSession',

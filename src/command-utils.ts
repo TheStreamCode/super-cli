@@ -58,6 +58,39 @@ export function buildTerminalName(value: string | undefined, sequence: number, f
   return `${baseName}${suffix}`;
 }
 
+/**
+ * Finds the agent a terminal name was built for, or undefined when it matches none.
+ *
+ * This is how sessions are recovered after a window reload: VS Code reconnects the terminal processes
+ * but the in-memory session registry starts empty, so the only thing left tying a surviving terminal
+ * to an agent is the name `buildTerminalName` gave it — either the agent's label, or the label plus a
+ * numeric suffix. Exact matches are preferred over suffix matches so that an agent whose label itself
+ * ends in a number can't be shadowed by a shorter one.
+ */
+export function findAgentByTerminalName<T extends { label: string }>(
+  terminalName: string,
+  agents: readonly T[],
+): T | undefined {
+  const name = terminalName.trim();
+  if (!name) {
+    return undefined;
+  }
+
+  const exact = agents.find((agent) => agent.label.trim() === name);
+  if (exact) {
+    return exact;
+  }
+
+  return agents.find((agent) => {
+    const base = agent.label.trim();
+    if (!base || !name.startsWith(`${base} `)) {
+      return false;
+    }
+
+    return /^\d+$/.test(name.slice(base.length + 1));
+  });
+}
+
 /** Returns the settings search query for the current extension id. */
 export function buildExtensionSettingsQuery(extensionId: string): string {
   return `@ext:${extensionId}`;

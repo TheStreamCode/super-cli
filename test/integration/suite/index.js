@@ -282,6 +282,53 @@ async function run() {
       'Expected the session to clear once its terminal closed.',
     );
 
+    // Adoption: this is how sessions survive a window reload. A terminal that already exists is taken
+    // over, flagged as adopted (its true start time died with the previous extension host), and taking
+    // it over twice must not produce a second row -- the sweep can run more than once.
+    const adoptionTerminal = vscode.window.createTerminal({ name: 'Adoption probe' });
+    try {
+      const adoptedSession = registry.adopt(testAgent, adoptionTerminal, undefined);
+      assert.ok(adoptedSession, 'Expected an untracked terminal to be adopted.');
+      assert.equal(adoptedSession.adopted, true);
+      assert.equal(registry.adopt(testAgent, adoptionTerminal, undefined), undefined, 'Adoption must be idempotent.');
+      assert.equal(registry.list().filter((session) => session.terminal === adoptionTerminal).length, 1);
+
+      // A real launch on the same terminal supersedes the adoption rather than adding to it: whichever
+      // order onDidOpenTerminal and launchAgent land in, the terminal ends up with exactly one row and
+      // the launch's own metadata wins.
+      const launchedOverAdoption = registry.start(testAgent, adoptionTerminal, undefined);
+      assert.equal(launchedOverAdoption.adopted, false);
+      assert.equal(registry.list().filter((session) => session.terminal === adoptionTerminal).length, 1);
+
+      // An adopted row reports that it reconnected instead of inventing a runtime it cannot know.
+      const adoptedOnly = new AgentSessionRegistry();
+      try {
+        adoptedOnly.adopt(testAgent, adoptionTerminal, undefined);
+        const adoptedProvider = new AgentTreeDataProvider(
+          () => [],
+          () => [],
+          () => undefined,
+          () => undefined,
+          () => adoptedOnly.list(),
+          extension.extensionUri,
+        );
+        const adoptedRoots = adoptedProvider.getChildren();
+        const adoptedRow = adoptedProvider.getTreeItem(adoptedProvider.getChildren(adoptedRoots[0])[0]);
+        assert.match(adoptedRow.description, /^reconnected/);
+        assert.match(adoptedRow.tooltip, /reconnected after a window reload/);
+      } finally {
+        adoptedOnly.dispose();
+      }
+    } finally {
+      // Also the documented end of an adopted session: it has no shell-integration listener, so
+      // closing the terminal is the only thing that can clear it.
+      adoptionTerminal.dispose();
+      await waitForCondition(
+        () => !registry.list().some((session) => session.terminal === adoptionTerminal),
+        'Expected the adopted session to clear once its terminal closed.',
+      );
+    }
+
     // Tree shaping: a running session renders a spinning "Running" group above the static agents,
     // with one child row that reveals its terminal when clicked.
     const treeProbeTerminal = vscode.window.createTerminal({ name: 'Tree probe' });

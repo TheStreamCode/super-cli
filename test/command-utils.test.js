@@ -7,6 +7,7 @@ const path = require('node:path');
 const {
   appendBoundedText,
   buildTerminalName,
+  findAgentByTerminalName,
   normalizeTerminalName,
   buildExtensionSettingsQuery,
   resolveTerminalCwd,
@@ -47,6 +48,43 @@ test('buildTerminalName uses the base name for the first terminal', () => {
 
 test('buildTerminalName appends the sequence after the first terminal', () => {
   assert.equal(buildTerminalName('Claude Code', 3, 'Agent'), 'Claude Code 3');
+});
+
+// findAgentByTerminalName
+const namedAgents = [
+  { id: 'claude', label: 'Claude Code' },
+  { id: 'codex', label: 'Codex' },
+];
+
+test('findAgentByTerminalName matches the plain label and the numbered variants', () => {
+  assert.equal(findAgentByTerminalName('Claude Code', namedAgents)?.id, 'claude');
+  assert.equal(findAgentByTerminalName('Claude Code 2', namedAgents)?.id, 'claude');
+  assert.equal(findAgentByTerminalName('Claude Code 17', namedAgents)?.id, 'claude');
+  assert.equal(findAgentByTerminalName('Codex 3', namedAgents)?.id, 'codex');
+});
+
+test('findAgentByTerminalName round-trips every name buildTerminalName can produce', () => {
+  for (const sequence of [1, 2, 9, 42]) {
+    const name = buildTerminalName('Claude Code', sequence, 'Claude Code');
+    assert.equal(findAgentByTerminalName(name, namedAgents)?.id, 'claude', name);
+  }
+});
+
+test('findAgentByTerminalName ignores terminals that belong to nobody', () => {
+  assert.equal(findAgentByTerminalName('bash', namedAgents), undefined);
+  assert.equal(findAgentByTerminalName('', namedAgents), undefined);
+  assert.equal(findAgentByTerminalName('   ', namedAgents), undefined);
+  // A suffix has to be numeric: this is a different terminal, not Claude Code's second one.
+  assert.equal(findAgentByTerminalName('Claude Code notes', namedAgents), undefined);
+  assert.equal(findAgentByTerminalName('Claude', namedAgents), undefined);
+});
+
+test('findAgentByTerminalName prefers an exact label over another agent numeric suffix', () => {
+  // "Agent 2" is genuinely this agent's own label, not the second terminal of "Agent".
+  const overlapping = [{ id: 'a', label: 'Agent' }, { id: 'b', label: 'Agent 2' }];
+
+  assert.equal(findAgentByTerminalName('Agent 2', overlapping)?.id, 'b');
+  assert.equal(findAgentByTerminalName('Agent 3', overlapping)?.id, 'a');
 });
 
 // buildExtensionSettingsQuery
