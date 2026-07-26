@@ -51,16 +51,22 @@ async function waitForCondition(predicate, message, timeoutMs = 3000) {
  * hard-coded per platform, so it stays correct on a macOS machine that *does* have a desktop session.
  */
 async function detectsActiveTerminalFocus() {
-  const probe = vscode.window.createTerminal({ name: 'Focus probe' });
-  probe.show();
+  // Must probe re-showing an ALREADY OPEN terminal, which is what revealSession does. Creating one
+  // and showing it proves nothing: VS Code activates a freshly created terminal regardless of window
+  // focus, so a create-then-show probe reports true even on a runner where the real assertion fails.
+  const first = vscode.window.createTerminal({ name: 'Focus probe A' });
+  const second = vscode.window.createTerminal({ name: 'Focus probe B' });
 
   try {
-    await waitForCondition(() => vscode.window.activeTerminal === probe, 'probe', 2000);
+    second.show();
+    first.show();
+    await waitForCondition(() => vscode.window.activeTerminal === first, 'probe', 2000);
     return true;
   } catch {
     return false;
   } finally {
-    probe.dispose();
+    first.dispose();
+    second.dispose();
   }
 }
 
