@@ -37,13 +37,22 @@ The integration suite downloads/caches VS Code builds under `.vscode-test/` (git
 `@vscode/test-electron`, launches a real Extension Development Host, and needs a display on Linux
 (CI starts Xvfb for it).
 
-`vscode.window.activeTerminal` only follows `terminal.show()` when the window holds real OS focus.
-A headless macOS runner never grants it, and a local desktop can steal it mid-run, so anything
-asserting on `activeTerminal` must go behind `detectsActiveTerminalFocus()`, which probes the
-environment once at runtime instead of hard-coding a platform. This is not hypothetical: for several
-releases the macOS leg failed on exactly this while Windows and Linux passed, and because macOS was
-not among the required status checks nobody noticed. Never "fix" a red macOS leg by assuming it is
-just flaky — read the log first.
+**Never assert on `vscode.window.activeTerminal`.** It only follows `terminal.show()` when the window
+holds real OS focus, and a headless macOS runner will not move focus between a terminal in the editor
+area (where launches land, since `terminalLocation` defaults to `beside`) and one in the panel. For
+several releases the macOS leg failed on exactly this while Windows and Linux passed, and because
+macOS is not among the required status checks, nobody noticed.
+
+Gating those assertions behind an environment probe was tried and abandoned: two probes in a row
+reported focus as working on macOS anyway — one because VS Code activates a *newly created* terminal
+regardless of focus, the other because it used two panel terminals rather than spanning the editor
+area and the panel. Any probe that re-creates the conditions it guards will drift from them.
+
+What replaced it: pass a stand-in `{ show() {} }` as the session's terminal and assert the call was
+made. `resolveCommandSessionArgument` only needs a `sessionId`, an `agent` and a `terminal`, so a
+plain object qualifies. That pins the part that is genuinely ours — argument resolution — and leaves
+window focus, which is VS Code's behaviour and not this extension's, out of the test entirely. Prefer
+that shape for any future command that just forwards to a terminal method.
 
 ## Architecture
 

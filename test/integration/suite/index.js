@@ -18,11 +18,6 @@ async function waitForNewTerminal(beforeCount, timeoutMs = 3000) {
   throw new Error('Expected the launcher to create a terminal.');
 }
 
-/** Waits for the given terminal to become the active one. */
-async function waitForActiveTerminal(expected, timeoutMs = 3000) {
-  await waitForCondition(() => vscode.window.activeTerminal === expected, 'Expected the terminal to become active.', timeoutMs);
-}
-
 /**
  * Polls a predicate until it is true or the timeout elapses. `message` may be a function, so a
  * caller can report the state that actually caused the failure without paying for it on every poll.
@@ -39,35 +34,6 @@ async function waitForCondition(predicate, message, timeoutMs = 3000) {
   }
 
   throw new Error(typeof message === 'function' ? message() : message);
-}
-
-/**
- * Reports whether this environment reflects `terminal.show()` in `vscode.window.activeTerminal`.
- *
- * It doesn't everywhere: a headless macOS CI runner never gives the VS Code window real OS focus, and
- * without focus `activeTerminal` simply never updates. That is a property of the runner, not of the
- * extension, so the focus-dependent assertions are skipped there instead of failing the whole matrix
- * on every platform -- Windows and Linux still cover them. Probed once, at runtime, rather than
- * hard-coded per platform, so it stays correct on a macOS machine that *does* have a desktop session.
- */
-async function detectsActiveTerminalFocus() {
-  // Must probe re-showing an ALREADY OPEN terminal, which is what revealSession does. Creating one
-  // and showing it proves nothing: VS Code activates a freshly created terminal regardless of window
-  // focus, so a create-then-show probe reports true even on a runner where the real assertion fails.
-  const first = vscode.window.createTerminal({ name: 'Focus probe A' });
-  const second = vscode.window.createTerminal({ name: 'Focus probe B' });
-
-  try {
-    second.show();
-    first.show();
-    await waitForCondition(() => vscode.window.activeTerminal === first, 'probe', 2000);
-    return true;
-  } catch {
-    return false;
-  } finally {
-    first.dispose();
-    second.dispose();
-  }
 }
 
 // Disposing and immediately creating another terminal back-to-back is unreliable in this test host --
@@ -162,7 +128,6 @@ async function run() {
     const terminal = await waitForNewTerminal(beforeCount);
     assert.match(terminal.name, /^Super CLI Test/);
 
-    const distraction = vscode.window.createTerminal({ name: 'Distraction' });
     const fakeSession = {
       sessionId: 'integration-test-session',
       agent: testAgent,
@@ -171,29 +136,34 @@ async function run() {
       cwd: undefined,
     };
 
-    // revealSession accepts two argument shapes: the raw session (what tree rows pass through
-    // item.command — see tree.ts's getTreeItem) and the wrapped node (what context-menu invocations
-    // pass). Running both always exercises resolveCommandSessionArgument on every platform; only the
-    // "did the terminal actually come to the front" half needs real window focus, so it is asserted
-    // just where the environment supports it (see detectsActiveTerminalFocus).
-    const tracksTerminalFocus = await detectsActiveTerminalFocus();
-    if (!tracksTerminalFocus) {
-      console.log('[super-cli] No terminal focus in this environment: skipping activeTerminal assertions.');
-    }
+    // revealSession is "resolve the argument, then call show() on that session's terminal". What is
+    // worth asserting is the resolution: it must accept both the raw session (what tree rows pass
+    // through item.command — see tree.ts's getTreeItem) and the wrapped node (what context-menu
+    // invocations pass). Whether show() then moves the OS focus is VS Code's behaviour, not this
+    // extension's, and asserting it via vscode.window.activeTerminal made the macOS leg permanently
+    // red -- a headless runner will not move focus between the editor area, where launches land, and
+    // the panel. A stand-in terminal records the call directly instead: deterministic everywhere, and
+    // it pins the part that is actually ours. resolveCommandSessionArgument only requires the session
+    // to carry a sessionId, an agent and a terminal, so a plain object is a valid one.
+    let revealedCount = 0;
+    const spySession = {
+      sessionId: 'integration-test-reveal-spy',
+      agent: testAgent,
+      terminal: { show: () => { revealedCount++; } },
+      startedAt: Date.now(),
+      cwd: undefined,
+    };
 
-    for (const revealArgument of [fakeSession, { kind: 'session', session: fakeSession }]) {
-      distraction.show();
-      if (tracksTerminalFocus) {
-        await waitForActiveTerminal(distraction);
-      }
+    await vscode.commands.executeCommand('superCli.revealSession', spySession);
+    assert.equal(revealedCount, 1, 'Expected a raw session argument to reveal its terminal.');
 
-      await vscode.commands.executeCommand('superCli.revealSession', revealArgument);
-      if (tracksTerminalFocus) {
-        await waitForActiveTerminal(terminal);
-      }
-    }
+    await vscode.commands.executeCommand('superCli.revealSession', { kind: 'session', session: spySession });
+    assert.equal(revealedCount, 2, 'Expected a wrapped tree node to reveal its terminal too.');
 
-    distraction.dispose();
+    // A malformed argument must be ignored rather than throwing out of the command handler.
+    await vscode.commands.executeCommand('superCli.revealSession', { kind: 'agent', agent: testAgent });
+    await vscode.commands.executeCommand('superCli.revealSession', undefined);
+    assert.equal(revealedCount, 2, 'Expected unrecognized arguments to reveal nothing.');
 
     // superCli.stopSession disposes the terminal — real argument resolution, not a direct dispose().
     const beforeStop = vscode.window.terminals.length;
