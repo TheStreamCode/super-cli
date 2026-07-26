@@ -45,3 +45,10 @@ jobs:
         run: npm run check
         env:
           DISPLAY: ':99.0'
+
+      # One platform is enough: the dependency tree is the same everywhere, and this should report a
+      # newly disclosed advisory rather than three copies of it. Kept out of `npm run check` so a
+      # published advisory never blocks local development on an unrelated change.
+      - name: Audit dependencies
+        if: runner.os == 'Linux'
+        run: npm audit --audit-level=moderate
