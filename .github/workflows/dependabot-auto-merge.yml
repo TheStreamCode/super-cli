@@ -1,0 +1,51 @@
+name: Dependabot auto-merge
+
+# Approves and auto-merges Dependabot's patch and minor updates once the required
+# checks pass. Major bumps are deliberately excluded: they are the ones that break
+# builds and deserve a human read.
+#
+# Why pull_request_target and not pull_request: GitHub treats Dependabot runs as if
+# they came from a fork, so on `pull_request` the GITHUB_TOKEN is read-only and
+# cannot approve or merge. `pull_request_target` runs in the base repository's
+# context with a writable token.
+#
+# That trigger is dangerous when a workflow checks out and executes the pull
+# request's code, because untrusted code would then run with those elevated
+# permissions. This workflow never checks out the PR — it only reads metadata and
+# calls the API — so that risk does not apply here.
+#
+# Auto-merge waits for the branch protection checks; nothing lands on a red build.
+
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    # Verify the author, not just the actor, so the job cannot be driven by a PR
+    # someone else opened.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Approve and enable auto-merge for patch and minor updates
+        if: |
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          steps.meta.outputs.update-type == 'version-update:semver-minor'
+        run: |
+          gh pr review --approve "$PR_URL"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Flag major updates for manual review
+        if: steps.meta.outputs.update-type == 'version-update:semver-major'
+        run: |
+          echo "::notice::Major update (${{ steps.meta.outputs.dependency-names }}) left for manual review."
