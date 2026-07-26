@@ -3,7 +3,6 @@ const assert = require('node:assert/strict');
 
 const {
   buildAgentGroups,
-  buildAgentSections,
   formatSessionElapsed,
   resolveMigratedFavorites,
   shouldOfferFavoriteAfterLaunch,
@@ -60,28 +59,27 @@ test('buildAgentGroups omits the favorite group entirely when there are no favor
   assert.equal(groups.some((group) => group.id === 'favorite'), false);
 });
 
-test('buildAgentSections promotes a single favorite and alphabetizes the remaining agents without duplicates', () => {
-  const sections = buildAgentSections(agents, ['bravo'], () => true);
-  const flattened = sections.flatMap((section) => section.agents.map((agent) => agent.id));
+// The quick pick renders these same groups as separators (see buildQuickPickItems in extension.ts),
+// so every agent must appear exactly once across the whole result — a duplicate would show up twice
+// in the picker, and a dropped agent would be unlaunchable from it.
+test('buildAgentGroups partitions agents exactly once each, favorites first', () => {
+  const groups = buildAgentGroups(agents, ['bravo'], () => true);
+  const flattened = groups.flatMap((group) => group.agents.map((agent) => agent.id));
 
-  assert.equal(sections[0].id, 'favorite');
-  assert.deepEqual(sections[0].agents.map((agent) => agent.id), ['bravo']);
-  assert.deepEqual(sections[1].agents.map((agent) => agent.id), ['alpha', 'charlie']);
-  assert.deepEqual(flattened.sort(), ['alpha', 'bravo', 'charlie']);
+  assert.equal(groups[0].id, 'favorite');
+  assert.deepEqual(groups[0].agents.map((agent) => agent.id), ['bravo']);
+  assert.deepEqual(groups[1].agents.map((agent) => agent.id), ['alpha', 'charlie']);
+  assert.deepEqual([...flattened].sort(), ['alpha', 'bravo', 'charlie']);
+  assert.equal(new Set(flattened).size, flattened.length);
 });
 
-test('buildAgentSections promotes multiple favorites, alphabetized, without duplicates', () => {
-  const sections = buildAgentSections(agents, ['charlie', 'alpha'], () => true);
+test('buildAgentGroups labels each group for both the tree and the quick pick', () => {
+  const groups = buildAgentGroups(agents, ['alpha'], getStatus);
 
-  assert.equal(sections[0].id, 'favorite');
-  assert.deepEqual(sections[0].agents.map((agent) => agent.id), ['alpha', 'charlie']);
-  assert.deepEqual(sections[1].agents.map((agent) => agent.id), ['bravo']);
-});
-
-test('buildAgentSections omits the favorite section when there are no favorites', () => {
-  const sections = buildAgentSections(agents, [], () => true);
-
-  assert.equal(sections.some((section) => section.id === 'favorite'), false);
+  assert.deepEqual(
+    groups.map((group) => [group.id, group.label]),
+    [['favorite', 'Favorites'], ['unknown', 'Agents'], ['setup', 'Setup required']],
+  );
 });
 
 test('favorite prompt is offered only after a successful launch, for an agent not already favorited', () => {

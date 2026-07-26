@@ -2,13 +2,11 @@ import type { Agent } from './agents.js';
 
 export type AgentInstallStatus = boolean | undefined;
 
+/**
+ * One labelled group of agents. The sidebar tree renders these as collapsible group nodes and the
+ * quick pick renders the same grouping as separators, so both stay in sync by construction.
+ */
 export interface AgentGroup {
-  id: 'favorite' | 'ready' | 'unknown' | 'setup';
-  label: string;
-  agents: Agent[];
-}
-
-export interface AgentSection {
   id: 'favorite' | 'ready' | 'unknown' | 'setup';
   label: string;
   agents: Agent[];
@@ -65,9 +63,9 @@ function sortAgents(agents: readonly Agent[]): Agent[] {
 }
 
 /**
- * Groups sidebar agents for the tree: favorites get their own group, promoted above the
- * installation-state groups (which exclude favorites, so no agent is ever listed twice). Each group
- * is sorted alphabetically.
+ * Groups agents for both the sidebar tree and the quick pick: favorites get their own group, promoted
+ * above the installation-state groups (which exclude favorites, so no agent is ever listed twice).
+ * Each group is sorted alphabetically, and empty groups are dropped entirely.
  */
 export function buildAgentGroups(
   agents: readonly Agent[],
@@ -104,22 +102,4 @@ export function formatSessionElapsed(startedAtMs: number, nowMs: number): string
   const hours = Math.floor(elapsedMinutes / 60);
   const minutes = elapsedMinutes % 60;
   return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
-}
-
-/** Builds non-duplicated Quick Pick sections with favorites promoted to their own section. */
-export function buildAgentSections(
-  agents: readonly Agent[],
-  favoriteIds: readonly string[],
-  getInstallStatus: (id: string) => AgentInstallStatus,
-): AgentSection[] {
-  const favorites = sortAgents(agents.filter((agent) => favoriteIds.includes(agent.id)));
-  const remaining = sortAgents(agents.filter((agent) => !favoriteIds.includes(agent.id)));
-  const sections: AgentSection[] = [
-    { id: 'favorite', label: 'Favorites', agents: favorites },
-    { id: 'ready', label: 'Ready', agents: remaining.filter((agent) => getInstallStatus(agent.id) === true) },
-    { id: 'unknown', label: 'Agents', agents: remaining.filter((agent) => getInstallStatus(agent.id) === undefined) },
-    { id: 'setup', label: 'Setup required', agents: remaining.filter((agent) => getInstallStatus(agent.id) === false) },
-  ];
-
-  return sections.filter((section) => section.agents.length > 0);
 }
