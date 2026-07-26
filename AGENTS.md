@@ -137,6 +137,29 @@ notification (fixed in 1.6.1, regression-tested in the integration suite). Any f
 `await`s a terminal command needs the same escape hatch, plus a cancellable progress if it loops.
 When adding one, verify the test fails without the fix — a test for a hang passes trivially otherwise.
 
+### Sessions are recovered by terminal name, and the engine floor is the real API floor
+
+`AgentSessionRegistry` lives in memory, so a window reload wipes it while VS Code keeps the terminal
+processes alive (`terminal.integrated.enablePersistentSessions`). `adoptExistingTerminals`
+(`extension.ts`) closes that gap by matching surviving terminals back to agents with
+`findAgentByTerminalName` (`command-utils.ts`, pure and unit-tested) — the name is the only surviving
+link, since `creationOptions` is not dependable for reconnected terminals. Adopted sessions are
+flagged `adopted` and carry no shell-integration listener: the command was started by a previous
+extension host and cannot be observed, so they end only when the terminal closes. `start()`
+deliberately supersedes an adoption for the same terminal, because `onDidOpenTerminal` also fires for
+our own launches and the two must never both produce a row.
+
+Cross-window or cross-editor session sharing is **not possible** with the VS Code API: each window has
+an isolated extension host with no access to another window's terminals. It would require an external
+channel (shared state on disk, a watcher, and a request protocol so the owning window performs the
+stop). Don't accept an issue claiming this is a small fix.
+
+Related: `engines.vscode` is deliberately `^1.93.0`, the true floor of the terminal shell-integration
+APIs, not the newest release — forks (Cursor, Windsurf, Trae, …) track upstream at a delay, and a
+higher floor silently makes the extension uninstallable there. `@types/vscode` is pinned to exactly
+that version and excluded from Dependabot so the compiler can't accept API the manifest doesn't
+promise. Raise the two together, never one alone.
+
 ### Renaming or retyping a setting: migrate additively, never clear the old key
 
 `superCli.favoriteAgents` (array) replaced `superCli.favoriteAgent` (single id) this way: the old

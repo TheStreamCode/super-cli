@@ -16,8 +16,10 @@ OpenClaw CLI, Qoder CLI, Cursor Agent, and other AI coding agents** inside VS Co
 integrated terminal. Super CLI keeps every supported agent one click away without replacing its
 official command-line experience.
 
-It works on Windows, macOS, Linux, and WSL, and across the VS Code family: VS Code, Cursor,
-Antigravity, and Windsurf. It is free, open source, and has no telemetry or automatic CLI installers.
+It works on Windows, macOS, Linux, and WSL, and on any editor that supports the VS Code extension
+model — VS Code itself plus the forks that install from [Open VSX](https://open-vsx.org/extension/mikesoft/vscode-super-cli)
+or from a `.vsix`, such as Cursor, Windsurf, Google Antigravity, Kiro, Trae, VSCodium, and Gitpod. It
+is free, open source, and has no telemetry or automatic CLI installers.
 
 ## Install Super CLI in VS Code
 
@@ -28,8 +30,24 @@ or run:
 code --install-extension mikesoft.vscode-super-cli
 ```
 
-You can also open the Extensions view in VS Code, Cursor, Antigravity, or Windsurf, search for
-**Super CLI**, and select **Install**.
+You can also open the Extensions view, search for **Super CLI**, and select **Install**.
+
+### Which editors it runs in
+
+Super CLI needs an editor that runs VS Code extensions. That covers VS Code and its forks — Cursor,
+Windsurf, Google Antigravity, Kiro, Trae, VSCodium, Gitpod and others. Because Microsoft's Marketplace
+is licensed for Microsoft products only, forks generally install from
+[Open VSX](https://open-vsx.org/extension/mikesoft/vscode-super-cli), where every release is published
+too, or from the `.vsix` attached to each [GitHub release](https://github.com/TheStreamCode/super-cli/releases)
+via **Extensions: Install from VSIX…**.
+
+The manifest requires VS Code `1.93` or newer — the actual floor of the terminal APIs used — rather
+than the latest version, so forks that track upstream at a delay can still install it.
+
+Editors with their own extension system cannot run it, and no configuration changes that: **Zed**
+extensions are Rust crates compiled to WebAssembly, and **JetBrains** IDEs (IntelliJ, PyCharm,
+WebStorm, …) use JVM plugins. Neither loads a `.vsix`. Note this is about the *editor*: agent CLIs like
+Qoder CLI are supported as agents to launch, whichever supported editor you launch them from.
 
 This extension is unofficial and is not affiliated with, endorsed by, or sponsored by Anthropic,
 OpenAI, GitHub, Google, or any other vendor. See the [third-party
@@ -73,6 +91,11 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   running session at once. It clears itself as soon as the CLI exits (with terminal shell integration
   available) and always when the terminal closes. Super CLI never reads terminal content to show
   this — only the terminal's own lifecycle.
+- **Survives a window reload.** Reloading the window (or installing an update) restarts the extension
+  but not your agents: VS Code reconnects their terminals, and Super CLI picks them back up into the
+  **Running** group instead of losing sight of them. Recovered sessions are marked *reconnected*,
+  because their original start time is gone with the previous session and reporting a duration would
+  be a guess.
 - **Agent Manager.** Choose exactly which built-in CLIs appear from the sidebar toolbar or with
   **Super CLI: Manage Built-in Agents**. Hiding a favorited agent safely removes just that one from
   your favorites, leaving the rest untouched.
@@ -211,6 +234,13 @@ settings.
 - **I updated the extension but nothing changed.** Reload the window (**Developer: Reload Window**
   from the Command Palette) or restart your editor. Extension code loaded into a running window
   is not replaced until the window reloads, even after a newer version finishes installing.
+- **A running agent didn't come back after a reload.** Recovery matches a surviving terminal to an
+  agent by the terminal's name, so a renamed terminal can't be matched. It also relies on VS Code's own
+  terminal persistence: if `terminal.integrated.enablePersistentSessions` is off, the terminals
+  themselves don't survive a reload and there is nothing left to recover.
+- **Sessions in another window aren't listed.** Each window sees only its own. VS Code gives an
+  extension no access to another window's terminals, so a shared view across windows (or across two
+  different editors) isn't something Super CLI can do today.
 
 ## FAQ
 

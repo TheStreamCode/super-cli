@@ -5,6 +5,27 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-07-26
+
+### Added
+
+- Running sessions now survive a window reload. VS Code keeps the terminal processes alive across a
+  reload, but the extension host restarts with an empty registry, so agents that were still running
+  disappeared from the **Running** group. Surviving terminals are now matched back to their agent and
+  picked up again, marked *reconnected* — their original start time is gone with the previous session,
+  so no duration is invented for them. A recovered session ends when its terminal closes; unlike a
+  freshly launched one, its command can no longer be observed.
+
+### Changed
+
+- Lowered the required VS Code version from `1.103` back to `1.93`, the actual floor of the terminal
+  APIs in use. The higher value was raised only to satisfy packaging validation and made the extension
+  uninstallable on VS Code forks that track upstream at a delay (Cursor, Windsurf, Trae, and others).
+  `@types/vscode` is pinned to the same version so the compiler enforces that floor.
+- Documented which editors can run the extension: VS Code and forks that install from Open VSX or a
+  `.vsix`. Zed and JetBrains IDEs cannot — their extensions are Rust/WASM and JVM plugins
+  respectively, so no `.vsix` will load, regardless of configuration.
+
 ## [1.6.1] - 2026-07-26
 
 ### Fixed
