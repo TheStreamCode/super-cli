@@ -21,6 +21,7 @@ and are excluded from Super CLI's MIT license; see [`TRADEMARKS.md`](../../TRADE
 | Antigravity CLI | Antigravity silhouette with its compact color treatment | [Lobe Icons Antigravity asset](https://github.com/lobehub/lobe-icons) |
 | Droid CLI | Factory logomark, with the background removed for transparent compact use | [Factory favicon](https://factory.ai/favicon.svg) |
 | Crush | Official HeartBit mark | [Crush repository asset](https://github.com/charmbracelet/crush/blob/main/internal/cmd/stats/heartbit.svg) |
+| Devin CLI | Official Devin logomark, with the `1em` sizing and web `style` attributes removed | [Lobe Icons Devin asset](https://github.com/lobehub/lobe-icons) |
 | Hermes | Official ACP registry mark | [Hermes Agent repository asset](https://github.com/NousResearch/hermes-agent/blob/main/acp_registry/icon.svg) |
 | MiMo Code | Xiaomi 2021 Mi mark | [Xiaomi logo SVG](https://upload.wikimedia.org/wikipedia/commons/a/ae/Xiaomi_logo_%282021-%29.svg) |
 | Pi | Official light/dark Pi mark | [Pi website artwork](https://pi.dev/logo-auto.svg) |
@@ -42,4 +43,7 @@ attributes were dropped and its single `currentColor` token was replaced with ex
 contrast fills, keeping the original two-path geometry intact. The Qwen mark's `height`/`width`/
 `style` web attributes were similarly dropped, its auto-generated gradient id was renamed, and its
 gradient stops' partial opacity was flattened to fully opaque, keeping the original path geometry
-and gradient colors intact.
+and gradient colors intact. The Devin mark had the same `height`/`width`/`style` web attributes
+dropped; its three-path geometry and its three brand fills (`#3969CA`, `#21C19A`, `#0294DE`) are
+unchanged, and it is packaged as a single mark because those fixed colors read on light and dark
+themes alike, so no contrast variants are needed.

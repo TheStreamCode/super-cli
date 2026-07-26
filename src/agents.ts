@@ -207,6 +207,20 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     versionCommand: onAllPlatforms('crush --version'),
   },
   {
+    // No updateCommand on purpose: Devin's docs only document an update path for Homebrew
+    // (`brew upgrade --cask devin-cli`), and the CLI also installs via a curl script or winget. The
+    // right command depends on how it was installed, not on the platform, so an update button here
+    // would fail — or do something unexpected — for anyone who installed it a different way. No
+    // versionCommand either: the official docs don't document one, so Agent Doctor reports it as
+    // unavailable rather than guessing at `--version`.
+    id: 'devin',
+    label: 'Devin CLI',
+    command: onAllPlatforms('devin'),
+    icon: 'rocket',
+    iconPath: 'media/agents/devin.svg',
+    installationDocumentationUrl: 'https://docs.devin.ai/cli',
+  },
+  {
     id: 'hermes',
     label: 'Hermes',
     command: onAllPlatforms('hermes'),
