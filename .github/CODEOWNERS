@@ -1,0 +1,15 @@
+# Default owner for everything in the repo
+* @TheStreamCode
+
+# Source code
+/src/ @TheStreamCode
+
+# Tests
+/test/ @TheStreamCode
+
+# Documentation
+/docs/ @TheStreamCode
+*.md @TheStreamCode
+
+# CI/CD and GitHub config
+/.github/ @TheStreamCode
