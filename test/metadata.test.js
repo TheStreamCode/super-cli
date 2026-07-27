@@ -241,9 +241,12 @@ test('extension keeps Marketplace, sidebar, and toolbar artwork packaged', () =>
 });
 
 test('every built-in has a safe, compact, unique packaged icon', () => {
-  const iconPaths = BUILTIN_AGENTS.flatMap((agent) =>
-    typeof agent.iconPath === 'string' ? [agent.iconPath] : [agent.iconPath.light, agent.iconPath.dark],
-  );
+  const iconPaths = BUILTIN_AGENTS.flatMap((agent) => {
+    assert.equal(typeof agent.iconPath, 'object', `${agent.id}: themed icon pair`);
+    assert.match(agent.iconPath.light, /-light\.svg$/, `${agent.id}: light icon`);
+    assert.match(agent.iconPath.dark, /-dark\.svg$/, `${agent.id}: dark icon`);
+    return [agent.iconPath.light, agent.iconPath.dark];
+  });
 
   assert.equal(new Set(iconPaths).size, iconPaths.length);
   for (const iconPath of iconPaths) {
@@ -263,6 +266,20 @@ test('every built-in has a safe, compact, unique packaged icon', () => {
     'Continue CLI', 'Mistral Vibe', 'Rovo Dev CLI',
   ]) {
     assert.ok(attribution.includes(label), label);
+  }
+});
+
+test('brand icon theme treatments preserve contrast and the Mistral palette', () => {
+  assert.match(readText('media/agents/goose-light.svg'), /fill="#000000"/);
+  assert.match(readText('media/agents/goose-dark.svg'), /fill="#FFFFFF"/);
+  assert.match(readText('media/agents/droid-light.svg'), /fill="#000000"/);
+  assert.match(readText('media/agents/droid-dark.svg'), /fill="#FFFFFF"/);
+
+  const mistralLight = readText('media/agents/mistral-vibe-light.svg');
+  const mistralDark = readText('media/agents/mistral-vibe-dark.svg');
+  assert.equal(mistralLight, mistralDark);
+  for (const color of ['#FFAF01', '#FF8204', '#FA500F', '#E10500', '#C4001D']) {
+    assert.ok(mistralLight.includes(color), color);
   }
 });
 

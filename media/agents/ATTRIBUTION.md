@@ -30,11 +30,11 @@ and are excluded from Super CLI's MIT license; see [`TRADEMARKS.md`](../../TRADE
 | Amp | Official color logomark | [Amp website mark](https://ampcode.com/amp-mark-color.svg) |
 | OpenClaude | Official terminal-and-git mark | [OpenClaude website asset](https://openclaude.gitlawb.com/openclaude-logo.svg) |
 | Oh My Pi | Official gradient Pi favicon | [Oh My Pi website favicon](https://omp.sh/favicon.svg) |
-| goose | Official goose mark | [goose repository asset](https://github.com/aaif-goose/goose/blob/main/documentation/static/img/goose.svg) |
+| goose | Official goose mark, split into black/white light/dark contrast variants | [goose repository asset](https://github.com/aaif-goose/goose/blob/main/documentation/static/img/goose.svg) |
 | Auggie CLI | Official Augment brace mark, split into static light/dark contrast variants | [Augment website favicon](https://www.augmentcode.com/favicon.svg) |
 | Cline CLI | Official Cline robot mark, split into light/dark contrast variants | [Cline repository icon](https://github.com/cline/cline/blob/main/apps/vscode/assets/icons/icon.svg) |
 | Continue CLI | Official light/dark Continue marks | [Continue repository artwork](https://github.com/continuedev/continue/tree/main/docs/logo) |
-| Mistral Vibe | Official Vibe face mark, split into light/dark contrast variants | [Mistral Vibe Zed extension icon](https://github.com/mistralai/mistral-vibe/blob/main/distribution/zed/icons/mistral_vibe.svg) |
+| Mistral Vibe | Official colored Mistral face mark, packaged as explicit light/dark variants | [Mistral favicon](https://mistral.ai/favicon.svg) and [Mistral Vibe Zed extension geometry](https://github.com/mistralai/mistral-vibe/blob/main/distribution/zed/icons/mistral_vibe.svg) |
 | Rovo Dev CLI | Official blue Rovo mark | [Atlassian Rovo support asset](https://images.ctfassets.net/zsv3d0ugroxu/7GLXCkFtxe0MUSfmTNdrPL/1a042c58b850d16c6eb3339dc4532c0d/logo-light_Rovo_mark_brand_RGB.svg) |
 
 ## Project-drawn fallback
@@ -47,10 +47,12 @@ integration. The white JPEG canvas and antialiasing halo were removed, while the
 white sparkle, and white prompt bar were retained. It is not a vendor-published SVG; the source raster
 is the [Codebuff company-logo asset](https://media.licdn.com/dms/image/v2/D560BAQH0rZ-ApkRYLA/company-logo_400_400/B56Zl.LuDrHQAc-/0/1758758625794/codebuff_logo?e=2147483647&v=beta&t=nyuRe-ll-4MoL5E7PmlTxruvm-j91v06MM3Az-pWz5w).
 
-The vendor-sourced SVGs are packaged only as small UI identifiers. Where a source supplies a
-theme-aware/current-color mark, Super CLI provides black/white contrast variants without changing
-its geometry. The Grok favicon's backdrop, blur, and shadow were omitted because VS Code extension
-icons must be static, safe SVGs with a transparent background. Factory's black tile was similarly
+The vendor-sourced SVGs are packaged only as small UI identifiers. Every built-in has explicit
+light- and dark-theme files. Fixed-color marks keep their source colors in both files when those
+colors read on either theme; theme-aware/current-color and monochrome marks use black/white contrast
+variants without changing their geometry. The Grok favicon's backdrop, blur, and shadow were omitted
+because VS Code extension icons must be static, safe SVGs with a transparent background. Factory's
+black tile was similarly
 removed, while the official logomark geometry was preserved. The Antigravity silhouette and Xiaomi
 Mi geometry are preserved from the sources above. The Qoder mark's `height`/`width`/`style` web
 attributes were dropped and its single `currentColor` token was replaced with explicit light/dark
@@ -59,7 +61,7 @@ contrast fills, keeping the original two-path geometry intact. The Qwen mark's `
 gradient stops' partial opacity was flattened to fully opaque, keeping the original path geometry
 and gradient colors intact. The Devin mark had the same `height`/`width`/`style` web attributes
 dropped; its three-path geometry and its three brand fills (`#3969CA`, `#21C19A`, `#0294DE`) are
-unchanged, and it is packaged as a single mark because those fixed colors read on light and dark
-themes alike, so no contrast variants are needed. Augment's embedded theme CSS was replaced by
-explicit black/white files; Cline and Mistral Vibe received the same fill-only contrast treatment.
-Their source geometry is unchanged.
+unchanged and copied source-faithfully into both theme variants. Augment's embedded theme CSS was
+replaced by explicit black/white files; Cline, goose, and Factory Droid received the same fill-only contrast
+treatment. Mistral Vibe instead preserves the official five-color Mistral palette (`#FFAF01`,
+`#FF8204`, `#FA500F`, `#E10500`, `#C4001D`) in both theme files. Their source geometry is unchanged.

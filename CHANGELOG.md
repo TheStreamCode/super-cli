@@ -5,6 +5,14 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-07-27
+
+### Fixed
+
+- Added explicit light- and dark-theme SVG variants for every built-in agent. Monochrome marks now
+  render black on light themes and white on dark themes; Mistral Vibe keeps the official Mistral
+  yellow-to-red palette in both variants.
+
 ## [1.9.0] - 2026-07-27
 
 ### Added

@@ -103,9 +103,10 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   missing or failing version checks. It does not perform network update checks and its report omits
   environment variables, `PATH` contents, launch commands, and raw diagnostic output. The report is
   a single read-only virtual document that is replaced on every run and is never written to disk.
-- **Agent-specific artwork.** Built-ins use vendor-sourced CLI marks where suitable SVGs are
-  available, with documented compact fallbacks for Kimi and Codebuff and a ThemeIcon fallback for
-  custom agents.
+- **Agent-specific artwork.** Every built-in has explicit light- and dark-theme SVG variants.
+  Monochrome marks switch between black and white for contrast, while fixed-color marks preserve
+  their vendor palette. Documented compact fallbacks cover Kimi and Codebuff; custom agents use a
+  theme-aware ThemeIcon fallback.
 - **Built-in presets.** Claude Code, Codex CLI, GitHub Copilot CLI, Grok CLI, Kilo CLI, Kiro CLI,
   OpenClaw CLI, Antigravity CLI, OpenCode, Command Code, Cursor CLI, Droid CLI, Crush, Devin CLI,
   Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI, Qwen Code CLI, Amp, OpenClaude, Oh My Pi, goose,

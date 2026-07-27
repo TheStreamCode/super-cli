@@ -63,7 +63,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Claude Code',
     command: onAllPlatforms('claude'),
     icon: 'sparkle',
-    iconPath: 'media/agents/claude.svg',
+    iconPath: {
+      light: 'media/agents/claude-light.svg',
+      dark: 'media/agents/claude-dark.svg',
+    },
     installationDocumentationUrl: 'https://code.claude.com/docs/en/setup',
     updateCommand: onAllPlatforms('claude update'),
     versionCommand: onAllPlatforms('claude --version'),
@@ -76,7 +79,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Codex CLI',
     command: onAllPlatforms('codex'),
     icon: 'rocket',
-    iconPath: 'media/agents/codex.svg',
+    iconPath: {
+      light: 'media/agents/codex-light.svg',
+      dark: 'media/agents/codex-dark.svg',
+    },
     installationDocumentationUrl: 'https://learn.chatgpt.com/docs/codex/cli',
     updateCommand: onAllPlatforms('codex update'),
     versionCommand: onAllPlatforms('codex --version'),
@@ -124,7 +130,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Kiro CLI',
     command: onAllPlatforms('kiro-cli'),
     icon: 'sparkle-filled',
-    iconPath: 'media/agents/kiro.svg',
+    iconPath: {
+      light: 'media/agents/kiro-light.svg',
+      dark: 'media/agents/kiro-dark.svg',
+    },
     installationDocumentationUrl: 'https://kiro.dev/docs/cli/',
     // Kiro also downloads updates in the background and installs them when the CLI exits,
     // but it exposes this official command for an explicit, immediate update too.
@@ -136,7 +145,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'OpenClaw CLI',
     command: onAllPlatforms('openclaw chat'),
     icon: 'comment-discussion',
-    iconPath: 'media/agents/openclaw.svg',
+    iconPath: {
+      light: 'media/agents/openclaw-light.svg',
+      dark: 'media/agents/openclaw-dark.svg',
+    },
     installationDocumentationUrl: 'https://docs.openclaw.ai/install',
     updateCommand: onAllPlatforms('openclaw update'),
     versionCommand: onAllPlatforms('openclaw --version'),
@@ -146,7 +158,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Antigravity CLI',
     command: onAllPlatforms('agy'),
     icon: 'star-full',
-    iconPath: 'media/agents/antigravity.svg',
+    iconPath: {
+      light: 'media/agents/antigravity-light.svg',
+      dark: 'media/agents/antigravity-dark.svg',
+    },
     installationDocumentationUrl: 'https://antigravity.google/docs/cli/install',
   },
   {
@@ -169,7 +184,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     // `command-code` works on Windows, macOS, Linux, and WSL without that conflict.
     command: onAllPlatforms('command-code'),
     icon: 'terminal',
-    iconPath: 'media/agents/command-code.svg',
+    iconPath: {
+      light: 'media/agents/command-code-light.svg',
+      dark: 'media/agents/command-code-dark.svg',
+    },
     installationDocumentationUrl: 'https://commandcode.ai/docs',
     // The npm package registers `cmd`, `cmdc`, `command-code`, and `commandcode` as identical
     // aliases for the same script, so `command-code update`/`--version` work like the docs'
@@ -182,7 +200,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Cursor CLI',
     command: onAllPlatforms('cursor-agent'),
     icon: 'edit',
-    iconPath: 'media/agents/cursor.svg',
+    iconPath: {
+      light: 'media/agents/cursor-light.svg',
+      dark: 'media/agents/cursor-dark.svg',
+    },
     installationDocumentationUrl: 'https://cursor.com/docs/cli/overview',
     updateCommand: onAllPlatforms('cursor-agent update'),
     versionCommand: onAllPlatforms('cursor-agent --version'),
@@ -192,7 +213,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Droid CLI',
     command: onAllPlatforms('droid'),
     icon: 'circuit-board',
-    iconPath: 'media/agents/droid.svg',
+    iconPath: {
+      light: 'media/agents/droid-light.svg',
+      dark: 'media/agents/droid-dark.svg',
+    },
     installationDocumentationUrl: 'https://docs.factory.ai/cli/getting-started',
     updateCommand: onAllPlatforms('droid update'),
     versionCommand: onAllPlatforms('droid --version'),
@@ -202,7 +226,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Crush',
     command: onAllPlatforms('crush'),
     icon: 'flame',
-    iconPath: 'media/agents/crush.svg',
+    iconPath: {
+      light: 'media/agents/crush-light.svg',
+      dark: 'media/agents/crush-dark.svg',
+    },
     installationDocumentationUrl: 'https://github.com/charmbracelet/crush',
     versionCommand: onAllPlatforms('crush --version'),
   },
@@ -217,7 +244,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Devin CLI',
     command: onAllPlatforms('devin'),
     icon: 'rocket',
-    iconPath: 'media/agents/devin.svg',
+    iconPath: {
+      light: 'media/agents/devin-light.svg',
+      dark: 'media/agents/devin-dark.svg',
+    },
     installationDocumentationUrl: 'https://docs.devin.ai/cli',
   },
   {
@@ -238,7 +268,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'MiMo Code',
     command: onAllPlatforms('mimo'),
     icon: 'beaker',
-    iconPath: 'media/agents/mimo.svg',
+    iconPath: {
+      light: 'media/agents/mimo-light.svg',
+      dark: 'media/agents/mimo-dark.svg',
+    },
     installationDocumentationUrl: 'https://mimo.xiaomi.com/mimocode/install',
   },
   {
@@ -261,7 +294,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Kimi Code CLI',
     command: onAllPlatforms('kimi'),
     icon: 'comment-discussion',
-    iconPath: 'media/agents/kimi.svg',
+    iconPath: {
+      light: 'media/agents/kimi-light.svg',
+      dark: 'media/agents/kimi-dark.svg',
+    },
     installationDocumentationUrl: 'https://www.kimi.com/code/docs/en/kimi-code-cli/guides/getting-started.html',
     updateCommand: onAllPlatforms('kimi upgrade'),
     versionCommand: onAllPlatforms('kimi --version'),
@@ -284,7 +320,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Qwen Code CLI',
     command: onAllPlatforms('qwen'),
     icon: 'globe',
-    iconPath: 'media/agents/qwen.svg',
+    iconPath: {
+      light: 'media/agents/qwen-light.svg',
+      dark: 'media/agents/qwen-dark.svg',
+    },
     installationDocumentationUrl: 'https://qwenlm.github.io/qwen-code-docs/en/users/quickstart',
     versionCommand: onAllPlatforms('qwen --version'),
     // Qwen Code updates itself via its own interactive `/update` slash command, not an
@@ -295,7 +334,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Amp',
     command: onAllPlatforms('amp'),
     icon: 'terminal',
-    iconPath: 'media/agents/amp.svg',
+    iconPath: {
+      light: 'media/agents/amp-light.svg',
+      dark: 'media/agents/amp-dark.svg',
+    },
     installationDocumentationUrl: 'https://ampcode.com/manual',
     updateCommand: onAllPlatforms('amp update'),
     // Amp's manual documents launch and self-update commands, but not a version command.
@@ -305,7 +347,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'OpenClaude',
     command: onAllPlatforms('openclaude'),
     icon: 'terminal',
-    iconPath: 'media/agents/openclaude.svg',
+    iconPath: {
+      light: 'media/agents/openclaude-light.svg',
+      dark: 'media/agents/openclaude-dark.svg',
+    },
     installationDocumentationUrl: 'https://openclaude.gitlawb.com/docs/installation/',
     versionCommand: onAllPlatforms('openclaude --version'),
     // OpenClaude installs through npm or AUR, so updating must stay with the user's package manager.
@@ -315,7 +360,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Oh My Pi',
     command: onAllPlatforms('omp'),
     icon: 'terminal',
-    iconPath: 'media/agents/omp.svg',
+    iconPath: {
+      light: 'media/agents/omp-light.svg',
+      dark: 'media/agents/omp-dark.svg',
+    },
     installationDocumentationUrl: 'https://github.com/can1357/oh-my-pi#install',
     updateCommand: onAllPlatforms('omp update'),
     versionCommand: onAllPlatforms('omp --version'),
@@ -325,7 +373,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'goose',
     command: onAllPlatforms('goose session'),
     icon: 'terminal',
-    iconPath: 'media/agents/goose.svg',
+    iconPath: {
+      light: 'media/agents/goose-light.svg',
+      dark: 'media/agents/goose-dark.svg',
+    },
     installationDocumentationUrl: 'https://goose-docs.ai/docs/getting-started/installation/',
     updateCommand: onAllPlatforms('goose update'),
     versionCommand: onAllPlatforms('goose --version'),
@@ -361,7 +412,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Codebuff',
     command: onAllPlatforms('codebuff'),
     icon: 'terminal',
-    iconPath: 'media/agents/codebuff.svg',
+    iconPath: {
+      light: 'media/agents/codebuff-light.svg',
+      dark: 'media/agents/codebuff-dark.svg',
+    },
     installationDocumentationUrl: 'https://www.codebuff.com/docs/help/quick-start',
     versionCommand: onAllPlatforms('codebuff --version'),
     // Codebuff updates itself, so it does not need a separate update terminal.
@@ -397,7 +451,10 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     label: 'Rovo Dev CLI',
     command: onAllPlatforms('acli rovodev run'),
     icon: 'terminal',
-    iconPath: 'media/agents/rovo.svg',
+    iconPath: {
+      light: 'media/agents/rovo-light.svg',
+      dark: 'media/agents/rovo-dark.svg',
+    },
     installationDocumentationUrl: 'https://support.atlassian.com/rovo/docs/install-and-run-rovo-dev-cli-on-your-device/',
     // Rovo Dev is delivered by ACLI, so Agent Doctor reports the version of that host CLI.
     versionCommand: onAllPlatforms('acli --version'),

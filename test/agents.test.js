@@ -438,7 +438,9 @@ test('Qwen Code CLI ships as a built-in preset', () => {
   }
 
   const qwen = BUILTIN_AGENTS.find((a) => a.id === 'qwen');
-  assert.equal(qwen.iconPath, 'media/agents/qwen.svg');
+  assert.equal(typeof qwen.iconPath, 'object');
+  assert.equal(qwen.iconPath.light, 'media/agents/qwen-light.svg');
+  assert.equal(qwen.iconPath.dark, 'media/agents/qwen-dark.svg');
 });
 
 test('Kiro and OpenClaw ship as adaptive built-in presets', () => {
