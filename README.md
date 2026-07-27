@@ -11,10 +11,10 @@
 
 <p align="center"><strong>One launcher. Every coding agent.</strong></p>
 
-Launch **Claude Code, OpenAI Codex CLI, GitHub Copilot CLI, Google Antigravity, OpenCode, Kiro CLI,
-OpenClaw CLI, Qoder CLI, Cursor Agent, and other AI coding agents** inside VS Code from one sidebar and the native
-integrated terminal. Super CLI keeps every supported agent one click away without replacing its
-official command-line experience.
+Launch **Claude Code, OpenAI Codex CLI, GitHub Copilot CLI, Google Antigravity, OpenCode, Amp,
+goose, Cline CLI, Mistral Vibe, Rovo Dev CLI, and other AI coding agents** inside VS Code from one
+sidebar and the native integrated terminal. Super CLI keeps every supported agent one click away
+without replacing its official command-line experience.
 
 It works on Windows, macOS, Linux, and WSL, and on any editor that supports the VS Code extension
 model — VS Code itself plus the forks that install from [Open VSX](https://open-vsx.org/extension/mikesoft/vscode-super-cli)
@@ -104,16 +104,19 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   environment variables, `PATH` contents, launch commands, and raw diagnostic output. The report is
   a single read-only virtual document that is replaced on every run and is never written to disk.
 - **Agent-specific artwork.** Built-ins use vendor-sourced CLI marks where suitable SVGs are
-  available, with a documented compact fallback for Kimi and a ThemeIcon fallback for custom agents.
-- **Built-in presets.** Claude Code, Codex, GitHub Copilot CLI, Cursor, Devin CLI, Droid, Grok, Kilo,
-  Kiro, OpenClaw, Antigravity, OpenCode, Command Code, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI,
-  Qoder CLI, and Qwen Code CLI are available out of the box.
+  available, with documented compact fallbacks for Kimi and Codebuff and a ThemeIcon fallback for
+  custom agents.
+- **Built-in presets.** Claude Code, Codex CLI, GitHub Copilot CLI, Grok CLI, Kilo CLI, Kiro CLI,
+  OpenClaw CLI, Antigravity CLI, OpenCode, Command Code, Cursor CLI, Droid CLI, Crush, Devin CLI,
+  Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI, Qwen Code CLI, Amp, OpenClaude, Oh My Pi, goose,
+  Auggie CLI, Cline CLI, Codebuff, Continue CLI, Mistral Vibe, and Rovo Dev CLI are available out of
+  the box.
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
 - **Update from the sidebar.** Agents with a known update command show an update button next to
-  Launch, which runs the CLI's official update (e.g. `codex update`, `kilo upgrade`, `cursor-agent
-  update`, `opencode upgrade`, `droid update`, `openclaw update`, `kimi upgrade`). CLIs that update themselves don't
-  show one. With terminal shell integration available, Super CLI reports whether the update completed
+  Launch, which runs the CLI's official update (e.g. `codex update`, `amp update`, `goose update`,
+  `cline update`, `omp update`, `vibe --check-upgrade`). CLIs that update themselves don't show one.
+  With terminal shell integration available, Super CLI reports whether the update completed
   or failed and can bring the update terminal back into focus. **Super CLI: Update All Agents** in the
   sidebar toolbar runs every updatable agent's update in sequence, one at a time, in a single shared
   **Super CLI: updates** terminal, skipping any agent currently believed to be missing from `PATH`. It

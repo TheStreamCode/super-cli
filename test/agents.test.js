@@ -165,6 +165,71 @@ test('all built-ins resolve non-empty launch commands on Windows, macOS, and Lin
   }
 });
 
+test('expanded CLI presets resolve their verified commands on every platform', () => {
+  const expected = [
+    {
+      id: 'amp', label: 'Amp', command: 'amp', updateCommand: 'amp update', versionCommand: undefined,
+      documentationUrl: 'https://ampcode.com/manual',
+    },
+    {
+      id: 'openclaude', label: 'OpenClaude', command: 'openclaude', updateCommand: undefined,
+      versionCommand: 'openclaude --version',
+      documentationUrl: 'https://openclaude.gitlawb.com/docs/installation/',
+    },
+    {
+      id: 'omp', label: 'Oh My Pi', command: 'omp', updateCommand: 'omp update',
+      versionCommand: 'omp --version', documentationUrl: 'https://github.com/can1357/oh-my-pi#install',
+    },
+    {
+      id: 'goose', label: 'goose', command: 'goose session', updateCommand: 'goose update',
+      versionCommand: 'goose --version',
+      documentationUrl: 'https://goose-docs.ai/docs/getting-started/installation/',
+    },
+    {
+      id: 'auggie', label: 'Auggie CLI', command: 'auggie', updateCommand: 'auggie upgrade',
+      versionCommand: 'auggie --version', documentationUrl: 'https://docs.augmentcode.com/cli/overview',
+    },
+    {
+      id: 'cline', label: 'Cline CLI', command: 'cline', updateCommand: 'cline update',
+      versionCommand: 'cline --version', documentationUrl: 'https://docs.cline.bot/usage/cli-overview',
+    },
+    {
+      id: 'codebuff', label: 'Codebuff', command: 'codebuff', updateCommand: undefined,
+      versionCommand: 'codebuff --version',
+      documentationUrl: 'https://www.codebuff.com/docs/help/quick-start',
+    },
+    {
+      id: 'continue', label: 'Continue CLI', command: 'cn', updateCommand: undefined,
+      versionCommand: 'cn --version', documentationUrl: 'https://docs.continue.dev/cli/quickstart',
+    },
+    {
+      id: 'mistral-vibe', label: 'Mistral Vibe', command: 'vibe',
+      updateCommand: 'vibe --check-upgrade', versionCommand: 'vibe --version',
+      documentationUrl: 'https://github.com/mistralai/mistral-vibe#installation',
+    },
+    {
+      id: 'rovo', label: 'Rovo Dev CLI', command: 'acli rovodev run', updateCommand: undefined,
+      versionCommand: 'acli --version',
+      documentationUrl: 'https://support.atlassian.com/rovo/docs/install-and-run-rovo-dev-cli-on-your-device/',
+    },
+  ];
+
+  for (const item of expected) {
+    for (const platform of SUPPORTED_PLATFORMS) {
+      const agent = resolveBuiltin(item.id, platform);
+      assert.equal(agent.label, item.label, `${item.id}:${platform}:label`);
+      assert.equal(agent.command, item.command, `${item.id}:${platform}:command`);
+      assert.equal(agent.updateCommand, item.updateCommand, `${item.id}:${platform}:updateCommand`);
+      assert.equal(agent.versionCommand, item.versionCommand, `${item.id}:${platform}:versionCommand`);
+      assert.equal(
+        agent.installationDocumentationUrl,
+        item.documentationUrl,
+        `${item.id}:${platform}:documentationUrl`,
+      );
+    }
+  }
+});
+
 test('agents with a known update command carry their official one', () => {
   const expected = {
     claude: 'claude update',
@@ -181,6 +246,12 @@ test('agents with a known update command carry their official one', () => {
     kimi: 'kimi upgrade',
     qoder: 'qodercli update',
     'command-code': 'command-code update',
+    amp: 'amp update',
+    omp: 'omp update',
+    goose: 'goose update',
+    auggie: 'auggie upgrade',
+    cline: 'cline update',
+    'mistral-vibe': 'vibe --check-upgrade',
   };
   for (const [id, cmd] of Object.entries(expected)) {
     for (const platform of SUPPORTED_PLATFORMS) {
@@ -191,7 +262,7 @@ test('agents with a known update command carry their official one', () => {
 });
 
 test('self-updating CLIs have no manual update command', () => {
-  for (const id of ['mimo', 'qwen']) {
+  for (const id of ['mimo', 'qwen', 'codebuff']) {
     const agent = BUILTIN_AGENTS.find((a) => a.id === id);
     assert.equal(agent.updateCommand, undefined, id);
   }
@@ -231,6 +302,16 @@ test('built-ins expose only verified official installation documentation', () =>
     antigravity: 'https://antigravity.google/docs/cli/install',
     'command-code': 'https://commandcode.ai/docs',
     mimo: 'https://mimo.xiaomi.com/mimocode/install',
+    amp: 'https://ampcode.com/manual',
+    openclaude: 'https://openclaude.gitlawb.com/docs/installation/',
+    omp: 'https://github.com/can1357/oh-my-pi#install',
+    goose: 'https://goose-docs.ai/docs/getting-started/installation/',
+    auggie: 'https://docs.augmentcode.com/cli/overview',
+    cline: 'https://docs.cline.bot/usage/cli-overview',
+    codebuff: 'https://www.codebuff.com/docs/help/quick-start',
+    continue: 'https://docs.continue.dev/cli/quickstart',
+    'mistral-vibe': 'https://github.com/mistralai/mistral-vibe#installation',
+    rovo: 'https://support.atlassian.com/rovo/docs/install-and-run-rovo-dev-cli-on-your-device/',
   };
 
   for (const [id, url] of Object.entries(documentationUrls)) {

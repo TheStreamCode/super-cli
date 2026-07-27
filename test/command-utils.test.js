@@ -97,6 +97,11 @@ test('extractExecutable returns the first token for simple commands', () => {
   assert.equal(extractExecutable('claude'), 'claude');
 });
 
+test('extractExecutable returns the host executable for built-in commands with subcommands', () => {
+  assert.equal(extractExecutable('goose session'), 'goose');
+  assert.equal(extractExecutable('acli rovodev run'), 'acli');
+});
+
 test('extractExecutable preserves quoted Windows paths with spaces', () => {
   assert.equal(
     extractExecutable('"C:\\Program Files\\Claude\\claude.exe" --help'),

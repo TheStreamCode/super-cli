@@ -5,6 +5,18 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-07-27
+
+### Added
+
+- Added built-in presets for Amp, OpenClaude, Oh My Pi, goose, Auggie CLI, Cline CLI, Codebuff,
+  Continue CLI, Mistral Vibe, and Rovo Dev CLI, with verified launch/version/update commands where
+  the vendors expose them, official installation documentation, and source-attributed compact marks.
+
+  Package-manager-specific update commands are intentionally omitted for OpenClaude, Continue, and
+  Rovo Dev; Codebuff updates itself, while Amp does not document a version command. Gemini remains
+  excluded because `agy` is the existing Antigravity CLI preset, not a Gemini CLI alias.
+
 ## [1.8.0] - 2026-07-26
 
 ### Added

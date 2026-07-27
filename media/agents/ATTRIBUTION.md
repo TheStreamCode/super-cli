@@ -27,11 +27,25 @@ and are excluded from Super CLI's MIT license; see [`TRADEMARKS.md`](../../TRADE
 | Pi | Official light/dark Pi mark | [Pi website artwork](https://pi.dev/logo-auto.svg) |
 | Qoder CLI | Official Qoder logomark, with React/web attributes removed and the `currentColor` token split into light/dark contrast variants | [Lobe Icons Qoder asset](https://github.com/lobehub/lobe-icons) |
 | Qwen Code CLI | Official Qwen logomark (Alibaba Cloud's Qwen brand), with React/web attributes removed, the auto-generated gradient id renamed, and the gradient stops flattened to full opacity | [Lobe Icons Qwen asset](https://github.com/lobehub/lobe-icons) |
+| Amp | Official color logomark | [Amp website mark](https://ampcode.com/amp-mark-color.svg) |
+| OpenClaude | Official terminal-and-git mark | [OpenClaude website asset](https://openclaude.gitlawb.com/openclaude-logo.svg) |
+| Oh My Pi | Official gradient Pi favicon | [Oh My Pi website favicon](https://omp.sh/favicon.svg) |
+| goose | Official goose mark | [goose repository asset](https://github.com/aaif-goose/goose/blob/main/documentation/static/img/goose.svg) |
+| Auggie CLI | Official Augment brace mark, split into static light/dark contrast variants | [Augment website favicon](https://www.augmentcode.com/favicon.svg) |
+| Cline CLI | Official Cline robot mark, split into light/dark contrast variants | [Cline repository icon](https://github.com/cline/cline/blob/main/apps/vscode/assets/icons/icon.svg) |
+| Continue CLI | Official light/dark Continue marks | [Continue repository artwork](https://github.com/continuedev/continue/tree/main/docs/logo) |
+| Mistral Vibe | Official Vibe face mark, split into light/dark contrast variants | [Mistral Vibe Zed extension icon](https://github.com/mistralai/mistral-vibe/blob/main/distribution/zed/icons/mistral_vibe.svg) |
+| Rovo Dev CLI | Official blue Rovo mark | [Atlassian Rovo support asset](https://images.ctfassets.net/zsv3d0ugroxu/7GLXCkFtxe0MUSfmTNdrPL/1a042c58b850d16c6eb3339dc4532c0d/logo-light_Rovo_mark_brand_RGB.svg) |
 
 ## Project-drawn fallback
 
 The Kimi mark is the approved independent blue-avatar redraw already used by the companion Kimi Code
 CLI Launcher project. It is not an official vendor logo.
+
+The Codebuff mark is an approved vector reconstruction of the company-logo raster supplied for this
+integration. The white JPEG canvas and antialiasing halo were removed, while the black rounded tile,
+white sparkle, and white prompt bar were retained. It is not a vendor-published SVG; the source raster
+is the [Codebuff company-logo asset](https://media.licdn.com/dms/image/v2/D560BAQH0rZ-ApkRYLA/company-logo_400_400/B56Zl.LuDrHQAc-/0/1758758625794/codebuff_logo?e=2147483647&v=beta&t=nyuRe-ll-4MoL5E7PmlTxruvm-j91v06MM3Az-pWz5w).
 
 The vendor-sourced SVGs are packaged only as small UI identifiers. Where a source supplies a
 theme-aware/current-color mark, Super CLI provides black/white contrast variants without changing
@@ -46,4 +60,6 @@ gradient stops' partial opacity was flattened to fully opaque, keeping the origi
 and gradient colors intact. The Devin mark had the same `height`/`width`/`style` web attributes
 dropped; its three-path geometry and its three brand fills (`#3969CA`, `#21C19A`, `#0294DE`) are
 unchanged, and it is packaged as a single mark because those fixed colors read on light and dark
-themes alike, so no contrast variants are needed.
+themes alike, so no contrast variants are needed. Augment's embedded theme CSS was replaced by
+explicit black/white files; Cline and Mistral Vibe received the same fill-only contrast treatment.
+Their source geometry is unchanged.

@@ -163,7 +163,10 @@ test('agents setting is machine-scoped and security restricted', () => {
   assert.equal(properties['superCli.agents'].scope, 'machine');
   assert.equal(properties['superCli.useBuiltins'].default, true);
   assert.equal(properties['superCli.hiddenBuiltins'].scope, 'machine');
-  assert.ok(properties['superCli.hiddenBuiltins'].items.enum.includes('openclaw'));
+  assert.deepEqual(
+    properties['superCli.hiddenBuiltins'].items.enum,
+    BUILTIN_AGENTS.map((agent) => agent.id),
+  );
   assert.equal(properties['superCli.favoriteAgents'].type, 'array');
   assert.equal(properties['superCli.favoriteAgents'].scope, 'machine');
   assert.equal(properties['superCli.favoriteAgent'].type, 'string');
@@ -171,8 +174,12 @@ test('agents setting is machine-scoped and security restricted', () => {
   assert.ok(properties['superCli.favoriteAgent'].markdownDeprecationMessage.includes('favoriteAgents'));
   assert.deepEqual(properties['superCli.agents'].items.required, ['id', 'label', 'command']);
   assert.deepEqual(packageJson.capabilities.untrustedWorkspaces.restrictedConfigurations, ['superCli.agents']);
-  assert.match(properties['superCli.agents'].items.properties.id.description, /kimi/);
-  assert.match(properties['superCli.useBuiltins'].description, /Kimi Code CLI/);
+  const idDescription = properties['superCli.agents'].items.properties.id.description;
+  const builtinsDescription = properties['superCli.useBuiltins'].description;
+  for (const agent of BUILTIN_AGENTS) {
+    assert.ok(idDescription.includes(agent.id), agent.id);
+    assert.ok(builtinsDescription.includes(agent.label), agent.label);
+  }
   assert.ok(packageJson.keywords.includes('kimi code'));
   assert.ok(packageJson.keywords.includes('kiro'));
   assert.ok(packageJson.keywords.includes('openclaw'));
@@ -242,6 +249,7 @@ test('every built-in has a safe, compact, unique packaged icon', () => {
   for (const iconPath of iconPaths) {
     assert.match(iconPath, /^media\/agents\/[a-z0-9-]+\.svg$/);
     const svg = readText(iconPath);
+    assert.ok(Buffer.byteLength(svg, 'utf8') < 12 * 1024, iconPath);
     assert.match(svg, /<svg\b/i, iconPath);
     assert.match(svg, /viewBox="[^"]+"/, iconPath);
     assert.doesNotMatch(svg, /<script\b|<foreignObject\b|\bhref=|data:image/i, iconPath);
@@ -250,6 +258,12 @@ test('every built-in has a safe, compact, unique packaged icon', () => {
   const attribution = readText('media/agents/ATTRIBUTION.md');
   assert.match(attribution, /Vendor-sourced marks/);
   assert.match(attribution, /Project-drawn fallback/);
+  for (const label of [
+    'Amp', 'OpenClaude', 'Oh My Pi', 'goose', 'Auggie CLI', 'Cline CLI', 'Codebuff',
+    'Continue CLI', 'Mistral Vibe', 'Rovo Dev CLI',
+  ]) {
+    assert.ok(attribution.includes(label), label);
+  }
 });
 
 test('documentation uses local images and VSIX packaging uses only .vscodeignore', () => {

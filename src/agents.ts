@@ -290,6 +290,119 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     // Qwen Code updates itself via its own interactive `/update` slash command, not an
     // external CLI subcommand, so there is no updateCommand to run from a fresh terminal.
   },
+  {
+    id: 'amp',
+    label: 'Amp',
+    command: onAllPlatforms('amp'),
+    icon: 'terminal',
+    iconPath: 'media/agents/amp.svg',
+    installationDocumentationUrl: 'https://ampcode.com/manual',
+    updateCommand: onAllPlatforms('amp update'),
+    // Amp's manual documents launch and self-update commands, but not a version command.
+  },
+  {
+    id: 'openclaude',
+    label: 'OpenClaude',
+    command: onAllPlatforms('openclaude'),
+    icon: 'terminal',
+    iconPath: 'media/agents/openclaude.svg',
+    installationDocumentationUrl: 'https://openclaude.gitlawb.com/docs/installation/',
+    versionCommand: onAllPlatforms('openclaude --version'),
+    // OpenClaude installs through npm or AUR, so updating must stay with the user's package manager.
+  },
+  {
+    id: 'omp',
+    label: 'Oh My Pi',
+    command: onAllPlatforms('omp'),
+    icon: 'terminal',
+    iconPath: 'media/agents/omp.svg',
+    installationDocumentationUrl: 'https://github.com/can1357/oh-my-pi#install',
+    updateCommand: onAllPlatforms('omp update'),
+    versionCommand: onAllPlatforms('omp --version'),
+  },
+  {
+    id: 'goose',
+    label: 'goose',
+    command: onAllPlatforms('goose session'),
+    icon: 'terminal',
+    iconPath: 'media/agents/goose.svg',
+    installationDocumentationUrl: 'https://goose-docs.ai/docs/getting-started/installation/',
+    updateCommand: onAllPlatforms('goose update'),
+    versionCommand: onAllPlatforms('goose --version'),
+  },
+  {
+    id: 'auggie',
+    label: 'Auggie CLI',
+    command: onAllPlatforms('auggie'),
+    icon: 'terminal',
+    iconPath: {
+      light: 'media/agents/auggie-light.svg',
+      dark: 'media/agents/auggie-dark.svg',
+    },
+    installationDocumentationUrl: 'https://docs.augmentcode.com/cli/overview',
+    updateCommand: onAllPlatforms('auggie upgrade'),
+    versionCommand: onAllPlatforms('auggie --version'),
+  },
+  {
+    id: 'cline',
+    label: 'Cline CLI',
+    command: onAllPlatforms('cline'),
+    icon: 'terminal',
+    iconPath: {
+      light: 'media/agents/cline-light.svg',
+      dark: 'media/agents/cline-dark.svg',
+    },
+    installationDocumentationUrl: 'https://docs.cline.bot/usage/cli-overview',
+    updateCommand: onAllPlatforms('cline update'),
+    versionCommand: onAllPlatforms('cline --version'),
+  },
+  {
+    id: 'codebuff',
+    label: 'Codebuff',
+    command: onAllPlatforms('codebuff'),
+    icon: 'terminal',
+    iconPath: 'media/agents/codebuff.svg',
+    installationDocumentationUrl: 'https://www.codebuff.com/docs/help/quick-start',
+    versionCommand: onAllPlatforms('codebuff --version'),
+    // Codebuff updates itself, so it does not need a separate update terminal.
+  },
+  {
+    id: 'continue',
+    label: 'Continue CLI',
+    command: onAllPlatforms('cn'),
+    icon: 'terminal',
+    iconPath: {
+      light: 'media/agents/continue-light.svg',
+      dark: 'media/agents/continue-dark.svg',
+    },
+    installationDocumentationUrl: 'https://docs.continue.dev/cli/quickstart',
+    versionCommand: onAllPlatforms('cn --version'),
+    // Continue installs through npm or a shell installer and has no package-manager-neutral updater.
+  },
+  {
+    id: 'mistral-vibe',
+    label: 'Mistral Vibe',
+    command: onAllPlatforms('vibe'),
+    icon: 'terminal',
+    iconPath: {
+      light: 'media/agents/mistral-vibe-light.svg',
+      dark: 'media/agents/mistral-vibe-dark.svg',
+    },
+    installationDocumentationUrl: 'https://github.com/mistralai/mistral-vibe#installation',
+    updateCommand: onAllPlatforms('vibe --check-upgrade'),
+    versionCommand: onAllPlatforms('vibe --version'),
+  },
+  {
+    id: 'rovo',
+    label: 'Rovo Dev CLI',
+    command: onAllPlatforms('acli rovodev run'),
+    icon: 'terminal',
+    iconPath: 'media/agents/rovo.svg',
+    installationDocumentationUrl: 'https://support.atlassian.com/rovo/docs/install-and-run-rovo-dev-cli-on-your-device/',
+    // Rovo Dev is delivered by ACLI, so Agent Doctor reports the version of that host CLI.
+    versionCommand: onAllPlatforms('acli --version'),
+    // ACLI updates through different OS package managers or manual binary replacement.
+  },
 ];
 
 function isValidPlatformCommand(value: unknown): value is PlatformCommand {

@@ -12,15 +12,18 @@ GitHub and GitHub Copilot; xAI and Grok; Kilo Code and Kilo; Amazon Web Services
 OpenClaw; Google and Antigravity; OpenCode; Command Code; Cursor; Factory and Droid; Charm and
 Crush; Cognition and Devin; Nous Research and Hermes; Xiaomi and MiMo Code; Earendil Works and Pi;
 Bright Zenith Private Limited and Qoder; Moonshot AI and Kimi Code; Alibaba Cloud and Qwen Code;
-Microsoft and Visual Studio Code; Windsurf; npm; and Open VSX. These names,
+Amp; GitLawb and OpenClaude; Oh My Pi; the Agentic AI Foundation and goose; Augment and Auggie;
+Cline; Codebuff; Continue; Mistral AI and Mistral Vibe; Atlassian and Rovo; Microsoft and Visual
+Studio Code; Windsurf; npm; and Open VSX. These names,
 logos, and trademarks belong to their respective owners and are used only to
 identify compatible products and services.
 
 The compact marks under `media/agents` are used solely for nominative identification inside the
 launcher. Most are sourced from public vendor websites, brand kits, or official repositories; their
 exact provenance is recorded in [`media/agents/ATTRIBUTION.md`](media/agents/ATTRIBUTION.md).
-Kimi uses a project-drawn fallback; Antigravity, Droid, and MiMo Code use source-attributed compact
-marks documented in the attribution file. No mark may be used to imply affiliation, sponsorship,
+Kimi uses a project-drawn fallback, and Codebuff uses an approved vector reconstruction from the
+provided company-logo raster; Antigravity, Droid, and MiMo Code use source-attributed compact marks
+documented in the attribution file. No mark may be used to imply affiliation, sponsorship,
 certification, or endorsement. Rights holders may request correction or removal of their marks.
 
 The MIT License in [LICENSE](LICENSE) applies only to original Super CLI
