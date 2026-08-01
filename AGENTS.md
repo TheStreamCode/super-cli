@@ -37,6 +37,11 @@ The integration suite downloads/caches VS Code builds under `.vscode-test/` (git
 `@vscode/test-electron`, launches a real Extension Development Host, and needs a display on Linux
 (CI starts Xvfb for it).
 
+Keep `@vscode/test-electron` at **3.1.0 or newer**. VS Code 1.110 renamed the macOS executable from
+`Electron` to the product name, and the compatibility symlink was removed in July 2026. Older test
+harnesses still hard-code `Contents/MacOS/Electron` and fail with `ENOENT` on Apple Silicon runners
+before the integration suite can start.
+
 **Never assert on `vscode.window.activeTerminal`.** It only follows `terminal.show()` when the window
 holds real OS focus, and a headless macOS runner will not move focus between a terminal in the editor
 area (where launches land, since `terminalLocation` defaults to `beside`) and one in the panel. For

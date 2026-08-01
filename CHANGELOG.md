@@ -9,6 +9,8 @@ All notable changes to this project are documented here. The format is based on
 
 ### Fixed
 
+- Updated the VS Code integration-test harness for the current macOS app executable layout, restoring
+  CI on Apple Silicon runners after the legacy `Electron` compatibility path was removed upstream.
 - Preserved a favorite when its built-in preset is hidden but a custom agent override with the same
   id remains available.
 - Escaped backslashes before Markdown delimiters in Agent Doctor reports, preventing version output

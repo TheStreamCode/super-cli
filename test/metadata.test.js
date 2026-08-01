@@ -217,6 +217,7 @@ test('package scripts use deterministic local tooling entry points', () => {
   assert.equal(packageJson.scripts.compile, 'node ./node_modules/typescript/bin/tsc -p . --pretty false');
   assert.equal(packageJson.scripts.package, 'node ./node_modules/@vscode/vsce/vsce package');
   assert.match(packageJson.scripts.check, /vsce ls$/);
+  assert.equal(packageJson.devDependencies['@vscode/test-electron'], '^3.1.0');
 });
 
 test('extension keeps Marketplace, sidebar, and toolbar artwork packaged', () => {
