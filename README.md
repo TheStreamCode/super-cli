@@ -21,6 +21,16 @@ model — VS Code itself plus the forks that install from [Open VSX](https://ope
 or from a `.vsix`, such as Cursor, Windsurf, Google Antigravity, Kiro, Trae, VSCodium, and Gitpod. It
 is free, open source, and has no telemetry or automatic CLI installers.
 
+## Requirements
+
+- VS Code `1.93` or newer, or a compatible desktop editor that can install VS Code extensions.
+- At least one supported coding-agent CLI installed and authenticated according to that vendor's
+  documentation. Super CLI never installs or configures the CLI for you.
+- A trusted workspace before launch, update, or version commands can run.
+
+Node.js and npm are required only for developing or packaging Super CLI, not for installing the
+extension or launching an agent.
+
 ## Install Super CLI in VS Code
 
 [Install Super CLI from the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli),
@@ -52,6 +62,18 @@ Qoder CLI are supported as agents to launch, whichever supported editor you laun
 This extension is unofficial and is not affiliated with, endorsed by, or sponsored by Anthropic,
 OpenAI, GitHub, Google, or any other vendor. See the [third-party
 notices](TRADEMARKS.md).
+
+## Quick start
+
+1. Install and authenticate the coding-agent CLI you want to use.
+2. Install Super CLI, open a folder, and trust the workspace after reviewing it.
+3. Open **Super CLI** from the activity bar and select an agent, or run **Super CLI: Launch Coding
+   Agent** from the Command Palette.
+4. Optionally star one or more agents and use `Ctrl+Alt+A` (`Cmd+Alt+A` on macOS) for fast access.
+
+The selected command runs in a native integrated terminal with the active workspace folder as its
+working directory. Super CLI does not proxy the CLI or replace the agent's own authentication and
+settings.
 
 ## Interface
 
@@ -171,9 +193,9 @@ reuses a built-in `id` — overrides that built-in (for example to point at a cu
   paths that contain spaces.
 - `icon` — optional [ThemeIcon](https://code.visualstudio.com/api/references/icons-in-labels) id,
   e.g. `sparkle` or `rocket`.
-- `installationDocumentationUrl` — optional verified official installation documentation URL. When
-  the command is missing, Super CLI offers to open this URL in your external browser; it does not run
-  any installation command.
+- `installationDocumentationUrl` — optional verified official HTTPS installation documentation URL.
+  Credential-bearing URLs and non-HTTPS schemes are ignored. When the command is missing, Super CLI
+  offers to open the URL in your external browser; it does not run any installation command.
 - `env` — optional environment variables set for the agent's terminal, e.g. to opt out of a CLI's
   IDE-extension auto-install via its own variable: `{ "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1" }`.
 - `updateCommand` — optional command to update the CLI. It accepts the same cross-platform string or
@@ -187,6 +209,16 @@ the command runs inside WSL.
 
 Only the user (global) value of `superCli.agents` is used; workspace overrides are ignored so that
 an untrusted repository cannot inject commands.
+
+### Environment variables and secrets
+
+Super CLI itself requires no environment variables and does not load `.env` files. The optional
+`env` object on a custom agent applies only to that agent's terminal; executable detection uses the
+same overrides so a custom `PATH` is reflected in the sidebar status.
+
+Keep credentials in the CLI vendor's supported credential store or in your normal shell environment.
+Do not commit secrets in settings, command strings, or environment files. `.env` variants are ignored
+by Git and explicitly excluded from VSIX packages as a defensive safeguard.
 
 ## Configuration
 
@@ -269,8 +301,9 @@ Windows, macOS, Linux, or WSL command variant.
 ### Which AI coding agents are supported?
 
 Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command
-Code, Cursor, Devin CLI, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI, and Qwen Code
-CLI out of the box — plus any CLI you add in `settings.json`.
+Code, Cursor, Devin CLI, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI, Qwen Code CLI,
+Amp, OpenClaude, Oh My Pi, goose, Auggie CLI, Cline CLI, Codebuff, Continue CLI, Mistral Vibe, and Rovo
+Dev CLI out of the box — plus any CLI you add in `settings.json`.
 
 ### Does Super CLI work on Windows, macOS, Linux, and WSL?
 
@@ -286,6 +319,8 @@ integrated terminal.
 If Super CLI is useful to you, consider [sponsoring its development](https://github.com/sponsors/TheStreamCode).
 Bug reports, feature requests, and contributions are welcome on
 [GitHub](https://github.com/TheStreamCode/super-cli).
+Report suspected vulnerabilities privately according to [SECURITY.md](SECURITY.md), not in a public
+issue.
 
 ## Privacy
 
@@ -298,10 +333,47 @@ show the one-time rating nudge described above — neither is ever transmitted a
 Keep credentials in each CLI's supported credential store or environment configuration rather than
 embedding them directly in launch, update, or version command strings.
 
-## Building
+## Development
+
+Development requires Node.js 22, npm, and VS Code 1.93 or newer. The repository includes `.nvmrc` for
+Node version managers. Install the exact locked dependency tree before working:
 
 ```bash
 npm ci
-npm run check     # compile + unit tests + VS Code integration smoke test
-npm run package   # produce the .vsix
 ```
+
+Press `F5` in VS Code to compile and open an Extension Development Host, or use these scripts:
+
+| Command | Purpose |
+| --- | --- |
+| `npm run compile` | Compile strict TypeScript from `src/` to `out/`. |
+| `npm run typecheck` | Run strict TypeScript checks without emitting files. |
+| `npm run watch` | Recompile TypeScript while files change. |
+| `npm run test:unit` | Compile and run the fast `node:test` unit suite. |
+| `npm run test:integration` | Compile and launch the real VS Code Extension Development Host smoke test. |
+| `npm run check` | Run compile, unit tests, integration tests, and the VSIX file-list dry run used by CI. |
+| `npm run audit` | Check the complete dependency tree for moderate-or-higher known vulnerabilities. |
+| `npm run package` | Compile and create an installable `.vsix`. |
+
+There is no separate linter: `tsc --strict`, `noUnusedLocals`, and `noUnusedParameters` are the static
+quality gate. Unit tests execute compiled files from `out/`, never TypeScript source directly. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for code, test, branding, and pull-request conventions.
+
+## Build and distribution
+
+Before producing a release artifact, run the same gates as CI and inspect the VSIX contents:
+
+```bash
+npm ci
+npm run audit
+npm run check
+npm run package
+```
+
+For this project, deployment means publishing the reviewed VSIX rather than deploying a server. A
+maintainer updates `package.json`, `package-lock.json`, `CHANGELOG.md`, and `CITATION.cff` together,
+installs the generated VSIX in a clean Extension Development Host, then publishes that same artifact
+to the Visual Studio Marketplace, Open VSX, and the matching GitHub release. Publishing credentials
+belong in the platform's secret store or local credential manager and must never be committed.
+
+The complete maintainer checklist is in [CONTRIBUTING.md](CONTRIBUTING.md#release-checklist-maintainers).

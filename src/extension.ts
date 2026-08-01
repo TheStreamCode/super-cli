@@ -4,6 +4,7 @@ import {
   type AgentDefinition,
   BUILTIN_AGENTS,
   filterHiddenBuiltins,
+  normalizeInstallationDocumentationUrl,
   resolveCommandAgentArgument,
   resolveAgentCommands,
   resolveAgents,
@@ -63,6 +64,11 @@ function getEffectiveAgents(): Agent[] {
 /** Returns the ids of the user's favorite agents. */
 function getFavoriteIds(): string[] {
   return vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<string[]>('favoriteAgents', []);
+}
+
+/** Mirrors the environment VS Code gives the agent terminal, including configured overrides. */
+function getAgentEnvironment(agent: Agent): NodeJS.ProcessEnv {
+  return agent.env ? { ...process.env, ...agent.env } : process.env;
 }
 
 /** Persists the full favorites list at the user (global) level. */
@@ -176,7 +182,7 @@ export function activate(context: vscode.ExtensionContext): void {
         for (const agent of getEffectiveAgents()) {
           installStatus.set(
             agent.id,
-            executableExistsOnPath(agent.command, process.env, process.platform, isExecutableFile),
+            executableExistsOnPath(agent.command, getAgentEnvironment(agent), process.platform, isExecutableFile),
           );
         }
       }
@@ -242,7 +248,7 @@ export function activate(context: vscode.ExtensionContext): void {
       for (const agent of agents) {
         installStatus.set(
           agent.id,
-          executableExistsOnPath(agent.command, process.env, process.platform, isExecutableFile),
+          executableExistsOnPath(agent.command, getAgentEnvironment(agent), process.platform, isExecutableFile),
         );
       }
     }
@@ -281,8 +287,9 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   const openAgentDocumentation = async (agent: Agent): Promise<void> => {
-    if (agent.installationDocumentationUrl) {
-      await vscode.env.openExternal(vscode.Uri.parse(agent.installationDocumentationUrl));
+    const documentationUrl = normalizeInstallationDocumentationUrl(agent.installationDocumentationUrl);
+    if (documentationUrl) {
+      await vscode.env.openExternal(vscode.Uri.parse(documentationUrl));
     }
   };
 

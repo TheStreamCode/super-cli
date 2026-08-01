@@ -172,6 +172,7 @@ test('agents setting is machine-scoped and security restricted', () => {
 
   assert.equal(properties['superCli.agents'].type, 'array');
   assert.equal(properties['superCli.agents'].scope, 'machine');
+  assert.equal(properties['superCli.agents'].items.additionalProperties, false);
   assert.equal(properties['superCli.useBuiltins'].default, true);
   assert.equal(properties['superCli.hiddenBuiltins'].scope, 'machine');
   assert.deepEqual(
@@ -202,7 +203,9 @@ test('agent settings do not permit automatic CLI installation', () => {
   assert.equal(Object.hasOwn(properties, 'installCommand'), false);
   assert.equal(Object.hasOwn(properties, 'autoInstall'), false);
   assert.equal(properties.installationDocumentationUrl.type, 'string');
-  assert.match(properties.installationDocumentationUrl.description, /official installation documentation/i);
+  assert.equal(properties.installationDocumentationUrl.format, 'uri');
+  assert.equal(properties.installationDocumentationUrl.pattern, '^https://');
+  assert.match(properties.installationDocumentationUrl.description, /official HTTPS installation documentation/i);
   for (const field of ['command', 'updateCommand', 'versionCommand']) {
     const platformVariant = properties[field].oneOf.find((schema) => schema.type === 'object');
     assert.ok(properties[field].oneOf.some((schema) => schema.type === 'string'), field);
@@ -215,9 +218,15 @@ test('package scripts use deterministic local tooling entry points', () => {
   const packageJson = readPackageJson();
 
   assert.equal(packageJson.scripts.compile, 'node ./node_modules/typescript/bin/tsc -p . --pretty false');
+  assert.match(packageJson.scripts.typecheck, /tsc -p \. --noEmit/);
   assert.equal(packageJson.scripts.package, 'node ./node_modules/@vscode/vsce/vsce package');
+  assert.equal(packageJson.scripts.audit, 'npm audit --audit-level=moderate');
   assert.match(packageJson.scripts.check, /vsce ls$/);
   assert.equal(packageJson.devDependencies['@vscode/test-electron'], '^3.1.0');
+  assert.deepEqual(packageJson.allowScripts, {
+    '@vscode/vsce-sign@2.0.9': true,
+    'keytar@7.9.0': true,
+  });
 });
 
 test('extension keeps Marketplace, sidebar, and toolbar artwork packaged', () => {
@@ -301,20 +310,31 @@ test('documentation uses local images and VSIX packaging uses only .vscodeignore
   const contributing = readText('CONTRIBUTING.md');
   const notices = readText('TRADEMARKS.md');
   const vscodeIgnore = readText('.vscodeignore');
+  const nodeVersion = readText('.nvmrc').trim();
 
   assert.equal(packageJson.files, undefined);
   assert.match(vscodeIgnore, /^\.vscode-test\/\*\*$/m);
   assert.match(vscodeIgnore, /^src\/\*\*$/m);
+  assert.match(vscodeIgnore, /^\.env\.\*$/m);
+  assert.match(vscodeIgnore, /^\*\.vsix$/m);
   assert.doesNotMatch(readme, /!\[[^\]]*\]\(https?:\/\//i);
   assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/sidebar\.png\)/);
   assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/settings\.png\)/);
   assert.match(readme, /^# Super CLI .*AI Coding Agent CLI Launcher for VS Code/m);
   assert.match(readme, /Install Super CLI in VS Code/);
+  assert.match(readme, /^## Requirements$/m);
+  assert.match(readme, /^## Quick start$/m);
+  assert.match(readme, /^## Development$/m);
+  assert.match(readme, /^## Build and distribution$/m);
   assert.match(readme, /How do I launch Claude Code in VS Code\?/);
+  for (const agent of BUILTIN_AGENTS) {
+    assert.ok(readme.includes(agent.label), `README missing built-in label: ${agent.label}`);
+  }
   assert.match(contributing, /npm ci/);
   assert.match(contributing, /media\/agents\/ATTRIBUTION\.md/);
   assert.match(notices, /not affiliated with or endorsed\s+by \[Chutes\]\(https:\/\/chutes\.ai\/\)/i);
   assert.match(notices, /\[Terms of Service\]\(https:\/\/chutes\.ai\/terms\)/);
+  assert.equal(nodeVersion, '22');
 });
 
 test('repository documentation contains no hidden control characters', () => {
@@ -355,6 +375,16 @@ test('CI workflow validates the extension on Windows, macOS, and Linux', () => {
   assert.match(workflow, /macos-latest/);
   assert.match(workflow, /ubuntu-latest/);
   assert.match(workflow, /npm run check/);
+  assert.match(workflow, /npm run audit/);
+});
+
+test('Dependabot monitors npm and GitHub Actions without drifting the VS Code API floor', () => {
+  const dependabot = readText('.github/dependabot.yml');
+
+  assert.match(dependabot, /package-ecosystem: npm/);
+  assert.match(dependabot, /package-ecosystem: github-actions/);
+  assert.match(dependabot, /interval: weekly/);
+  assert.match(dependabot, /dependency-name: "@types\/vscode"/);
 });
 
 test('GitHub workflows pin every action to an immutable commit', () => {

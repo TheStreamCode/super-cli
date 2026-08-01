@@ -5,6 +5,31 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.9.3] - 2026-08-01
+
+### Added
+
+- Added explicit type-check and dependency-audit scripts, weekly Dependabot coverage for npm and
+  GitHub Actions, and a pinned npm install-script approval policy. Updated `actions/setup-node` to
+  its current major release while retaining immutable action references.
+
+### Changed
+
+- Expanded the README and agent guidance with requirements, quick start, environment handling,
+  development commands, build steps, release distribution, and supply-chain conventions.
+- Updated the locked Node.js type definitions within the existing Node 22 compatibility range.
+
+### Fixed
+
+- Restricted external installation documentation to credential-free HTTPS URLs and rejected unknown
+  custom-agent settings at the configuration-schema boundary.
+- Isolated Agent Doctor runner failures so one malformed or unavailable version command cannot abort
+  the complete report.
+- Made executable detection honor each custom agent's configured environment overrides.
+- Removed the integration suite's remaining dependency on `vscode.window.terminals` array order by
+  matching newly created terminals by identity and name.
+- Excluded local environment files, logs, coverage output, and generated VSIX files from packages.
+
 ## [1.9.2] - 2026-08-01
 
 ### Fixed

@@ -504,6 +504,27 @@ function normalizeAgentEnvironment(value: unknown): Record<string, string> | und
   return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 }
 
+/** Returns a documentation URL that is safe to hand to the external browser. */
+export function normalizeInstallationDocumentationUrl(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'https:' && Boolean(parsed.hostname) && !parsed.username && !parsed.password
+      ? trimmed
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Maps Node's host platform and the WSL setting to the command variant that will actually run. */
 export function resolveCommandPlatform(nodePlatform: NodeJS.Platform, useWsl: boolean): CommandPlatform {
   if (nodePlatform === 'win32') {
@@ -552,10 +573,11 @@ function isValidAgent(value: unknown): value is AgentDefinition {
 
 /** Describes the safe missing-command prompt and its optional verified documentation link. */
 export function getMissingAgentGuidance(agent: Agent): { message: string; documentationUrl?: string } {
-  if (agent.installationDocumentationUrl) {
+  const documentationUrl = normalizeInstallationDocumentationUrl(agent.installationDocumentationUrl);
+  if (documentationUrl) {
     return {
       message: `${agent.label} was not found. Open its official installation documentation?`,
-      documentationUrl: agent.installationDocumentationUrl,
+      documentationUrl,
     };
   }
 
@@ -595,8 +617,10 @@ export function resolveAgents(
       if (merged.iconPath !== undefined && !isValidAgentIconPath(merged.iconPath)) {
         delete merged.iconPath;
       }
-      if (typeof merged.installationDocumentationUrl !== 'string'
-        || merged.installationDocumentationUrl.trim().length === 0) {
+      const documentationUrl = normalizeInstallationDocumentationUrl(merged.installationDocumentationUrl);
+      if (documentationUrl) {
+        merged.installationDocumentationUrl = documentationUrl;
+      } else {
         delete merged.installationDocumentationUrl;
       }
       const environment = normalizeAgentEnvironment(merged.env);

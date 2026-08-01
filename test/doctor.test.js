@@ -61,6 +61,15 @@ test('inspectAgent classifies successful, empty, timed-out, and failed version c
   }))).status, 'check-failed');
 });
 
+test('inspectAgent isolates a version runner failure to the affected agent', async () => {
+  assert.deepEqual(
+    await inspectAgent(agent, true, true, false, async () => {
+      throw new Error('runner failed');
+    }),
+    { status: 'check-failed', detail: 'Version command could not be started.' },
+  );
+});
+
 test('inspectAgents preserves order and limits version checks to three workers', async () => {
   const agents = Array.from({ length: 7 }, (_, index) => ({
     ...agent,

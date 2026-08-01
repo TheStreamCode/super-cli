@@ -4,7 +4,7 @@ Thanks for your interest in improving Super CLI.
 
 ## Prerequisites
 
-- Node.js 22
+- Node.js 22 (the repository includes `.nvmrc`)
 - npm (included with Node.js)
 - VS Code 1.93 or newer for Extension Development Host testing
 
@@ -49,6 +49,10 @@ Thanks for your interest in improving Super CLI.
 - Follow the existing patterns in `src/`; consistency matters more than
   personal preference.
 - Keep user-facing behavior documented in `README.md`.
+- Keep external installation links on credential-free HTTPS URLs. Super CLI opens documentation but
+  never accepts installer commands.
+- Keep credentials out of commands, settings, fixtures, and `.env` files. Use each CLI's supported
+  credential store or local shell environment.
 - Third-party marks must come from an authoritative public source, remain
   limited to product identification, and be recorded in
   [`media/agents/ATTRIBUTION.md`](media/agents/ATTRIBUTION.md) and
@@ -67,11 +71,22 @@ Thanks for your interest in improving Super CLI.
 - Keep PRs focused — one concern per PR is easier to review and merge.
 - Do not commit generated `out/`, `.vsix`, `.vscode-test/`, or `node_modules/` content.
 
+## Dependency and supply-chain changes
+
+- Keep dependency changes in `devDependencies`; Super CLI has zero runtime dependencies.
+- `@types/vscode` must remain aligned with `engines.vscode` and is intentionally ignored by
+  Dependabot. Raise both together only when the extension actually needs a newer VS Code API.
+- npm install scripts are approved by exact package version in `package.json#allowScripts`. If an
+  install reports a new pending script, inspect the package and script before approving it; do not
+  replace the version-pinned entries with an open-ended package-name approval.
+- GitHub Actions must use immutable 40-character commit SHAs. Dependabot keeps both npm dependencies
+  and action references current on a weekly schedule.
+
 ## Release checklist (maintainers)
 
 1. Choose the next semantic version and update `package.json`,
    `package-lock.json`, `CHANGELOG.md`, and `CITATION.cff` together.
-2. Run `npm ci`, `npm audit`, and `npm run check`.
+2. Run `npm ci`, `npm run audit`, and `npm run check`.
 3. Run `npm run package` and inspect the file list reported by `vsce`.
 4. Install the generated VSIX in a clean Extension Development Host and verify
    the sidebar, launcher, settings, toolbar icon, and one terminal launch.

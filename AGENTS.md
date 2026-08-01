@@ -14,17 +14,23 @@ commands you configure; it never installs, wraps, or modifies a CLI or shell pro
 ```bash
 npm ci                    # install
 npm run compile           # tsc build: src/ -> out/
-npm run watch              # tsc in watch mode
-npm run test:unit          # compile + fast unit tests (node:test against out/*.js)
-npm run test:integration   # compile + real VS Code Extension Development Host smoke test
-npm run test                # unit + integration
-npm run check                # compile + unit + integration + `vsce ls` packaging dry run
-npm run package               # build the .vsix via vsce
+npm run typecheck         # strict tsc check without emitting
+npm run watch             # tsc in watch mode
+npm run test:unit         # compile + fast unit tests (node:test against out/*.js)
+npm run test:integration  # compile + real VS Code Extension Development Host smoke test
+npm run test              # unit + integration
+npm run audit             # dependency advisories at moderate severity or higher
+npm run check             # compile + unit + integration + `vsce ls` packaging dry run
+npm run package           # build the .vsix via vsce
 ```
 
 `npm run check` is what CI runs (`.github/workflows/ci.yml`, matrix over Windows/macOS/Linux) — run
 it before submitting changes. There is no separate lint script; `tsc --strict` is the only static
 check.
+
+Before editing, inspect `git status` and the relevant files. Preserve unrelated local work, keep the
+diff focused, and do not commit generated `out/`, `.vscode-test/`, `.vsce/`, coverage, log, `.env`, or
+`.vsix` content. Do not bump the extension version unless the task is explicitly a release.
 
 Unit tests `require('../out/<name>.js')`, so they run against **compiled output**, never `src/`
 directly. To run a single test file, compile first, then point `node --test` at it:
@@ -102,6 +108,15 @@ just to `package.json`.
 — never the resolved/merged value — so a workspace's `.vscode/settings.json` cannot inject launch
 commands (see `getEffectiveAgents` in `extension.ts`). The launcher is also disabled outright whenever
 `vscode.workspace.isTrusted` is false. Preserve both when touching config-reading code.
+
+The custom-agent schema rejects unknown properties. `installationDocumentationUrl` accepts only a
+credential-free HTTPS URL, and every path to `vscode.env.openExternal` must pass through
+`normalizeInstallationDocumentationUrl`, including command arguments that bypass settings parsing.
+Never add an `installCommand`, automatic installer, shell-profile mutation, or arbitrary URL scheme.
+
+An agent's `env` belongs only to its terminal. Installation-status checks merge those overrides with
+the extension host environment so a custom `PATH` is reported consistently; Agent Doctor reports and
+raw diagnostic output must continue to exclude environment values and credentials.
 
 ### Command resolution
 
@@ -191,9 +206,22 @@ third-party agent marks.
 `tsconfig.json` uses `NodeNext` modules — relative imports in `src/` need an explicit `.js`
 extension (e.g. `from './agents.js'`) even though the source files are `.ts`. `strict` is on.
 
+### Dependencies, CI, and packaging
+
+Super CLI intentionally has zero runtime dependencies. All packages remain in `devDependencies` and
+the lockfile is authoritative. npm install scripts are reviewed and approved by exact package version
+in `package.json#allowScripts`; when a dependency update introduces a pending script, inspect it and
+update the pin deliberately rather than approving a package name indefinitely.
+
+`.github/dependabot.yml` monitors npm and GitHub Actions weekly. `@types/vscode` is ignored there
+because it must stay exactly aligned with `engines.vscode`; raise the two together. Workflow actions
+must remain pinned to immutable 40-character commit SHAs. `.vscodeignore` is the packaging boundary:
+keep source, tests, local configuration, environment files, source maps, logs, coverage, and generated
+VSIX files out of the artifact, then verify the actual list with `vsce ls`.
+
 ## Release process
 
 From `CONTRIBUTING.md`: version bumps touch `package.json`, `package-lock.json`, `CHANGELOG.md`, and
 `CITATION.cff` together (enforced by a `metadata.test.js` consistency check), followed by
-`npm audit` and `npm run check`, then `npm run package` and a manual install-and-verify pass in a
-clean Extension Development Host before tagging and publishing.
+`npm run audit` and `npm run check`, then `npm run package` and a manual install-and-verify pass in a
+clean Extension Development Host before tagging and publishing the same reviewed VSIX.

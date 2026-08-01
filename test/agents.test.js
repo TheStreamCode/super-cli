@@ -5,6 +5,7 @@ const {
   BUILTIN_AGENTS,
   filterHiddenBuiltins,
   getMissingAgentGuidance,
+  normalizeInstallationDocumentationUrl,
   resolveCommandAgentArgument,
   resolveAgentCommands,
   resolveAgents,
@@ -122,6 +123,30 @@ test('resolveAgents ignores legacy non-string documentation and command values',
   assert.equal(agents[0].installationDocumentationUrl, undefined);
   assert.equal(agents[0].updateCommand, undefined);
   assert.equal(agents[0].versionCommand, undefined);
+});
+
+test('documentation links are trimmed and limited to credential-free HTTPS URLs', () => {
+  assert.equal(
+    normalizeInstallationDocumentationUrl('  https://example.com/install  '),
+    'https://example.com/install',
+  );
+  for (const value of [
+    'http://example.com/install',
+    'file:///tmp/install.html',
+    'command:workbench.action.openSettings',
+    'https://user:secret@example.com/install',
+    'not a URL',
+  ]) {
+    assert.equal(normalizeInstallationDocumentationUrl(value), undefined, value);
+  }
+
+  const [agent] = resolveAgents([], [{
+    id: 'custom',
+    label: 'Custom',
+    command: 'custom',
+    installationDocumentationUrl: 'file:///tmp/install.html',
+  }], false);
+  assert.equal(agent.installationDocumentationUrl, undefined);
 });
 
 test('resolveAgents sanitizes malformed optional user fields without throwing', () => {
@@ -345,6 +370,17 @@ test('missing CLI guidance offers no installation action without verified docume
   const guidance = getMissingAgentGuidance({ id: 'custom', label: 'Custom CLI', command: 'custom' });
 
   assert.match(guidance.message, /not found/i);
+  assert.equal(guidance.documentationUrl, undefined);
+});
+
+test('missing CLI guidance ignores unsafe documentation schemes from command arguments', () => {
+  const guidance = getMissingAgentGuidance({
+    id: 'custom',
+    label: 'Custom CLI',
+    command: 'custom',
+    installationDocumentationUrl: 'command:workbench.action.openSettings',
+  });
+
   assert.equal(guidance.documentationUrl, undefined);
 });
 

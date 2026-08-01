@@ -3,19 +3,26 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vscode = require('vscode');
 
-/** Waits for a terminal created by the launcher to appear in the window. */
-async function waitForNewTerminal(beforeCount, timeoutMs = 3000) {
+/** Waits for a matching terminal that was not present before the action under test. */
+async function waitForNewTerminal(beforeTerminals, predicate, timeoutMs = 3000) {
   const startedAt = Date.now();
 
   while (Date.now() - startedAt < timeoutMs) {
-    if (vscode.window.terminals.length > beforeCount) {
-      return vscode.window.terminals[vscode.window.terminals.length - 1];
+    const created = vscode.window.terminals.find(
+      (terminal) => !beforeTerminals.has(terminal) && predicate(terminal),
+    );
+    if (created) {
+      return created;
     }
 
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
-  throw new Error('Expected the launcher to create a terminal.');
+  throw new Error(
+    `Expected the launcher to create a matching terminal. Open terminals: ${JSON.stringify(
+      vscode.window.terminals.map((terminal) => terminal.name),
+    )}`,
+  );
 }
 
 /**
@@ -113,19 +120,25 @@ async function run() {
     // support existed. The N>1 case opens an interactive QuickPick, which (matching the pre-existing
     // "no favorite set" fallback below, itself never driven through its own picker) isn't automated
     // here -- driving VS Code's real QuickPick UI isn't exposed to this test harness.
-    const beforeFavoriteLaunch = vscode.window.terminals.length;
+    const beforeFavoriteLaunch = new Set(vscode.window.terminals);
     await vscode.commands.executeCommand('superCli.launchFavorite');
-    const favoriteTerminal = await waitForNewTerminal(beforeFavoriteLaunch);
+    const favoriteTerminal = await waitForNewTerminal(
+      beforeFavoriteLaunch,
+      (candidate) => /^Super CLI Test/.test(candidate.name),
+    );
     assert.match(favoriteTerminal.name, /^Super CLI Test/);
-    favoriteTerminal.dispose();
+    await disposeAndWaitClosed(favoriteTerminal);
 
     await vscode.commands.executeCommand('superCli.unsetFavorite', treeNode);
     assert.deepEqual(configuration.inspect('favoriteAgents')?.globalValue, []);
 
-    const beforeCount = vscode.window.terminals.length;
+    const beforeLaunch = new Set(vscode.window.terminals);
     await vscode.commands.executeCommand('superCli.launchAgent', treeNode);
 
-    const terminal = await waitForNewTerminal(beforeCount);
+    const terminal = await waitForNewTerminal(
+      beforeLaunch,
+      (candidate) => /^Super CLI Test/.test(candidate.name),
+    );
     assert.match(terminal.name, /^Super CLI Test/);
 
     const fakeSession = {
@@ -175,9 +188,12 @@ async function run() {
 
     // superCli.restartSession disposes the old terminal and relaunches the same agent, reusing its
     // exact cwd (here captured from the first launch) rather than re-resolving or prompting for one.
-    const beforeRestartLaunch = vscode.window.terminals.length;
+    const beforeRestartLaunch = new Set(vscode.window.terminals);
     await vscode.commands.executeCommand('superCli.launchAgent', treeNode);
-    const restartTerminal = await waitForNewTerminal(beforeRestartLaunch);
+    const restartTerminal = await waitForNewTerminal(
+      beforeRestartLaunch,
+      (candidate) => /^Super CLI Test/.test(candidate.name),
+    );
     const originalCwd = restartTerminal.creationOptions?.cwd;
     const restartSession = {
       sessionId: 'integration-test-restart-session',
@@ -208,19 +224,26 @@ async function run() {
     assert.deepEqual(relaunchedTerminal.creationOptions?.cwd, originalCwd);
     await disposeAndWaitClosed(relaunchedTerminal);
 
-    const beforeUpdateCount = vscode.window.terminals.length;
+    const beforeUpdate = new Set(vscode.window.terminals);
     await vscode.commands.executeCommand('superCli.updateAgent', treeNode);
 
-    const updateTerminal = await waitForNewTerminal(beforeUpdateCount);
+    const updateTerminal = await waitForNewTerminal(
+      beforeUpdate,
+      (candidate) => /^Update Super CLI Test/.test(candidate.name),
+    );
     assert.match(updateTerminal.name, /^Update Super CLI Test/);
     await disposeAndWaitClosed(updateTerminal);
 
     // superCli.updateAllAgents runs every updatable agent's update command in sequence, in ONE shared
     // "Super CLI: updates" terminal rather than one terminal per agent. With builtins disabled above,
     // only testAgent has an updateCommand ("node --version"); testAgent2 must be skipped entirely.
-    const beforeUpdateAllCount = vscode.window.terminals.length;
+    const beforeUpdateAll = new Set(vscode.window.terminals);
+    const beforeUpdateAllCount = beforeUpdateAll.size;
     await vscode.commands.executeCommand('superCli.updateAllAgents');
-    const updateAllTerminal = await waitForNewTerminal(beforeUpdateAllCount);
+    const updateAllTerminal = await waitForNewTerminal(
+      beforeUpdateAll,
+      (candidate) => candidate.name === 'Super CLI: updates',
+    );
     assert.equal(updateAllTerminal.name, 'Super CLI: updates');
     assert.equal(vscode.window.terminals.length, beforeUpdateAllCount + 1);
     await disposeAndWaitClosed(updateAllTerminal);
@@ -237,11 +260,20 @@ async function run() {
       label: 'Super CLI Long 2',
       command: 'node -e "setInterval(() => {}, 1000)"',
     };
-    const beforeBulkLaunch = vscode.window.terminals.length;
+    const beforeBulkLaunch = new Set(vscode.window.terminals);
     await vscode.commands.executeCommand('superCli.launchAgent', { kind: 'agent', agent: longRunningAgent });
-    const bulkTerminal1 = await waitForNewTerminal(beforeBulkLaunch);
+    const bulkTerminal1 = await waitForNewTerminal(
+      beforeBulkLaunch,
+      (candidate) => candidate.name === longRunningAgent.label
+        || candidate.name.startsWith(`${longRunningAgent.label} `),
+    );
+    const beforeSecondBulkLaunch = new Set(vscode.window.terminals);
     await vscode.commands.executeCommand('superCli.launchAgent', { kind: 'agent', agent: longRunningAgent2 });
-    const bulkTerminal2 = await waitForNewTerminal(beforeBulkLaunch + 1);
+    const bulkTerminal2 = await waitForNewTerminal(
+      beforeSecondBulkLaunch,
+      (candidate) => candidate.name === longRunningAgent2.label
+        || candidate.name.startsWith(`${longRunningAgent2.label} `),
+    );
 
     try {
       await vscode.commands.executeCommand('superCli.stopAllSessions');
@@ -397,10 +429,13 @@ async function run() {
     // immediately) but the terminal itself stays open at a bare shell prompt.
     const shortLivedAgent = { id: 'integration-test-short', label: 'Super CLI Short', command: 'node --version' };
     const fakeContext = { extensionUri: extension.extensionUri, subscriptions: [] };
-    const beforeShortLived = vscode.window.terminals.length;
+    const beforeShortLived = new Set(vscode.window.terminals);
     await launchAgent(shortLivedAgent, fakeContext, 1, registry);
 
-    const shortLivedTerminal = await waitForNewTerminal(beforeShortLived);
+    const shortLivedTerminal = await waitForNewTerminal(
+      beforeShortLived,
+      (candidate) => candidate.name === shortLivedAgent.label,
+    );
     try {
       await waitForCondition(
         () => !registry.list().some((session) => session.terminal === shortLivedTerminal),

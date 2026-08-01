@@ -3,7 +3,7 @@
   "displayName": "Super CLI: Claude Code, Codex & AI Agent Launcher",
   "description": "Launch Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro, OpenClaw, Qoder CLI and other AI coding agents from one VS Code sidebar.",
   "publisher": "mikesoft",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -349,6 +349,7 @@
           "markdownDescription": "Coding agent CLIs to make available in the launcher. Each entry adds a new agent or, when it reuses a built-in `id`, overrides that built-in. Commands can be a cross-platform string or an object with `windows`, `macos`, and `linux` variants. Only the user (global) value is read; workspace overrides are ignored for security.\n\nExample:\n```json\n\"superCli.agents\": [\n  { \"id\": \"my-agent\", \"label\": \"My Agent\", \"command\": \"my-agent\" }\n]\n```",
           "items": {
             "type": "object",
+            "additionalProperties": false,
             "required": [
               "id",
               "label",
@@ -397,11 +398,13 @@
               },
               "installationDocumentationUrl": {
                 "type": "string",
-                "description": "Optional verified official installation documentation URL opened in your browser when this CLI is not found."
+                "format": "uri",
+                "pattern": "^https://",
+                "description": "Optional verified official HTTPS installation documentation URL opened in your external browser when this CLI is not found."
               },
               "env": {
                 "type": "object",
-                "description": "Optional environment variables to set for the agent's terminal. Useful to opt out of a CLI's IDE-extension auto-install via its own environment variable.",
+                "description": "Optional environment variables to set for the agent's terminal and use for executable detection. Useful to opt out of a CLI's IDE-extension auto-install or provide a custom PATH.",
                 "additionalProperties": {
                   "type": "string"
                 }
@@ -554,13 +557,19 @@
   },
   "scripts": {
     "compile": "node ./node_modules/typescript/bin/tsc -p . --pretty false",
+    "typecheck": "node ./node_modules/typescript/bin/tsc -p . --noEmit --pretty false",
     "watch": "node ./node_modules/typescript/bin/tsc --watch -p . --pretty false",
     "test": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node --test test/*.test.js && node ./test/integration/runTest.js",
     "test:unit": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node --test test/*.test.js",
     "test:integration": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node ./test/integration/runTest.js",
     "vscode:prepublish": "node ./node_modules/typescript/bin/tsc -p . --pretty false",
     "package": "node ./node_modules/@vscode/vsce/vsce package",
+    "audit": "npm audit --audit-level=moderate",
     "check": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node --test test/*.test.js && node ./test/integration/runTest.js && node ./node_modules/@vscode/vsce/vsce ls"
+  },
+  "allowScripts": {
+    "@vscode/vsce-sign@2.0.9": true,
+    "keytar@7.9.0": true
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

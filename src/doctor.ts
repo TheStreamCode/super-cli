@@ -94,7 +94,12 @@ export async function inspectAgent(
     return { status: 'version-unavailable', detail: 'No verified version command is configured.' };
   }
 
-  const result = await runner(agent.versionCommand, useWsl);
+  let result: VersionCommandResult;
+  try {
+    result = await runner(agent.versionCommand, useWsl);
+  } catch {
+    return { status: 'check-failed', detail: 'Version command could not be started.' };
+  }
   if (result.timedOut) {
     return { status: 'timed-out', detail: 'Version command exceeded 5 seconds.' };
   }

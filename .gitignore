@@ -3,6 +3,10 @@ out/
 .vscode-test/
 .vsce/
 coverage/
+.env
+.env.*
 *.vsix
 *.log
 *.tsbuildinfo
+.DS_Store
+Thumbs.db
