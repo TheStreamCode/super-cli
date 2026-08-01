@@ -2,27 +2,34 @@
 
 Thanks for your interest in improving Super CLI.
 
+## Prerequisites
+
+- Node.js 22
+- npm (included with Node.js)
+- VS Code 1.93 or newer for Extension Development Host testing
+
 ## Getting started
 
 1. **Fork** the repository and clone your fork locally.
-2. Install dependencies:
+2. Install the locked dependency tree:
 
-   `ash
+   ```bash
    npm ci
-   `
+   ```
 
-3. Create a branch from `main` with a descriptive name:
+3. Create a focused branch from an up-to-date `main`:
 
-   `ash
-   git checkout -b fix/agent-detection-wsl
-   git checkout -b feat/custom-agent-icons
-   `
+   ```bash
+   git switch main
+   git pull --ff-only
+   git switch -c fix/agent-detection-wsl
+   ```
 
-4. Make your changes, then verify everything passes:
+4. Make your changes, then run the same verification used by CI:
 
-   `ash
-   npm run check    # compile + unit tests + VS Code integration smoke test
-   `
+   ```bash
+   npm run check
+   ```
 
 5. Commit with a clear message, push to your fork, and open a **Pull Request**
    against `main`. Fill in the PR template completely.
@@ -31,9 +38,10 @@ Thanks for your interest in improving Super CLI.
 
 - **Search existing issues** — your problem may already be reported.
 - Use the **Bug report** or **Feature request** template.
-- For questions ("how do I…?", "does it work with…?"), open a
+- For questions ("how do I...?", "does it work with...?"), open a
   [Discussion](https://github.com/TheStreamCode/super-cli/discussions) instead
   of an issue.
+- Report vulnerabilities privately according to [SECURITY.md](SECURITY.md).
 
 ## Code style
 
@@ -57,6 +65,7 @@ Thanks for your interest in improving Super CLI.
 - Include screenshots or a short recording for any UI-visible change.
 - Run `npm run check` before submitting.
 - Keep PRs focused — one concern per PR is easier to review and merge.
+- Do not commit generated `out/`, `.vsix`, `.vscode-test/`, or `node_modules/` content.
 
 ## Release checklist (maintainers)
 

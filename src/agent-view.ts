@@ -50,6 +50,15 @@ export function resolveMigratedFavorites(
   return [legacyFavoriteId];
 }
 
+/** Keeps favorites that still resolve to an effective agent, preserving the user's chosen order. */
+export function retainAvailableFavoriteIds(
+  favoriteIds: readonly string[],
+  availableAgentIds: readonly string[],
+): string[] {
+  const available = new Set(availableAgentIds);
+  return favoriteIds.filter((id) => available.has(id));
+}
+
 /** Successful launches before the one-time rating prompt is offered. */
 export const RATING_PROMPT_LAUNCH_THRESHOLD = 20;
 

@@ -24,4 +24,5 @@ Project maintainers may remove comments, issues, pull requests, or contributors 
 
 ## Reporting
 
-Use the maintainer contact listed on `https://mikesoft.it` for private conduct concerns.
+Email `info@mikesoft.it` for private conduct concerns. Include enough context for the maintainers to
+understand what happened, but do not include credentials or unrelated personal information.

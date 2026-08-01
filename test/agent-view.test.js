@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const {
   buildAgentGroups,
   formatSessionElapsed,
+  retainAvailableFavoriteIds,
   resolveMigratedFavorites,
   shouldOfferFavoriteAfterLaunch,
   shouldOfferRatingAfterLaunch,
@@ -100,6 +101,14 @@ test('resolveMigratedFavorites does nothing without a legacy value, or once favo
   assert.equal(resolveMigratedFavorites(undefined, undefined), undefined);
   assert.equal(resolveMigratedFavorites('', undefined), undefined);
   assert.equal(resolveMigratedFavorites('claude', ['codex']), undefined);
+});
+
+test('retainAvailableFavoriteIds removes only agents that no longer resolve', () => {
+  assert.deepEqual(
+    retainAvailableFavoriteIds(['claude', 'custom', 'codex'], ['custom', 'codex']),
+    ['custom', 'codex'],
+  );
+  assert.deepEqual(retainAvailableFavoriteIds(['custom'], ['custom']), ['custom']);
 });
 
 test('rating prompt is offered exactly once, only once the launch threshold is reached', () => {

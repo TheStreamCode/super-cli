@@ -16,7 +16,7 @@ Fixes #
 
 ## Testing
 
-- [ ] `npm run check` passes (compile + unit tests + smoke test)
+- [ ] `npm run check` passes (compile + unit tests + integration smoke test + packaging dry run)
 - [ ] Manually verified in Extension Development Host
 - [ ] Tested on Windows / macOS / Linux (list which)
 

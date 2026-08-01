@@ -147,7 +147,9 @@ export async function inspectAgents(
 }
 
 function escapeMarkdownCell(value: string): string {
-  return value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+  // Escape existing backslashes first. Otherwise an input such as `\|` can consume the escape we
+  // add for the pipe and break the table cell. Collapse every newline form to keep one row per agent.
+  return value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/[\r\n]+/g, ' ');
 }
 
 /** Builds a local diagnostic report without environment values, credentials, or captured logs. */

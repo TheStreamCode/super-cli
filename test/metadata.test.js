@@ -27,6 +27,17 @@ function readPngSize(relativePath) {
   };
 }
 
+function listMarkdownFiles(relativeDirectory) {
+  const absoluteDirectory = path.join(rootDir, relativeDirectory);
+  return fs.readdirSync(absoluteDirectory, { withFileTypes: true }).flatMap((entry) => {
+    const relativePath = path.join(relativeDirectory, entry.name);
+    if (entry.isDirectory()) {
+      return listMarkdownFiles(relativePath);
+    }
+    return entry.isFile() && entry.name.endsWith('.md') ? [relativePath] : [];
+  });
+}
+
 test('package metadata uses Super CLI branding', () => {
   const packageJson = readPackageJson();
 
@@ -305,6 +316,27 @@ test('documentation uses local images and VSIX packaging uses only .vscodeignore
   assert.match(notices, /\[Terms of Service\]\(https:\/\/chutes\.ai\/terms\)/);
 });
 
+test('repository documentation contains no hidden control characters', () => {
+  const rootMarkdown = fs.readdirSync(rootDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .map((entry) => entry.name);
+  const markdownFiles = [
+    ...rootMarkdown,
+    ...listMarkdownFiles('.github'),
+    ...listMarkdownFiles('docs'),
+    ...listMarkdownFiles('media'),
+  ];
+
+  for (const markdownFile of markdownFiles) {
+    assert.doesNotMatch(
+      readText(markdownFile),
+      /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/,
+      markdownFile,
+    );
+  }
+  assert.match(readText('CONTRIBUTING.md'), /```bash\n\s+npm ci\n\s+```/);
+});
+
 test('package contributes split sidebar and toolbar icons', () => {
   const packageJson = readPackageJson();
 
@@ -322,4 +354,17 @@ test('CI workflow validates the extension on Windows, macOS, and Linux', () => {
   assert.match(workflow, /macos-latest/);
   assert.match(workflow, /ubuntu-latest/);
   assert.match(workflow, /npm run check/);
+});
+
+test('GitHub workflows pin every action to an immutable commit', () => {
+  const workflows = fs.readdirSync(path.join(rootDir, '.github', 'workflows'))
+    .filter((fileName) => fileName.endsWith('.yml') || fileName.endsWith('.yaml'));
+
+  for (const workflow of workflows) {
+    const content = readText(path.join('.github', 'workflows', workflow));
+    const actionReferences = [...content.matchAll(/^\s*-?\s*uses:\s*[^\s@]+@([^\s#]+)/gm)];
+    for (const [, reference] of actionReferences) {
+      assert.match(reference, /^[a-f0-9]{40}$/, `${workflow}: ${reference}`);
+    }
+  }
 });

@@ -16,7 +16,13 @@ name: Dependabot auto-merge
 #
 # Auto-merge waits for the branch protection checks; nothing lands on a red build.
 
-on: pull_request_target
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -28,6 +34,7 @@ jobs:
     # someone else opened.
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - name: Fetch Dependabot metadata

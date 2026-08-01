@@ -12,6 +12,7 @@ import {
 import {
   buildAgentGroups,
   compareAgentsByLabel,
+  retainAvailableFavoriteIds,
   resolveMigratedFavorites,
   shouldOfferFavoriteAfterLaunch,
   shouldOfferRatingAfterLaunch,
@@ -214,9 +215,15 @@ export function activate(context: vscode.ExtensionContext): void {
     await configuration.update('hiddenBuiltins', nextHiddenIds, vscode.ConfigurationTarget.Global);
 
     const favoriteIds = getFavoriteIds();
-    const removedFavorites = favoriteIds.filter((id) => nextHiddenIds.includes(id));
+    // A hidden built-in may still resolve through a user override with the same id. Keep that
+    // favorite because the effective agent remains launchable; only remove ids that disappeared.
+    const availableFavoriteIds = retainAvailableFavoriteIds(
+      favoriteIds,
+      getEffectiveAgents().map((agent) => agent.id),
+    );
+    const removedFavorites = favoriteIds.filter((id) => !availableFavoriteIds.includes(id));
     if (removedFavorites.length > 0) {
-      await updateFavorites(favoriteIds.filter((id) => !nextHiddenIds.includes(id)));
+      await updateFavorites(availableFavoriteIds);
       void vscode.window.showInformationMessage(
         removedFavorites.length === 1
           ? 'The hidden agent was removed from your favorites.'

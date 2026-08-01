@@ -5,6 +5,22 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.9.2] - 2026-08-01
+
+### Fixed
+
+- Preserved a favorite when its built-in preset is hidden but a custom agent override with the same
+  id remains available.
+- Escaped backslashes before Markdown delimiters in Agent Doctor reports, preventing version output
+  from breaking the generated table.
+- Repaired corrupted shell code fences in the contributor guide and added a regression check for
+  hidden control characters in repository documentation.
+
+### Changed
+
+- Hardened GitHub Actions with immutable action references, concurrency controls, and job timeouts;
+  clarified the contributor, pull-request, conduct, and private security-reporting guidance.
+
 ## [1.9.1] - 2026-07-27
 
 ### Fixed

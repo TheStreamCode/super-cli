@@ -11,6 +11,8 @@ node_modules/**
 **/*.map
 **/*.ts
 .gitignore
+.gitattributes
+.editorconfig
 .vscodeignore
 tsconfig.json
 *.tsbuildinfo

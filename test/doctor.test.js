@@ -94,3 +94,12 @@ test('doctor report contains useful state without commands, raw output, or envir
   assert.doesNotMatch(report, /Launch command/);
   assert.doesNotMatch(report, /DOCTOR_SECRET_SENTINEL/);
 });
+
+test('doctor report safely escapes Markdown table delimiters and backslashes', () => {
+  const results = new Map([['example', { status: 'ready', version: 'C:\\tools\\agent | 1.2.3\r\nnext' }]]);
+  const report = buildDoctorReport([agent], results, 'Windows', false, true);
+  const agentRows = report.split('\n').filter((line) => line.startsWith('| Example CLI'));
+
+  assert.equal(agentRows.length, 1);
+  assert.equal(agentRows[0], '| Example CLI | Ready | C:\\\\tools\\\\agent \\| 1.2.3 next |');
+});

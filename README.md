@@ -97,8 +97,8 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
   because their original start time is gone with the previous session and reporting a duration would
   be a guess.
 - **Agent Manager.** Choose exactly which built-in CLIs appear from the sidebar toolbar or with
-  **Super CLI: Manage Built-in Agents**. Hiding a favorited agent safely removes just that one from
-  your favorites, leaving the rest untouched.
+  **Super CLI: Manage Built-in Agents**. Hiding a favorited agent removes it only when that id is no
+  longer available; a custom override with the same id remains favorited.
 - **Agent Doctor.** Run an explicit, bounded local diagnostic to see detected CLI versions and
   missing or failing version checks. It does not perform network update checks and its report omits
   environment variables, `PATH` contents, launch commands, and raw diagnostic output. The report is
