@@ -5,6 +5,13 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-08-02
+
+### Fixed
+
+- Replaced the CodeArts Agent CLI project-drawn fallback icon with the official Huawei logomark,
+  using the vendor's radial-gradient eight-petal mark with web attributes removed.
+
 ## [1.10.0] - 2026-08-02
 
 ### Added
