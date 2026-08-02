@@ -87,8 +87,11 @@ Thanks for your interest in improving Super CLI.
 1. Choose the next semantic version and update `package.json`,
    `package-lock.json`, `CHANGELOG.md`, and `CITATION.cff` together.
 2. Run `npm ci`, `npm run audit`, and `npm run check`.
-3. Run `npm run package` and inspect the file list reported by `vsce`.
+3. Run `npm run package`; inspect the file list reported by `vsce` and require the embedded-manifest
+   identity check to pass.
 4. Install the generated VSIX in a clean Extension Development Host and verify
    the sidebar, launcher, settings, toolbar icon, and one terminal launch.
+   On Windows, use VS Code's `bin\\code.cmd` CLI wrapper for command-line install checks rather than
+   the desktop `Code.exe` binary.
 5. Commit and push the reviewed files, then create the matching `v<version>`
    tag and publish the same VSIX to the intended registries.

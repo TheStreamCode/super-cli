@@ -5,6 +5,37 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.9.4] - 2026-08-02
+
+### Fixed
+
+- Stopping or restarting an agent within three seconds of launching it no longer sends its command to
+  a terminal that has already been closed. The shell-integration fallback timer is now cancelled when
+  its terminal goes away, instead of raising `Terminal has already been disposed` from the timer.
+- Listeners and timers created for each launch and each agent update are no longer added to the
+  extension's activation subscriptions, which VS Code empties only when the extension shuts down. They
+  are released as soon as the command finishes or its terminal closes, so a long editing session no
+  longer accumulates one disposed listener per launch, along with the terminal each one captured.
+- Terminal output is now captured only where it is actually used — the launch path, to detect a CLI
+  that is not installed. Update commands previously had up to 16 KB of their output buffered in memory
+  for a handler that discarded it, contrary to the documented behaviour.
+
+### Changed
+
+- Documented the disposable-ownership rule, the opt-in output capture, and the terminal-close
+  cancellation in `AGENTS.md`, and recorded the fixes in the security review log.
+- Kept Dependabot updates for Node types within the supported Node 22 runtime line.
+- Packaging now verifies the embedded publisher, extension name, and version before an artifact can
+  be used for a release, and the Windows release guidance distinguishes `code.cmd` from `Code.exe`.
+
+### Internal
+
+- Added regression coverage: two `package.json`-style source checks pinning the single activation
+  registration and the single output-capture opt-in, plus a deterministic terminal-close case in the
+  Windows integration leg.
+- Made the fallback assertion independent of the headless xterm renderer while retaining a real
+  terminal-close regression case.
+
 ## [1.9.3] - 2026-08-01
 
 ### Added

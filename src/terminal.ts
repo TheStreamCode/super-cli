@@ -13,6 +13,39 @@ import {
 
 const SETTINGS_NAMESPACE = 'superCli';
 const MAX_CAPTURED_SHELL_OUTPUT = 16 * 1024;
+const SHELL_INTEGRATION_TIMEOUT_MS = 3000;
+
+/**
+ * Teardown callbacks for terminal commands that are still in flight. Every invocation of
+ * `executeCommandWithOptionalShellIntegration` adds exactly one entry and removes it again the moment
+ * that command settles or its terminal closes, so this set stays proportional to what is running now.
+ *
+ * This is why per-invocation disposables are deliberately kept out of `context.subscriptions`: VS Code
+ * empties that array only at deactivate, and disposing an entry does not remove it from the array. A
+ * push per launch or per update would therefore grow it for the entire session. `activate` registers
+ * `createPendingCommandsDisposable()` once instead, and `metadata.test.js` pins that there is exactly
+ * one `context.subscriptions.push(` in the whole of `src/`.
+ */
+const pendingCommandTeardowns = new Set<() => void>();
+
+/**
+ * Releases every listener and timer still owned by an in-flight terminal command. Registered once by
+ * `activate`, so that a command left pending at deactivate cannot outlive the extension.
+ */
+export function createPendingCommandsDisposable(): vscode.Disposable {
+  return {
+    dispose: () => {
+      for (const teardown of [...pendingCommandTeardowns]) {
+        teardown();
+      }
+    },
+  };
+}
+
+/** Test hook: how many terminal commands are still in flight. See AGENTS.md. */
+export function countPendingTerminalCommands(): number {
+  return pendingCommandTeardowns.size;
+}
 
 function collectShellExecutionOutput(execution: vscode.TerminalShellExecution): Promise<string> {
   return (async () => {
@@ -34,14 +67,28 @@ function collectShellExecutionOutput(execution: vscode.TerminalShellExecution): 
 export function executeCommandWithOptionalShellIntegration(
   terminal: vscode.Terminal,
   command: string,
-  context: vscode.ExtensionContext,
   onShellExecutionEnd?: (event: vscode.TerminalShellExecutionEndEvent, output: string) => void | Promise<void>,
   // Called instead of onShellExecutionEnd when shell integration never attached in time: sendText has
   // no completion signal at all, so callers that need to resolve (e.g. a bulk operation awaiting each
   // step) can treat "we sent it" as done rather than waiting forever for an end event that never comes.
   onFallback?: () => void,
+  // Terminal output is streamed and retained only where a caller genuinely needs it — the launch path,
+  // so a missing CLI can be spotted. Every other caller leaves it off, so no command's output is
+  // buffered just in case. See "Terminal content reading is the exception" in AGENTS.md.
+  captureOutput = false,
 ): void {
   let executionStarted = false;
+  let executionListener: vscode.Disposable | undefined;
+
+  // Everything this one invocation owns, released together: on the shell-execution end event, on the
+  // fallback, when the terminal closes, or at deactivate.
+  const release = (): void => {
+    pendingCommandTeardowns.delete(release);
+    shellIntegrationListener.dispose();
+    closeListener.dispose();
+    executionListener?.dispose();
+    clearTimeout(fallbackHandle);
+  };
 
   const startExecution = (shellIntegration: vscode.TerminalShellIntegration) => {
     if (executionStarted) {
@@ -52,23 +99,29 @@ export function executeCommandWithOptionalShellIntegration(
     shellIntegrationListener.dispose();
     clearTimeout(fallbackHandle);
 
+    if (!onShellExecutionEnd) {
+      shellIntegration.executeCommand(command);
+      release();
+      return;
+    }
+
     let execution: vscode.TerminalShellExecution | undefined;
     let outputPromise: Promise<string> | undefined;
 
-    const executionListener = onShellExecutionEnd
-      ? vscode.window.onDidEndTerminalShellExecution(async (endEvent) => {
-        if (endEvent.terminal !== terminal || (execution && endEvent.execution !== execution)) {
-          return;
-        }
+    executionListener = vscode.window.onDidEndTerminalShellExecution(async (endEvent) => {
+      if (endEvent.terminal !== terminal || (execution && endEvent.execution !== execution)) {
+        return;
+      }
 
-        executionListener?.dispose();
-        const output = outputPromise ? await outputPromise : '';
-        await onShellExecutionEnd(endEvent, output);
-      })
-      : undefined;
+      release();
+      const output = outputPromise ? await outputPromise : '';
+      await onShellExecutionEnd(endEvent, output);
+    });
 
     execution = shellIntegration.executeCommand(command);
-    outputPromise = collectShellExecutionOutput(execution);
+    if (captureOutput) {
+      outputPromise = collectShellExecutionOutput(execution);
+    }
   };
 
   const shellIntegrationListener = vscode.window.onDidChangeTerminalShellIntegration((event) => {
@@ -79,6 +132,17 @@ export function executeCommandWithOptionalShellIntegration(
     startExecution(event.shellIntegration);
   });
 
+  // A terminal that closes inside the fallback window has to cancel the pending sendText. VS Code
+  // throws "Terminal has already been disposed" when sendText targets a terminal the extension itself
+  // disposed — which superCli.stopSession, superCli.stopAllSessions and superCli.restartSession all
+  // do — so stopping or restarting an agent within the timeout used to raise that from the timer,
+  // with the command going nowhere either way.
+  const closeListener = vscode.window.onDidCloseTerminal((closed) => {
+    if (closed === terminal) {
+      release();
+    }
+  });
+
   const fallbackHandle = setTimeout(() => {
     if (terminal.shellIntegration) {
       startExecution(terminal.shellIntegration);
@@ -86,20 +150,16 @@ export function executeCommandWithOptionalShellIntegration(
     }
 
     executionStarted = true;
-    shellIntegrationListener.dispose();
+    release();
     terminal.sendText(command, true);
     onFallback?.();
-  }, 3000);
+  }, SHELL_INTEGRATION_TIMEOUT_MS);
+
+  pendingCommandTeardowns.add(release);
 
   if (terminal.shellIntegration) {
     startExecution(terminal.shellIntegration);
-    return;
   }
-
-  context.subscriptions.push(
-    shellIntegrationListener,
-    { dispose: () => clearTimeout(fallbackHandle) },
-  );
 }
 
 /** Opens the Settings UI filtered to this extension. */
@@ -150,7 +210,6 @@ async function handleMissingAgent(agent: Agent): Promise<void> {
 function watchAgentLifecycle(
   terminal: vscode.Terminal,
   agent: Agent,
-  context: vscode.ExtensionContext,
   runCommand: string,
   sessions: AgentSessionRegistry,
   sessionId: string,
@@ -158,13 +217,15 @@ function watchAgentLifecycle(
   executeCommandWithOptionalShellIntegration(
     terminal,
     runCommand,
-    context,
     async (endEvent, output) => {
       sessions.end(sessionId);
       if (shouldPromptToInstall(agent.command, endEvent.exitCode, output)) {
         await handleMissingAgent(agent);
       }
     },
+    undefined,
+    // The one place that reads terminal output: the bounded missing-command detector above.
+    true,
   );
 }
 
@@ -214,7 +275,7 @@ export async function launchAgent(
   });
   terminal.show();
   const session = sessions.start(agent, terminal, cwd);
-  watchAgentLifecycle(terminal, agent, context, command, sessions, session.sessionId);
+  watchAgentLifecycle(terminal, agent, command, sessions, session.sessionId);
   void vscode.window.setStatusBarMessage(`Started ${agent.label}`, 2500);
   return true;
 }
@@ -269,7 +330,6 @@ export function runAgentUpdate(
   agent: Agent,
   updateCommand: string,
   terminal: vscode.Terminal,
-  context: vscode.ExtensionContext,
   options: { notify: boolean },
 ): Promise<UpdateOutcome> {
   return new Promise<UpdateOutcome>((resolve) => {
@@ -293,7 +353,6 @@ export function runAgentUpdate(
     executeCommandWithOptionalShellIntegration(
       terminal,
       updateCommand,
-      context,
       (endEvent) => {
         // Settled as soon as the exit code is known, independent of the notification below: a caller
         // awaiting every agent in a bulk update must not block on the user dismissing a toast.
@@ -345,5 +404,5 @@ export async function updateAgent(agent: Agent, context: vscode.ExtensionContext
 
   const terminal = createAgentUpdateTerminal(agent, context);
   void vscode.window.setStatusBarMessage(`Updating ${agent.label}`, 2500);
-  return runAgentUpdate(agent, updateCommand, terminal, context, { notify: true });
+  return runAgentUpdate(agent, updateCommand, terminal, { notify: true });
 }

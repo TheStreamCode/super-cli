@@ -131,19 +131,51 @@ command runs inside the WSL terminal.
 `vscode.window.onDidCloseTerminal` and shell-integration start/end — and never reads terminal
 content. That's a deliberate design choice matching the no-telemetry stance in the README's Privacy
 section, and future terminal-state work should stay on the same lifecycle-only footing unless that
-stance changes deliberately. The one existing exception predates it: `collectShellExecutionOutput` in
+stance changes deliberately. The one existing exception: `collectShellExecutionOutput` in
 `terminal.ts` streams `execution.read()` for the life of the launched command and retains the first
 16 KB, solely so `shouldPromptToInstall` can detect a "command not found" failure right after launch.
 Treat that as a narrow, bounded, already-reviewed exception, not a precedent for reading more.
+
+That exception is opt-in, and only the launch path opts in. `executeCommandWithOptionalShellIntegration`
+takes a `captureOutput` flag defaulting to **false**, and `watchAgentLifecycle` is the only caller that
+passes `true`. It used to stream unconditionally, so `runAgentUpdate` also buffered up to 16 KB of every
+update command's output into memory for a handler that ignored the value — reading more than this
+section claimed. Leave the flag off in new callers; `metadata.test.js` asserts there is exactly one
+opt-in and one call site.
 
 The shell-integration path in `executeCommandWithOptionalShellIntegration` (`terminal.ts`) falls back
 to `terminal.sendText` after a 3-second timeout when shell integration doesn't attach in time. sendText
 itself has no completion signal at all, so callers that must resolve regardless pass the function's
 `onFallback` callback and treat "we sent it" as done. `executeCommandWithOptionalShellIntegration` is
-exported only so `test/integration/suite/index.js` can force this branch deterministically, by
-launching it against a `cmd.exe` terminal — VS Code's own docs confirm cmd.exe doesn't support shell
-integration, unlike a real interactive shell where the fallback would be a timing race. It has no
-other caller outside `terminal.ts`; don't remove the export as unused without checking that test first.
+exported only so `test/integration/suite/index.js` can force this branch deterministically with a
+minimal terminal double whose `shellIntegration` stays undefined. Using a real hidden terminal makes
+the headless Extension Host's xterm renderer log an unrelated missing-dimensions error when `sendText`
+scrolls. A separate real `cmd.exe` terminal is closed before the timeout to cover VS Code's
+terminal-close event without sending text. The function has no other caller outside `terminal.ts`;
+don't remove the export as unused without checking that test first. `countPendingTerminalCommands` is
+exported for the same suite and has no production caller.
+
+### Per-invocation disposables never go on `context.subscriptions`
+
+`context.subscriptions` is emptied **only at deactivate**, and calling `.dispose()` on an entry does
+not remove it from the array. Anything created once per launch, update, or command invocation
+therefore must not be pushed there, or the array grows for the whole session and keeps every disposed
+listener and its captured terminal alive. `executeCommandWithOptionalShellIntegration` did exactly
+that — two entries per launch and per update.
+
+The rule now: `activate` performs the **single** `context.subscriptions.push(` in all of `src/`, and
+per-invocation disposables belong to their own owner. `terminal.ts` keeps a module-level
+`pendingCommandTeardowns` set; each invocation adds one `release()` and removes it again when the
+command settles, when the fallback fires, or when its terminal closes, and `activate` registers
+`createPendingCommandsDisposable()` once so nothing survives deactivate. `metadata.test.js` pins the
+single push (comments stripped, so prose about the rule doesn't count as a registration).
+
+The close listener is not optional bookkeeping. `terminal.sendText` **throws** `Terminal has already
+been disposed` when its target was disposed by the extension, and `superCli.stopSession`,
+`superCli.stopAllSessions` and `superCli.restartSession` all dispose one — so stopping or restarting
+an agent within the 3-second window used to raise that from the timer, with the command going nowhere
+regardless. Closing the terminal now cancels the pending fallback. The Windows leg of the integration
+suite covers it deterministically via cmd.exe; keep any new terminal-command path on the same footing.
 
 ### Anything awaiting a terminal command must have a non-shell-integration way out
 
@@ -214,14 +246,21 @@ in `package.json#allowScripts`; when a dependency update introduces a pending sc
 update the pin deliberately rather than approving a package name indefinitely.
 
 `.github/dependabot.yml` monitors npm and GitHub Actions weekly. `@types/vscode` is ignored there
-because it must stay exactly aligned with `engines.vscode`; raise the two together. Workflow actions
-must remain pinned to immutable 40-character commit SHAs. `.vscodeignore` is the packaging boundary:
-keep source, tests, local configuration, environment files, source maps, logs, coverage, and generated
-VSIX files out of the artifact, then verify the actual list with `vsce ls`.
+because it must stay exactly aligned with `engines.vscode`; raise the two together. `@types/node`
+accepts updates within Node 22 but ignores major updates, since compiling against a newer Node API
+would contradict `.nvmrc` and CI. Workflow actions must remain pinned to immutable 40-character commit
+SHAs. `.vscodeignore` is the packaging boundary: keep source, scripts, tests, local configuration,
+environment files, source maps, logs, coverage, and generated VSIX files out of the artifact, then
+verify the actual list with `vsce ls`.
 
 ## Release process
 
 From `CONTRIBUTING.md`: version bumps touch `package.json`, `package-lock.json`, `CHANGELOG.md`, and
 `CITATION.cff` together (enforced by a `metadata.test.js` consistency check), followed by
 `npm run audit` and `npm run check`, then `npm run package` and a manual install-and-verify pass in a
-clean Extension Development Host before tagging and publishing the same reviewed VSIX.
+clean Extension Development Host before tagging and publishing the same reviewed VSIX. Packaging runs
+`scripts/verify-vsix.js`, which must confirm that both embedded manifests use the source
+`publisher`, `name`, and `version`; this prevents a differently named extension artifact from being
+sent to Super CLI's Marketplace path. On Windows use the CLI wrapper under VS Code's `bin` directory
+(`code.cmd`) for isolated install checks, and first verify that `--version` prints the editor version:
+the desktop `Code.exe` is not a substitute for the CLI wrapper even when PowerShell resolves it first.

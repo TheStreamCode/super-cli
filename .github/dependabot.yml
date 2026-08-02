@@ -10,6 +10,11 @@ updates:
     ignore:
       # Keep the compiler API surface aligned with engines.vscode (^1.93.0).
       - dependency-name: "@types/vscode"
+      # The extension is developed and validated on Node 22. Accept patch/minor type updates within
+      # that runtime line, but do not open incompatible Node 24/26 type-only major bumps.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: github-actions
     directory: /

@@ -9,6 +9,7 @@ CLAUDE.md
 .env
 .env.*
 src/**
+scripts/**
 test/**
 node_modules/**
 coverage/**

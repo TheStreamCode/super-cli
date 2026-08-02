@@ -27,6 +27,12 @@ function readPngSize(relativePath) {
   };
 }
 
+// Block comments, then whole-line `//` comments. Anchoring to the start of a line keeps `https://`
+// inside a string literal from truncating the code that follows it.
+function stripComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+}
+
 function listMarkdownFiles(relativeDirectory) {
   const absoluteDirectory = path.join(rootDir, relativeDirectory);
   return fs.readdirSync(absoluteDirectory, { withFileTypes: true }).flatMap((entry) => {
@@ -219,7 +225,10 @@ test('package scripts use deterministic local tooling entry points', () => {
 
   assert.equal(packageJson.scripts.compile, 'node ./node_modules/typescript/bin/tsc -p . --pretty false');
   assert.match(packageJson.scripts.typecheck, /tsc -p \. --noEmit/);
-  assert.equal(packageJson.scripts.package, 'node ./node_modules/@vscode/vsce/vsce package');
+  assert.equal(
+    packageJson.scripts.package,
+    'node ./node_modules/@vscode/vsce/vsce package && node ./scripts/verify-vsix.js',
+  );
   assert.equal(packageJson.scripts.audit, 'npm audit --audit-level=moderate');
   assert.match(packageJson.scripts.check, /vsce ls$/);
   assert.equal(packageJson.devDependencies['@vscode/test-electron'], '^3.1.0');
@@ -378,13 +387,47 @@ test('CI workflow validates the extension on Windows, macOS, and Linux', () => {
   assert.match(workflow, /npm run audit/);
 });
 
-test('Dependabot monitors npm and GitHub Actions without drifting the VS Code API floor', () => {
+test('Dependabot monitors npm and GitHub Actions without drifting the VS Code or Node API floors', () => {
   const dependabot = readText('.github/dependabot.yml');
 
   assert.match(dependabot, /package-ecosystem: npm/);
   assert.match(dependabot, /package-ecosystem: github-actions/);
   assert.match(dependabot, /interval: weekly/);
   assert.match(dependabot, /dependency-name: "@types\/vscode"/);
+  assert.match(
+    dependabot,
+    /dependency-name: "@types\/node"\s+update-types:\s+- "version-update:semver-major"/,
+  );
+});
+
+test('per-invocation disposables never accumulate in context.subscriptions', () => {
+  const sourceFiles = fs.readdirSync(path.join(rootDir, 'src'))
+    .filter((fileName) => fileName.endsWith('.ts'))
+    .map((fileName) => path.posix.join('src', fileName));
+  // Comments are stripped so that prose about this rule — including the comments explaining it at both
+  // call sites — is never mistaken for a registration, and a commented-out push never counts as one.
+  const registrations = sourceFiles.flatMap((sourceFile) =>
+    [...stripComments(readText(sourceFile)).matchAll(/context\.subscriptions\.push\(/g)].map(() => sourceFile));
+
+  // VS Code empties context.subscriptions only at deactivate, and disposing an entry does not remove
+  // it from the array, so a push per launch or per update grows it for the whole session. activate()
+  // owns the single aggregate registration; terminal.ts tracks its own in-flight commands and releases
+  // each one when it settles or its terminal closes.
+  assert.deepEqual(registrations, ['src/extension.ts']);
+  assert.match(readText('src/extension.ts'), /createPendingCommandsDisposable\(\),/);
+  assert.match(readText('src/terminal.ts'), /pendingCommandTeardowns\.delete\(release\);/);
+  assert.match(readText('src/terminal.ts'), /onDidCloseTerminal\(\(closed\) => \{/);
+});
+
+test('terminal output is captured only for the missing-command detector', () => {
+  const terminalSource = readText('src/terminal.ts');
+
+  // The no-telemetry stance in the README and AGENTS.md allows exactly one bounded terminal-output
+  // read: the launch path, so a CLI that is not installed can be reported. Update commands and any
+  // future caller must leave capture off rather than buffering output nothing consumes.
+  assert.equal([...terminalSource.matchAll(/collectShellExecutionOutput\(/g)].length, 2);
+  assert.match(terminalSource, /if \(captureOutput\) \{\n\s+outputPromise = collectShellExecutionOutput\(execution\);/);
+  assert.equal([...terminalSource.matchAll(/^\s+captureOutput = false,$/gm)].length, 1);
 });
 
 test('GitHub workflows pin every action to an immutable commit', () => {

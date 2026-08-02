@@ -3,7 +3,7 @@
   "displayName": "Super CLI: Claude Code, Codex & AI Agent Launcher",
   "description": "Launch Claude Code, Codex CLI, Copilot CLI, Google Antigravity, OpenCode, Kiro, OpenClaw, Qoder CLI and other AI coding agents from one VS Code sidebar.",
   "publisher": "mikesoft",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "repository": {
     "type": "git",
     "url": "https://github.com/TheStreamCode/super-cli.git"
@@ -563,7 +563,7 @@
     "test:unit": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node --test test/*.test.js",
     "test:integration": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node ./test/integration/runTest.js",
     "vscode:prepublish": "node ./node_modules/typescript/bin/tsc -p . --pretty false",
-    "package": "node ./node_modules/@vscode/vsce/vsce package",
+    "package": "node ./node_modules/@vscode/vsce/vsce package && node ./scripts/verify-vsix.js",
     "audit": "npm audit --audit-level=moderate",
     "check": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node --test test/*.test.js && node ./test/integration/runTest.js && node ./node_modules/@vscode/vsce/vsce ls"
   },

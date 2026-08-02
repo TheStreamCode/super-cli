@@ -66,14 +66,37 @@ environment files, logs, coverage output, or previously generated VSIX files. Bo
 exclude those classes (`.gitignore:6`, `.vscodeignore:9`). The final package file list contains only
 runtime code, product metadata, documentation required by the Marketplace, and existing media.
 
+### SBR-005 — Terminal-command listeners accumulated, and one could fire at a disposed terminal
+
+Status: resolved in 1.9.4 (found after this review's cutoff; recorded here to keep the file the single
+security log).
+
+Every launch and every agent update registered two disposables on `context.subscriptions`, which VS
+Code empties only at deactivate and from which `.dispose()` does not remove an entry. The array — and
+the disposed listeners plus captured terminals it retained — therefore grew for the lifetime of the
+window. Separately, the 3-second shell-integration fallback was never cancelled when its terminal went
+away, so stopping or restarting an agent inside that window reached `terminal.sendText` on a disposed
+terminal, which VS Code answers by throwing. Neither is remotely triggerable and no data was exposed;
+both were availability and resource-retention defects in the extension host.
+
+Per-invocation disposables are now owned by `terminal.ts` and released when the command settles or its
+terminal closes, `activate` performs the only `context.subscriptions.push(` in `src/`
+(`src/extension.ts:736`), and the fallback timer is cancelled on terminal close (`src/terminal.ts:140`).
+Regression coverage: two `metadata.test.js` checks and a deterministic cmd.exe case in the Windows
+integration leg. The same change made the 16 KB output capture opt-in (see the corrected observation
+below).
+
 ## Informational observations
 
 - Launch and update commands remain shell strings by design. The extension reads agent definitions
   only from user-global configuration and refuses to run them before Workspace Trust is granted.
 - Agent Doctor commands are explicit, bounded to five seconds and 4 KB, run with concurrency three,
   and produce a report without commands, raw output, environment values, or credentials.
-- Session tracking is lifecycle-based. The only terminal-output read remains the bounded 16 KB
+- Session tracking is lifecycle-based. The intended terminal-output read is the bounded 16 KB
   missing-command detector documented in `AGENTS.md`.
+  **Correction (1.9.4):** at the time of this review the 16 KB stream was started unconditionally, so
+  update commands were also buffered even though nothing consumed the value. Capture is now opt-in and
+  only the launch path enables it, making the statement above true in code. See SBR-005 above.
 - The two npm deprecation notices come through the current `@vscode/vsce` development dependency
   (`whatwg-encoding` and optional `keytar`/`prebuild-install`). They are not runtime dependencies and
   have no current audit advisory; replacement depends on the upstream packaging tool.

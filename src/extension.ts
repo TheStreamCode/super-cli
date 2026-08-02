@@ -24,6 +24,7 @@ import { resolveAgentIcon } from './icons.js';
 import { AgentSessionRegistry, resolveCommandSessionArgument } from './sessions.js';
 import { AgentTreeDataProvider } from './tree.js';
 import {
+  createPendingCommandsDisposable,
   createSharedUpdateTerminal,
   launchAgent,
   openExtensionSettings,
@@ -633,7 +634,7 @@ export function activate(context: vscode.ExtensionContext): void {
           } else {
             sharedTerminal ??= createSharedUpdateTerminal();
             outcome = await Promise.race([
-              runAgentUpdate(agent, updateCommand, sharedTerminal, context, { notify: false }),
+              runAgentUpdate(agent, updateCommand, sharedTerminal, { notify: false }),
               cancelled,
             ]);
           }
@@ -727,10 +728,16 @@ export function activate(context: vscode.ExtensionContext): void {
     adoptTerminal(terminal);
   });
 
+  // The extension's single registration point. Anything created once per launch, update or command
+  // invocation must NOT be added here — VS Code empties this array only at deactivate and disposing an
+  // entry does not remove it, so a per-invocation push grows it for the whole session. Per-invocation
+  // disposables belong to their own owner (see `createPendingCommandsDisposable` in terminal.ts), and
+  // `metadata.test.js` pins this to the only `context.subscriptions.push(` in `src/`.
   context.subscriptions.push(
     sessions,
     sessionsChangeListener,
     adoptionListener,
+    createPendingCommandsDisposable(),
     treeView,
     launchCommand,
     launchFavoriteCommand,

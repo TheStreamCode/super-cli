@@ -353,7 +353,7 @@ Press `F5` in VS Code to compile and open an Extension Development Host, or use 
 | `npm run test:integration` | Compile and launch the real VS Code Extension Development Host smoke test. |
 | `npm run check` | Run compile, unit tests, integration tests, and the VSIX file-list dry run used by CI. |
 | `npm run audit` | Check the complete dependency tree for moderate-or-higher known vulnerabilities. |
-| `npm run package` | Compile and create an installable `.vsix`. |
+| `npm run package` | Compile, create an installable `.vsix`, and verify its embedded publisher, name, and version. |
 
 There is no separate linter: `tsc --strict`, `noUnusedLocals`, and `noUnusedParameters` are the static
 quality gate. Unit tests execute compiled files from `out/`, never TypeScript source directly. See
@@ -375,5 +375,10 @@ maintainer updates `package.json`, `package-lock.json`, `CHANGELOG.md`, and `CIT
 installs the generated VSIX in a clean Extension Development Host, then publishes that same artifact
 to the Visual Studio Marketplace, Open VSX, and the matching GitHub release. Publishing credentials
 belong in the platform's secret store or local credential manager and must never be committed.
+
+On Windows, command-line install checks must use VS Code's `bin\code.cmd` wrapper; `Code.exe` is the
+desktop application and does not provide the extension-management CLI even if PowerShell resolves it
+first. The packaging command fails when the VSIX filename or either embedded manifest disagrees with
+the source manifest, so a differently named extension cannot be sent to Super CLI's publishing path.
 
 The complete maintainer checklist is in [CONTRIBUTING.md](CONTRIBUTING.md#release-checklist-maintainers).

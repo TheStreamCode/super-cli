@@ -472,7 +472,6 @@ async function run() {
     hangingAgent,
     hangingUpdateCommand,
     hangTerminal,
-    { extensionUri: extension.extensionUri, subscriptions: [] },
     { notify: false },
   );
 
@@ -487,45 +486,90 @@ async function run() {
   ]);
   assert.equal(hangSettled, 'terminal-closed', 'Expected runAgentUpdate to settle once its terminal closed.');
 
-  // sendText fallback path (Windows only): VS Code docs confirm cmd.exe does not support shell
-  // integration, making it a reliable, deterministic way to force executeCommandWithOptionalShellIntegration
-  // past its 3s timeout into the fallback branch, rather than racing a real shell's integration hooks.
-  // Exported from terminal.js solely for this — see AGENTS.md.
+  // sendText fallback path (Windows only). A minimal terminal double keeps this deterministic without
+  // making the headless Extension Host ask xterm to render/scroll a real hidden terminal — an upstream
+  // path that logs a dimensions error even though sendText itself succeeds.
   if (process.platform === 'win32') {
-    const { executeCommandWithOptionalShellIntegration } = require(path.join(extension.extensionPath, 'out', 'terminal.js'));
-    const cmdTerminal = vscode.window.createTerminal({ name: 'Cmd fallback probe', shellPath: 'cmd.exe' });
+    const {
+      executeCommandWithOptionalShellIntegration,
+      countPendingTerminalCommands,
+    } = require(path.join(extension.extensionPath, 'out', 'terminal.js'));
+    const sentCommands = [];
+    const fallbackTerminal = {
+      shellIntegration: undefined,
+      sendText: (command, addNewLine) => sentCommands.push({ command, addNewLine }),
+    };
+    const pendingBeforeFallback = countPendingTerminalCommands();
 
-    try {
-      let shellExecutionEndFired = false;
-      let fallbackFired = false;
+    let shellExecutionEndFired = false;
+    let fallbackFired = false;
 
-      executeCommandWithOptionalShellIntegration(
-        cmdTerminal,
-        'ver',
-        { subscriptions: [] },
-        () => {
-          shellExecutionEndFired = true;
-        },
-        () => {
-          fallbackFired = true;
-        },
-      );
+    executeCommandWithOptionalShellIntegration(
+      fallbackTerminal,
+      'ver',
+      () => {
+        shellExecutionEndFired = true;
+      },
+      () => {
+        fallbackFired = true;
+      },
+    );
 
-      await waitForCondition(
-        () => fallbackFired,
-        'Expected the sendText fallback to fire for a cmd.exe terminal.',
-        5000,
-      );
+    assert.equal(
+      countPendingTerminalCommands(),
+      pendingBeforeFallback + 1,
+      'Expected the in-flight command to be tracked while it waits for shell integration.',
+    );
 
-      assert.equal(cmdTerminal.shellIntegration, undefined, 'Expected cmd.exe to never report shell integration.');
-      assert.equal(shellExecutionEndFired, false, 'Expected the fallback path to never invoke onShellExecutionEnd.');
-      assert.ok(
-        vscode.window.terminals.includes(cmdTerminal),
-        'Expected the terminal to survive taking the fallback path.',
-      );
-    } finally {
-      cmdTerminal.dispose();
-    }
+    await waitForCondition(
+      () => fallbackFired,
+      'Expected the sendText fallback to fire without shell integration.',
+      5000,
+    );
+
+    assert.equal(shellExecutionEndFired, false, 'Expected the fallback path to never invoke onShellExecutionEnd.');
+    assert.deepEqual(sentCommands, [{ command: 'ver', addNewLine: true }]);
+    assert.equal(
+      countPendingTerminalCommands(),
+      pendingBeforeFallback,
+      'Expected the fallback to release the command it owned instead of leaving it registered.',
+    );
+
+    // Regression: a terminal closed inside the 3s shell-integration window must cancel the pending
+    // fallback outright. sendText against a terminal the extension disposed throws "Terminal has
+    // already been disposed" — and superCli.stopSession, superCli.stopAllSessions and
+    // superCli.restartSession all dispose one, so stopping or restarting an agent right after
+    // launching it used to raise that from the timer. This real cmd.exe terminal is closed before
+    // the timeout, so the regression covers VS Code's terminal-close event without sending text.
+    const closedTerminal = vscode.window.createTerminal({ name: 'Cmd close probe', shellPath: 'cmd.exe' });
+    const pendingBeforeClose = countPendingTerminalCommands();
+    let cancelledFallbackFired = false;
+
+    executeCommandWithOptionalShellIntegration(
+      closedTerminal,
+      'ver',
+      undefined,
+      () => {
+        cancelledFallbackFired = true;
+      },
+    );
+
+    assert.equal(countPendingTerminalCommands(), pendingBeforeClose + 1);
+    closedTerminal.dispose();
+
+    await waitForCondition(
+      () => countPendingTerminalCommands() === pendingBeforeClose,
+      'Expected closing the terminal to release its pending command.',
+      5000,
+    );
+
+    // Past the full fallback window, so a timer that survived the close would have fired by now.
+    await new Promise((resolve) => setTimeout(resolve, 3500));
+    assert.equal(
+      cancelledFallbackFired,
+      false,
+      'Expected no sendText fallback after the terminal was closed.',
+    );
   }
 
   await vscode.commands.executeCommand('superCli.runDoctor');
