@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-08-02
+
 ### Added
 
 - Added CodeArts Agent CLI (Huawei Cloud) and CodeBuddy Code CLI (Tencent Cloud) as built-in
