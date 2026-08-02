@@ -36,6 +36,7 @@ and are excluded from Super CLI's MIT license; see [`TRADEMARKS.md`](../../TRADE
 | Continue CLI | Official light/dark Continue marks | [Continue repository artwork](https://github.com/continuedev/continue/tree/main/docs/logo) |
 | Mistral Vibe | Official colored Mistral face mark, packaged as explicit light/dark variants | [Mistral favicon](https://mistral.ai/favicon.svg) and [Mistral Vibe Zed extension geometry](https://github.com/mistralai/mistral-vibe/blob/main/distribution/zed/icons/mistral_vibe.svg) |
 | Rovo Dev CLI | Official blue Rovo mark | [Atlassian Rovo support asset](https://images.ctfassets.net/zsv3d0ugroxu/7GLXCkFtxe0MUSfmTNdrPL/1a042c58b850d16c6eb3339dc4532c0d/logo-light_Rovo_mark_brand_RGB.svg) |
+| CodeBuddy Code CLI | Official CodeBuddy logomark (a rounded tile with a teal-to-purple radial gradient and white mark), with the React/web attributes removed and the auto-generated gradient id renamed | [Lobe Icons CodeBuddy asset](https://github.com/lobehub/lobe-icons) |
 
 ## Project-drawn fallback
 
@@ -46,6 +47,12 @@ The Codebuff mark is an approved vector reconstruction of the company-logo raste
 integration. The white JPEG canvas and antialiasing halo were removed, while the black rounded tile,
 white sparkle, and white prompt bar were retained. It is not a vendor-published SVG; the source raster
 is the [Codebuff company-logo asset](https://media.licdn.com/dms/image/v2/D560BAQH0rZ-ApkRYLA/company-logo_400_400/B56Zl.LuDrHQAc-/0/1758758625794/codebuff_logo?e=2147483647&v=beta&t=nyuRe-ll-4MoL5E7PmlTxruvm-j91v06MM3Az-pWz5w).
+
+The CodeArts mark is a project-drawn fallback vectorized from the official CodeArts Agent CLI logo,
+since Huawei Cloud does not publish a standalone SVG for it. The reference bitmap's orange-red, purple,
+cyan, and green regions were traced into compact flat-color vector shapes that preserve the original
+flowing pinwheel composition while dropping its gradients and antialiasing. It is packaged as identical
+light and dark variants and is not an official vendor logo.
 
 The vendor-sourced SVGs are packaged only as small UI identifiers. Every built-in has explicit
 light- and dark-theme files. Fixed-color marks keep their source colors in both files when those

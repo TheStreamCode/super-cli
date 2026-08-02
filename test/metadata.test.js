@@ -293,7 +293,7 @@ test('every built-in has a safe, compact, unique packaged icon', () => {
   assert.match(attribution, /Project-drawn fallback/);
   for (const label of [
     'Amp', 'OpenClaude', 'Oh My Pi', 'goose', 'Auggie CLI', 'Cline CLI', 'Codebuff',
-    'Continue CLI', 'Mistral Vibe', 'Rovo Dev CLI',
+    'Continue CLI', 'Mistral Vibe', 'Rovo Dev CLI', 'CodeArts Agent CLI', 'CodeBuddy Code CLI',
   ]) {
     assert.ok(attribution.includes(label), label);
   }

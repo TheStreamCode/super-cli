@@ -13,7 +13,8 @@ OpenClaw; Google and Antigravity; OpenCode; Command Code; Cursor; Factory and Dr
 Crush; Cognition and Devin; Nous Research and Hermes; Xiaomi and MiMo Code; Earendil Works and Pi;
 Bright Zenith Private Limited and Qoder; Moonshot AI and Kimi Code; Alibaba Cloud and Qwen Code;
 Amp; GitLawb and OpenClaude; Oh My Pi; the Agentic AI Foundation and goose; Augment and Auggie;
-Cline; Codebuff; Continue; Mistral AI and Mistral Vibe; Atlassian and Rovo; Microsoft and Visual
+Cline; Codebuff; Continue; Mistral AI and Mistral Vibe; Atlassian and Rovo; Huawei Cloud and
+CodeArts Agent; Tencent Cloud and CodeBuddy Code; Microsoft and Visual
 Studio Code; Windsurf; npm; and Open VSX. These names,
 logos, and trademarks belong to their respective owners and are used only to
 identify compatible products and services.

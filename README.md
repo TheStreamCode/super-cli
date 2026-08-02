@@ -12,7 +12,8 @@
 <p align="center"><strong>One launcher. Every coding agent.</strong></p>
 
 Launch **Claude Code, OpenAI Codex CLI, GitHub Copilot CLI, Google Antigravity, OpenCode, Amp,
-goose, Cline CLI, Mistral Vibe, Rovo Dev CLI, and other AI coding agents** inside VS Code from one
+goose, Cline CLI, Mistral Vibe, Rovo Dev CLI, CodeArts Agent CLI, CodeBuddy Code CLI, and other AI
+coding agents** inside VS Code from one
 sidebar and the native integrated terminal. Super CLI keeps every supported agent one click away
 without replacing its official command-line experience.
 
@@ -132,8 +133,8 @@ defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the L
 - **Built-in presets.** Claude Code, Codex CLI, GitHub Copilot CLI, Grok CLI, Kilo CLI, Kiro CLI,
   OpenClaw CLI, Antigravity CLI, OpenCode, Command Code, Cursor CLI, Droid CLI, Crush, Devin CLI,
   Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI, Qwen Code CLI, Amp, OpenClaude, Oh My Pi, goose,
-  Auggie CLI, Cline CLI, Codebuff, Continue CLI, Mistral Vibe, and Rovo Dev CLI are available out of
-  the box.
+  Auggie CLI, Cline CLI, Codebuff, Continue CLI, Mistral Vibe, Rovo Dev CLI, CodeArts Agent CLI, and
+  CodeBuddy Code CLI are available out of the box.
 - **Add your own, no code required.** Define new agents in `settings.json`. The sidebar updates
   automatically.
 - **Update from the sidebar.** Agents with a known update command show an update button next to
@@ -302,8 +303,9 @@ Windows, macOS, Linux, or WSL command variant.
 
 Claude Code, Codex, GitHub Copilot CLI, Grok, Kilo, Kiro, OpenClaw, Antigravity, OpenCode, Command
 Code, Cursor, Devin CLI, Droid, Crush, Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI, Qwen Code CLI,
-Amp, OpenClaude, Oh My Pi, goose, Auggie CLI, Cline CLI, Codebuff, Continue CLI, Mistral Vibe, and Rovo
-Dev CLI out of the box — plus any CLI you add in `settings.json`.
+Amp, OpenClaude, Oh My Pi, goose, Auggie CLI, Cline CLI, Codebuff, Continue CLI, Mistral Vibe, Rovo
+Dev CLI, CodeArts Agent CLI, and CodeBuddy Code CLI out of the box — plus any CLI you add in
+`settings.json`.
 
 ### Does Super CLI work on Windows, macOS, Linux, and WSL?
 

@@ -277,6 +277,8 @@ test('agents with a known update command carry their official one', () => {
     auggie: 'auggie upgrade',
     cline: 'cline update',
     'mistral-vibe': 'vibe --check-upgrade',
+    codearts: 'codearts upgrade',
+    codebuddy: 'codebuddy upgrade',
   };
   for (const [id, cmd] of Object.entries(expected)) {
     for (const platform of SUPPORTED_PLATFORMS) {
@@ -337,6 +339,8 @@ test('built-ins expose only verified official installation documentation', () =>
     continue: 'https://docs.continue.dev/cli/quickstart',
     'mistral-vibe': 'https://github.com/mistralai/mistral-vibe#installation',
     rovo: 'https://support.atlassian.com/rovo/docs/install-and-run-rovo-dev-cli-on-your-device/',
+    codearts: 'https://support.huaweicloud.com/intl/en-us/qs-codeartsagent/codeartsagent_qs_0004.html',
+    codebuddy: 'https://www.codebuddy.ai/docs/cli/installation',
   };
 
   for (const [id, url] of Object.entries(documentationUrls)) {
@@ -477,6 +481,44 @@ test('Qwen Code CLI ships as a built-in preset', () => {
   assert.equal(typeof qwen.iconPath, 'object');
   assert.equal(qwen.iconPath.light, 'media/agents/qwen-light.svg');
   assert.equal(qwen.iconPath.dark, 'media/agents/qwen-dark.svg');
+});
+
+test('CodeArts Agent CLI and CodeBuddy Code CLI ship as built-in presets', () => {
+  for (const platform of SUPPORTED_PLATFORMS) {
+    const codearts = resolveBuiltin('codearts', platform);
+    assert.equal(codearts.label, 'CodeArts Agent CLI', `${platform}:label`);
+    assert.equal(codearts.command, 'codearts', `${platform}:command`);
+    assert.equal(codearts.icon, 'terminal', `${platform}:icon`);
+    assert.equal(codearts.updateCommand, 'codearts upgrade', `${platform}:updateCommand`);
+    assert.equal(codearts.versionCommand, 'codearts --version', `${platform}:versionCommand`);
+    assert.equal(
+      codearts.installationDocumentationUrl,
+      'https://support.huaweicloud.com/intl/en-us/qs-codeartsagent/codeartsagent_qs_0004.html',
+      `${platform}:installationDocumentationUrl`,
+    );
+
+    const codebuddy = resolveBuiltin('codebuddy', platform);
+    assert.equal(codebuddy.label, 'CodeBuddy Code CLI', `${platform}:label`);
+    assert.equal(codebuddy.command, 'codebuddy', `${platform}:command`);
+    assert.equal(codebuddy.icon, 'terminal', `${platform}:icon`);
+    assert.equal(codebuddy.updateCommand, 'codebuddy upgrade', `${platform}:updateCommand`);
+    assert.equal(codebuddy.versionCommand, 'codebuddy --version', `${platform}:versionCommand`);
+    assert.equal(
+      codebuddy.installationDocumentationUrl,
+      'https://www.codebuddy.ai/docs/cli/installation',
+      `${platform}:installationDocumentationUrl`,
+    );
+  }
+
+  const codearts = BUILTIN_AGENTS.find((a) => a.id === 'codearts');
+  assert.equal(typeof codearts.iconPath, 'object');
+  assert.equal(codearts.iconPath.light, 'media/agents/codearts-light.svg');
+  assert.equal(codearts.iconPath.dark, 'media/agents/codearts-dark.svg');
+
+  const codebuddy = BUILTIN_AGENTS.find((a) => a.id === 'codebuddy');
+  assert.equal(typeof codebuddy.iconPath, 'object');
+  assert.equal(codebuddy.iconPath.light, 'media/agents/codebuddy-light.svg');
+  assert.equal(codebuddy.iconPath.dark, 'media/agents/codebuddy-dark.svg');
 });
 
 test('Kiro and OpenClaw ship as adaptive built-in presets', () => {

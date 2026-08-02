@@ -5,6 +5,11 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- Added CodeArts Agent CLI (Huawei Cloud) and CodeBuddy Code CLI (Tencent Cloud) as built-in
+  agent presets, addressing community feature request #14.
+
 ## [1.9.4] - 2026-08-02
 
 ### Fixed

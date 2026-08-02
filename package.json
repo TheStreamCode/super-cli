@@ -53,7 +53,6 @@
     "vscode",
     "vscode ai",
     "claude code",
-    "claude cli",
     "codex",
     "codex cli",
     "copilot cli",
@@ -73,7 +72,8 @@
     "kimi code",
     "pi coding agent",
     "qoder",
-    "qoder cli"
+    "codearts",
+    "codebuddy"
   ],
   "main": "./out/extension.js",
   "activationEvents": [
@@ -358,7 +358,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, kiro, openclaw, antigravity, opencode, command-code, cursor, droid, crush, devin, hermes, mimo, pi, kimi, qoder, qwen, amp, openclaude, omp, goose, auggie, cline, codebuff, continue, mistral-vibe, rovo) to override that built-in."
+                "description": "Unique identifier. Reuse a built-in id (claude, codex, copilot, grok, kilo, kiro, openclaw, antigravity, opencode, command-code, cursor, droid, crush, devin, hermes, mimo, pi, kimi, qoder, qwen, amp, openclaude, omp, goose, auggie, cline, codebuff, continue, mistral-vibe, rovo, codearts, codebuddy) to override that built-in."
               },
               "label": {
                 "type": "string",
@@ -472,7 +472,7 @@
           "type": "boolean",
           "scope": "machine",
           "default": true,
-          "description": "Include the built-in agent presets (Claude Code, Codex CLI, GitHub Copilot CLI, Grok CLI, Kilo CLI, Kiro CLI, OpenClaw CLI, Antigravity CLI, OpenCode, Command Code, Cursor CLI, Droid CLI, Crush, Devin CLI, Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI, Qwen Code CLI, Amp, OpenClaude, Oh My Pi, goose, Auggie CLI, Cline CLI, Codebuff, Continue CLI, Mistral Vibe, Rovo Dev CLI) in the launcher."
+          "description": "Include the built-in agent presets (Claude Code, Codex CLI, GitHub Copilot CLI, Grok CLI, Kilo CLI, Kiro CLI, OpenClaw CLI, Antigravity CLI, OpenCode, Command Code, Cursor CLI, Droid CLI, Crush, Devin CLI, Hermes, MiMo Code, Pi, Kimi Code CLI, Qoder CLI, Qwen Code CLI, Amp, OpenClaude, Oh My Pi, goose, Auggie CLI, Cline CLI, Codebuff, Continue CLI, Mistral Vibe, Rovo Dev CLI, CodeArts Agent CLI, CodeBuddy Code CLI) in the launcher."
         },
         "superCli.hiddenBuiltins": {
           "type": "array",
@@ -511,7 +511,9 @@
               "codebuff",
               "continue",
               "mistral-vibe",
-              "rovo"
+              "rovo",
+              "codearts",
+              "codebuddy"
             ]
           },
           "markdownDescription": "Built-in agent ids hidden from the sidebar and launcher. Use **Super CLI: Manage Built-in Agents** instead of editing this list by hand."

@@ -460,6 +460,32 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
     versionCommand: onAllPlatforms('acli --version'),
     // ACLI updates through different OS package managers or manual binary replacement.
   },
+  {
+    id: 'codearts',
+    label: 'CodeArts Agent CLI',
+    command: onAllPlatforms('codearts'),
+    icon: 'terminal',
+    iconPath: {
+      light: 'media/agents/codearts-light.svg',
+      dark: 'media/agents/codearts-dark.svg',
+    },
+    installationDocumentationUrl: 'https://support.huaweicloud.com/intl/en-us/qs-codeartsagent/codeartsagent_qs_0004.html',
+    updateCommand: onAllPlatforms('codearts upgrade'),
+    versionCommand: onAllPlatforms('codearts --version'),
+  },
+  {
+    id: 'codebuddy',
+    label: 'CodeBuddy Code CLI',
+    command: onAllPlatforms('codebuddy'),
+    icon: 'terminal',
+    iconPath: {
+      light: 'media/agents/codebuddy-light.svg',
+      dark: 'media/agents/codebuddy-dark.svg',
+    },
+    installationDocumentationUrl: 'https://www.codebuddy.ai/docs/cli/installation',
+    updateCommand: onAllPlatforms('codebuddy upgrade'),
+    versionCommand: onAllPlatforms('codebuddy --version'),
+  },
 ];
 
 function isValidPlatformCommand(value: unknown): value is PlatformCommand {
