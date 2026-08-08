@@ -7,6 +7,13 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(deps)"
+    groups:
+      # Security advisories in the same dev-only toolchain must land together so each PR can satisfy
+      # the repository-wide npm audit gate instead of remaining blocked by its sibling advisories.
+      security-fixes:
+        applies-to: security-updates
+        patterns:
+          - "*"
     ignore:
       # Keep the compiler API surface aligned with engines.vscode (^1.93.0).
       - dependency-name: "@types/vscode"

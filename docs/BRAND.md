@@ -7,6 +7,7 @@ listing.
 | Usage | Asset |
 | --- | --- |
 | Marketplace and extension listing | [`media/icon.png`](../media/icon.png), generated from [`media/icon.svg`](../media/icon.svg) |
+| GitHub social preview and README hero | [`media/social-preview.png`](../media/social-preview.png) |
 | Activity bar | [`media/sidebar-mark.svg`](../media/sidebar-mark.svg), monochrome and theme-adaptive |
 | Editor toolbar on light themes | [`media/toolbar-mark-light.svg`](../media/toolbar-mark-light.svg) |
 | Editor toolbar on dark themes | [`media/toolbar-mark-dark.svg`](../media/toolbar-mark-dark.svg) |

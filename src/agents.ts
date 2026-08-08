@@ -52,6 +52,15 @@ export function resolveCommandAgentArgument(argument: unknown): Agent | undefine
   return node.kind === 'agent' && isAgent(node.agent) ? node.agent : undefined;
 }
 
+/** Resolves a command argument to the canonical agent from trusted effective configuration. */
+export function resolveConfiguredCommandAgentArgument(
+  argument: unknown,
+  availableAgents: readonly Agent[],
+): Agent | undefined {
+  const candidate = resolveCommandAgentArgument(argument);
+  return candidate ? availableAgents.find((agent) => agent.id === candidate.id) : undefined;
+}
+
 function onAllPlatforms(command: string): Record<CommandPlatform, string> {
   return { windows: command, macos: command, linux: command };
 }
@@ -483,7 +492,7 @@ export const BUILTIN_AGENTS: readonly AgentDefinition[] = [
       dark: 'media/agents/codebuddy-dark.svg',
     },
     installationDocumentationUrl: 'https://www.codebuddy.ai/docs/cli/installation',
-    updateCommand: onAllPlatforms('codebuddy upgrade'),
+    updateCommand: onAllPlatforms('codebuddy update'),
     versionCommand: onAllPlatforms('codebuddy --version'),
   },
 ];

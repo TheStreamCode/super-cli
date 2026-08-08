@@ -7,6 +7,7 @@ const {
   getMissingAgentGuidance,
   normalizeInstallationDocumentationUrl,
   resolveCommandAgentArgument,
+  resolveConfiguredCommandAgentArgument,
   resolveAgentCommands,
   resolveAgents,
   resolveCommandPlatform,
@@ -28,6 +29,25 @@ test('resolveCommandAgentArgument accepts direct agents and tree item nodes', ()
   assert.equal(resolveCommandAgentArgument({ kind: 'group', agents: [agent] }), undefined);
   assert.equal(resolveCommandAgentArgument({ kind: 'agent', agent: { id: 'broken' } }), undefined);
   assert.equal(resolveCommandAgentArgument(undefined), undefined);
+});
+
+test('resolveConfiguredCommandAgentArgument returns only canonical configured agents', () => {
+  const configured = { id: 'example', label: 'Configured CLI', command: 'configured' };
+  const spoofed = {
+    id: configured.id,
+    label: 'Spoofed CLI',
+    command: 'poisoned',
+    updateCommand: 'poisoned update',
+    installationDocumentationUrl: 'https://attacker.example/setup',
+    env: { SECRET: 'exfiltrate' },
+  };
+
+  assert.equal(resolveConfiguredCommandAgentArgument(configured, [configured]), configured);
+  assert.equal(resolveConfiguredCommandAgentArgument({ kind: 'agent', agent: spoofed }, [configured]), configured);
+  assert.equal(
+    resolveConfiguredCommandAgentArgument({ id: 'unknown', label: 'Unknown', command: 'unknown' }, [configured]),
+    undefined,
+  );
 });
 
 test('resolveAgents returns the built-ins when no user agents are configured', () => {
@@ -278,7 +298,7 @@ test('agents with a known update command carry their official one', () => {
     cline: 'cline update',
     'mistral-vibe': 'vibe --check-upgrade',
     codearts: 'codearts upgrade',
-    codebuddy: 'codebuddy upgrade',
+    codebuddy: 'codebuddy update',
   };
   for (const [id, cmd] of Object.entries(expected)) {
     for (const platform of SUPPORTED_PLATFORMS) {
@@ -501,7 +521,7 @@ test('CodeArts Agent CLI and CodeBuddy Code CLI ship as built-in presets', () =>
     assert.equal(codebuddy.label, 'CodeBuddy Code CLI', `${platform}:label`);
     assert.equal(codebuddy.command, 'codebuddy', `${platform}:command`);
     assert.equal(codebuddy.icon, 'terminal', `${platform}:icon`);
-    assert.equal(codebuddy.updateCommand, 'codebuddy upgrade', `${platform}:updateCommand`);
+    assert.equal(codebuddy.updateCommand, 'codebuddy update', `${platform}:updateCommand`);
     assert.equal(codebuddy.versionCommand, 'codebuddy --version', `${platform}:versionCommand`);
     assert.equal(
       codebuddy.installationDocumentationUrl,

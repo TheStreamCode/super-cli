@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  github-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Verify tag matches package version
+        run: node -e "const version=require('./package.json').version; if ('v' + version !== process.env.GITHUB_REF_NAME) throw new Error('Tag and package version differ')"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm run audit
+
+      - name: Package verified VSIX
+        run: npm run package
+
+      - name: Create checksum
+        run: sha256sum "vscode-super-cli-${GITHUB_REF_NAME#v}.vsix" > "vscode-super-cli-${GITHUB_REF_NAME#v}.vsix.sha256"
+
+      - name: Publish GitHub release
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "vscode-super-cli-${GITHUB_REF_NAME#v}.vsix" \
+            "vscode-super-cli-${GITHUB_REF_NAME#v}.vsix.sha256" \
+            --verify-tag \
+            --generate-notes \
+            --title "Super CLI $GITHUB_REF_NAME"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

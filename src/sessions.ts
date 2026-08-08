@@ -40,6 +40,19 @@ export function resolveCommandSessionArgument(argument: unknown): AgentSession |
   return node.kind === 'session' && isAgentSession(node.session) ? node.session : undefined;
 }
 
+/** Resolves a command argument to a session currently owned by this extension host. */
+export function resolveTrackedCommandSessionArgument(
+  argument: unknown,
+  trackedSessions: readonly AgentSession[],
+): AgentSession | undefined {
+  const candidate = resolveCommandSessionArgument(argument);
+  return candidate
+    ? trackedSessions.find(
+      (session) => session.sessionId === candidate.sessionId || session.terminal === candidate.terminal,
+    )
+    : undefined;
+}
+
 const TICK_INTERVAL_MS = 30_000;
 
 /**

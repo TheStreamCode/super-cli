@@ -1,15 +1,17 @@
-# Super CLI — AI Coding Agent CLI Launcher for VS Code
-
-[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli)
-· [Open VSX](https://open-vsx.org/extension/mikesoft/vscode-super-cli)
-· [CI](https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml)
-· [Sponsor](https://github.com/sponsors/TheStreamCode)
-
 <p align="center">
   <img src="media/icon.png" width="144" alt="Super CLI Router S logo">
 </p>
 
+<h1 align="center">Super CLI</h1>
+
 <p align="center"><strong>One launcher. Every coding agent.</strong></p>
+
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli"><img alt="Visual Studio Marketplace version" src="https://img.shields.io/visual-studio-marketplace/v/mikesoft.vscode-super-cli?style=flat-square&amp;label=Marketplace&amp;color=2563eb"></a>
+  <a href="https://open-vsx.org/extension/mikesoft/vscode-super-cli"><img alt="Open VSX version" src="https://img.shields.io/open-vsx/v/mikesoft/vscode-super-cli?style=flat-square&amp;label=Open%20VSX&amp;color=7c3aed"></a>
+  <a href="https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/TheStreamCode/super-cli/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/TheStreamCode/super-cli?style=flat-square"></a>
+</p>
 
 Launch **Claude Code, OpenAI Codex CLI, GitHub Copilot CLI, Google Antigravity, OpenCode, Amp,
 goose, Cline CLI, Mistral Vibe, Rovo Dev CLI, CodeArts Agent CLI, CodeBuddy Code CLI, and other AI
@@ -21,6 +23,8 @@ It works on Windows, macOS, Linux, and WSL, and on any editor that supports the 
 model — VS Code itself plus the forks that install from [Open VSX](https://open-vsx.org/extension/mikesoft/vscode-super-cli)
 or from a `.vsix`, such as Cursor, Windsurf, Google Antigravity, Kiro, Trae, VSCodium, and Gitpod. It
 is free, open source, and has no telemetry or automatic CLI installers.
+
+![Super CLI — one secure VS Code launcher for more than 30 AI coding-agent CLIs](media/social-preview.png)
 
 ## Requirements
 
@@ -48,9 +52,9 @@ You can also open the Extensions view, search for **Super CLI**, and select **In
 Super CLI needs an editor that runs VS Code extensions. That covers VS Code and its forks — Cursor,
 Windsurf, Google Antigravity, Kiro, Trae, VSCodium, Gitpod and others. Because Microsoft's Marketplace
 is licensed for Microsoft products only, forks generally install from
-[Open VSX](https://open-vsx.org/extension/mikesoft/vscode-super-cli), where every release is published
-too, or from the `.vsix` attached to each [GitHub release](https://github.com/TheStreamCode/super-cli/releases)
-via **Extensions: Install from VSIX…**.
+[Open VSX](https://open-vsx.org/extension/mikesoft/vscode-super-cli), or install a reviewed `.vsix`
+from the matching [GitHub release](https://github.com/TheStreamCode/super-cli/releases) via
+**Extensions: Install from VSIX…**.
 
 The manifest requires VS Code `1.93` or newer — the actual floor of the terminal APIs used — rather
 than the latest version, so forks that track upstream at a delay can still install it.
@@ -91,9 +95,9 @@ without leaving the current file.
 ### Focused configuration
 
 All settings are available in one filtered view. Commands can be shared across platforms or
-defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the Linux command.
-
-![Super CLI VS Code settings for AI agents, favorites, terminal placement, built-ins, and WSL](media/screenshots/settings.png)
+defined explicitly for Windows, macOS, and Linux; WSL deliberately selects the Linux command. Open
+the maintained settings surface with **Super CLI: Open Settings** rather than editing deprecated keys
+by hand.
 
 ## Features
 
@@ -373,10 +377,11 @@ npm run package
 ```
 
 For this project, deployment means publishing the reviewed VSIX rather than deploying a server. A
-maintainer updates `package.json`, `package-lock.json`, `CHANGELOG.md`, and `CITATION.cff` together,
-installs the generated VSIX in a clean Extension Development Host, then publishes that same artifact
-to the Visual Studio Marketplace, Open VSX, and the matching GitHub release. Publishing credentials
-belong in the platform's secret store or local credential manager and must never be committed.
+maintainer updates `package.json`, `package-lock.json`, `CHANGELOG.md`, and `CITATION.cff` together and
+installs the generated VSIX in a clean Extension Development Host. Pushing the matching version tag
+creates a GitHub release with a rebuilt, identity-verified VSIX and SHA-256 file. Marketplace and Open
+VSX publication remain separate owner-controlled operations. Publishing credentials belong in the
+platform's secret store or local credential manager and must never be committed.
 
 On Windows, command-line install checks must use VS Code's `bin\code.cmd` wrapper; `Code.exe` is the
 desktop application and does not provide the extension-management CLI even if PowerShell resolves it

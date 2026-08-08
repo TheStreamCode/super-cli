@@ -93,5 +93,7 @@ Thanks for your interest in improving Super CLI.
    the sidebar, launcher, settings, toolbar icon, and one terminal launch.
    On Windows, use VS Code's `bin\\code.cmd` CLI wrapper for command-line install checks rather than
    the desktop `Code.exe` binary.
-5. Commit and push the reviewed files, then create the matching `v<version>`
-   tag and publish the same VSIX to the intended registries.
+5. Commit and push the reviewed files, then push the matching `v<version>` tag. The release workflow
+   rebuilds and verifies the package, creates its SHA-256 file, and publishes both to GitHub Releases.
+6. Publish the same reviewed version to the intended extension registries using owner-controlled
+   credentials, then verify the public version and artifact identity on each registry.

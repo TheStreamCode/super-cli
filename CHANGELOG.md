@@ -5,6 +5,27 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [1.11.1] - 2026-08-08
+
+### Changed
+
+- Grouped npm security updates in Dependabot so related transitive advisories can satisfy the
+  repository-wide audit gate in one pull request.
+- Refreshed the GitHub presentation with a branded social preview, concise status badges, a stronger
+  product-first README introduction, and clearer release-installation guidance.
+- Added a tag-driven GitHub release workflow that verifies the version, rebuilds the VSIX, and
+  publishes the artifact together with its SHA-256 checksum.
+
+### Fixed
+
+- Corrected the CodeBuddy Code CLI self-update command from `codebuddy upgrade` to the documented
+  `codebuddy update`.
+- Canonicalized agent command arguments against effective user-global configuration and limited stop
+  and restart actions to sessions owned by the current extension host, preventing crafted command
+  arguments from supplying alternate commands, environment values, URLs, or terminals.
+- Updated four vulnerable development-only transitive packages used by the VSIX toolchain:
+  `brace-expansion`, `fast-uri`, `js-yaml`, and `undici`.
+
 ## [1.11.0] - 2026-08-02
 
 ### Fixed

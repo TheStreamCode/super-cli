@@ -5,7 +5,7 @@ import {
   BUILTIN_AGENTS,
   filterHiddenBuiltins,
   normalizeInstallationDocumentationUrl,
-  resolveCommandAgentArgument,
+  resolveConfiguredCommandAgentArgument,
   resolveAgentCommands,
   resolveAgents,
   resolveCommandPlatform,
@@ -21,7 +21,11 @@ import {
 import { executableExistsOnPath, findAgentByTerminalName, isExecutableFile } from './command-utils.js';
 import { buildDoctorReport, inspectAgents, type DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
-import { AgentSessionRegistry, resolveCommandSessionArgument } from './sessions.js';
+import {
+  AgentSessionRegistry,
+  resolveCommandSessionArgument,
+  resolveTrackedCommandSessionArgument,
+} from './sessions.js';
 import { AgentTreeDataProvider } from './tree.js';
 import {
   createPendingCommandsDisposable,
@@ -60,6 +64,11 @@ function getEffectiveAgents(): Agent[] {
   const visibleBuiltins = filterHiddenBuiltins(BUILTIN_AGENTS, hiddenBuiltins);
   return resolveAgents(visibleBuiltins, userAgents, useBuiltins)
     .map((agent) => resolveAgentCommands(agent, commandPlatform));
+}
+
+/** Rejects command arguments that do not map to the trusted effective agent configuration. */
+function resolveEffectiveAgentArgument(argument: unknown): Agent | undefined {
+  return resolveConfiguredCommandAgentArgument(argument, getEffectiveAgents());
 }
 
 /** Returns the ids of the user's favorite agents. */
@@ -500,7 +509,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   const launchAgentCommand = vscode.commands.registerCommand('superCli.launchAgent', async (argument?: unknown) => {
-    const agent = resolveCommandAgentArgument(argument);
+    const agent = resolveEffectiveAgentArgument(argument);
     if (!agent) {
       return;
     }
@@ -509,7 +518,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   const setFavoriteCommand = vscode.commands.registerCommand('superCli.setFavorite', async (argument?: unknown) => {
-    const agent = resolveCommandAgentArgument(argument);
+    const agent = resolveEffectiveAgentArgument(argument);
     if (!agent) {
       return;
     }
@@ -519,7 +528,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   const unsetFavoriteCommand = vscode.commands.registerCommand('superCli.unsetFavorite', async (argument?: unknown) => {
-    const agent = resolveCommandAgentArgument(argument);
+    const agent = resolveEffectiveAgentArgument(argument);
     if (!agent) {
       return;
     }
@@ -529,7 +538,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   const updateAgentCommand = vscode.commands.registerCommand('superCli.updateAgent', async (argument?: unknown) => {
-    const agent = resolveCommandAgentArgument(argument);
+    const agent = resolveEffectiveAgentArgument(argument);
     if (!agent) {
       return;
     }
@@ -545,7 +554,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // Disposing the terminal triggers AgentSessionRegistry's own onDidCloseTerminal listener, so the
   // session clears itself the same way it would if the user had closed the terminal directly.
   const stopSessionCommand = vscode.commands.registerCommand('superCli.stopSession', (argument?: unknown) => {
-    const session = resolveCommandSessionArgument(argument);
+    const session = resolveTrackedCommandSessionArgument(argument, sessions.list());
     session?.terminal.dispose();
   });
 
@@ -555,7 +564,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // creating a terminal for an untrusted workspace or an agent with no command configured, and the
   // original session must survive that — a restart that fails should never be a silent stop.
   const restartSessionCommand = vscode.commands.registerCommand('superCli.restartSession', async (argument?: unknown) => {
-    const session = resolveCommandSessionArgument(argument);
+    const session = resolveTrackedCommandSessionArgument(argument, sessions.list());
     if (!session) {
       return;
     }
@@ -667,7 +676,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const openAgentDocumentationCommand = vscode.commands.registerCommand(
     'superCli.openAgentDocumentation',
     async (argument?: unknown) => {
-      const agent = resolveCommandAgentArgument(argument);
+      const agent = resolveEffectiveAgentArgument(argument);
       if (agent) {
         await openAgentDocumentation(agent);
       }

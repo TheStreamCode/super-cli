@@ -90,6 +90,16 @@ async function run() {
     label: 'Super CLI Test 2',
     command: 'node --version',
   };
+  const longRunningAgent = {
+    id: 'integration-test-long-1',
+    label: 'Super CLI Long 1',
+    command: 'node -e "setInterval(() => {}, 1000)"',
+  };
+  const longRunningAgent2 = {
+    id: 'integration-test-long-2',
+    label: 'Super CLI Long 2',
+    command: 'node -e "setInterval(() => {}, 1000)"',
+  };
   const treeNode = { kind: 'agent', agent: testAgent };
   const configuration = vscode.workspace.getConfiguration('superCli');
   const originalAgents = configuration.inspect('agents')?.globalValue;
@@ -97,11 +107,14 @@ async function run() {
   const originalUseBuiltins = configuration.inspect('useBuiltins')?.globalValue;
 
   try {
-    // launchFavorite cross-references getEffectiveAgents(), so the test agents need to be
-    // registered for real, not just passed as ad-hoc command arguments like the other commands below.
-    // Built-ins are disabled so superCli.updateAllAgents (below) only ever sees testAgent's safe
-    // "node --version" update command, never a real built-in's actual (network-touching) one.
-    await configuration.update('agents', [testAgent, testAgent2], vscode.ConfigurationTarget.Global);
+    // Command arguments are resolved back to effective global configuration, so every test agent is
+    // registered for real. Built-ins are disabled so superCli.updateAllAgents (below) only ever sees
+    // testAgent's safe "node --version" update command, never a real built-in's network-touching one.
+    await configuration.update(
+      'agents',
+      [testAgent, testAgent2, longRunningAgent, longRunningAgent2],
+      vscode.ConfigurationTarget.Global,
+    );
     await configuration.update('favoriteAgents', [], vscode.ConfigurationTarget.Global);
     await configuration.update('useBuiltins', false, vscode.ConfigurationTarget.Global);
 
@@ -131,6 +144,32 @@ async function run() {
 
     await vscode.commands.executeCommand('superCli.unsetFavorite', treeNode);
     assert.deepEqual(configuration.inspect('favoriteAgents')?.globalValue, []);
+
+    // A command caller may supply arbitrary object fields, but a known id must resolve back to the
+    // canonical globally configured agent, while an unknown id must not launch anything.
+    const spoofedAgent = {
+      id: testAgent.id,
+      label: 'Spoofed Agent',
+      command: 'definitely-not-the-configured-command',
+      updateCommand: 'definitely-not-the-configured-update',
+      env: { SUPER_CLI_SPOOFED: '1' },
+    };
+    const beforeSpoofedLaunch = new Set(vscode.window.terminals);
+    await vscode.commands.executeCommand('superCli.launchAgent', spoofedAgent);
+    const canonicalTerminal = await waitForNewTerminal(
+      beforeSpoofedLaunch,
+      (candidate) => /^Super CLI Test/.test(candidate.name),
+    );
+    assert.doesNotMatch(canonicalTerminal.name, /Spoofed Agent/);
+    await disposeAndWaitClosed(canonicalTerminal);
+
+    const beforeUnknownLaunch = new Set(vscode.window.terminals);
+    await vscode.commands.executeCommand(
+      'superCli.launchAgent',
+      { id: 'integration-test-unknown', label: 'Unknown Agent', command: 'unknown' },
+    );
+    assert.equal(vscode.window.terminals.length, beforeUnknownLaunch.size);
+    assert.ok(vscode.window.terminals.every((candidate) => beforeUnknownLaunch.has(candidate)));
 
     const beforeLaunch = new Set(vscode.window.terminals);
     await vscode.commands.executeCommand('superCli.launchAgent', treeNode);
@@ -178,6 +217,14 @@ async function run() {
     await vscode.commands.executeCommand('superCli.revealSession', undefined);
     assert.equal(revealedCount, 2, 'Expected unrecognized arguments to reveal nothing.');
 
+    let untrackedDisposeCount = 0;
+    await vscode.commands.executeCommand('superCli.stopSession', {
+      sessionId: 'integration-test-untracked',
+      agent: testAgent,
+      terminal: { dispose: () => { untrackedDisposeCount++; } },
+    });
+    assert.equal(untrackedDisposeCount, 0, 'Expected an untracked session argument to be ignored.');
+
     // superCli.stopSession disposes the terminal — real argument resolution, not a direct dispose().
     const beforeStop = vscode.window.terminals.length;
     await vscode.commands.executeCommand('superCli.stopSession', fakeSession);
@@ -197,7 +244,7 @@ async function run() {
     const originalCwd = restartTerminal.creationOptions?.cwd;
     const restartSession = {
       sessionId: 'integration-test-restart-session',
-      agent: testAgent,
+      agent: spoofedAgent,
       terminal: restartTerminal,
       startedAt: Date.now(),
       cwd: originalCwd,
@@ -250,16 +297,6 @@ async function run() {
 
     // superCli.stopAllSessions disposes every running session's terminal in one shot. A command that
     // never exits on its own keeps each session tracked as "running" until explicitly stopped.
-    const longRunningAgent = {
-      id: 'integration-test-long-1',
-      label: 'Super CLI Long 1',
-      command: 'node -e "setInterval(() => {}, 1000)"',
-    };
-    const longRunningAgent2 = {
-      id: 'integration-test-long-2',
-      label: 'Super CLI Long 2',
-      command: 'node -e "setInterval(() => {}, 1000)"',
-    };
     const beforeBulkLaunch = new Set(vscode.window.terminals);
     await vscode.commands.executeCommand('superCli.launchAgent', { kind: 'agent', agent: longRunningAgent });
     const bulkTerminal1 = await waitForNewTerminal(

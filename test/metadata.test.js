@@ -327,9 +327,11 @@ test('documentation uses local images and VSIX packaging uses only .vscodeignore
   assert.match(vscodeIgnore, /^\.env\.\*$/m);
   assert.match(vscodeIgnore, /^\*\.vsix$/m);
   assert.doesNotMatch(readme, /!\[[^\]]*\]\(https?:\/\//i);
+  assert.match(readme, /!\[[^\]]*\]\(media\/social-preview\.png\)/);
   assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/sidebar\.png\)/);
-  assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/settings\.png\)/);
-  assert.match(readme, /^# Super CLI .*AI Coding Agent CLI Launcher for VS Code/m);
+  assert.doesNotMatch(readme, /!\[[^\]]*\]\(media\/screenshots\/settings\.png\)/);
+  assert.match(readme, /<h1 align="center">Super CLI<\/h1>/);
+  assert.match(readme, /One launcher\. Every coding agent\./);
   assert.match(readme, /Install Super CLI in VS Code/);
   assert.match(readme, /^## Requirements$/m);
   assert.match(readme, /^## Quick start$/m);
@@ -387,12 +389,28 @@ test('CI workflow validates the extension on Windows, macOS, and Linux', () => {
   assert.match(workflow, /npm run audit/);
 });
 
+test('version tags publish an identity-verified VSIX and checksum to GitHub Releases', () => {
+  const workflow = readText('.github/workflows/release.yml');
+
+  assert.match(workflow, /tags:\s+- 'v\*'/);
+  assert.match(workflow, /if \('v' \+ version !== process\.env\.GITHUB_REF_NAME\)/);
+  assert.match(workflow, /npm run audit/);
+  assert.match(workflow, /npm run package/);
+  assert.match(workflow, /sha256sum/);
+  assert.match(workflow, /gh release create/);
+  assert.match(workflow, /--verify-tag/);
+});
+
 test('Dependabot monitors npm and GitHub Actions without drifting the VS Code or Node API floors', () => {
   const dependabot = readText('.github/dependabot.yml');
 
   assert.match(dependabot, /package-ecosystem: npm/);
   assert.match(dependabot, /package-ecosystem: github-actions/);
   assert.match(dependabot, /interval: weekly/);
+  assert.match(
+    dependabot,
+    /security-fixes:\s+applies-to: security-updates\s+patterns:\s+- "\*"/,
+  );
   assert.match(dependabot, /dependency-name: "@types\/vscode"/);
   assert.match(
     dependabot,

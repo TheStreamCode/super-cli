@@ -258,9 +258,12 @@ verify the actual list with `vsce ls`.
 From `CONTRIBUTING.md`: version bumps touch `package.json`, `package-lock.json`, `CHANGELOG.md`, and
 `CITATION.cff` together (enforced by a `metadata.test.js` consistency check), followed by
 `npm run audit` and `npm run check`, then `npm run package` and a manual install-and-verify pass in a
-clean Extension Development Host before tagging and publishing the same reviewed VSIX. Packaging runs
-`scripts/verify-vsix.js`, which must confirm that both embedded manifests use the source
-`publisher`, `name`, and `version`; this prevents a differently named extension artifact from being
-sent to Super CLI's Marketplace path. On Windows use the CLI wrapper under VS Code's `bin` directory
-(`code.cmd`) for isolated install checks, and first verify that `--version` prints the editor version:
-the desktop `Code.exe` is not a substitute for the CLI wrapper even when PowerShell resolves it first.
+clean Extension Development Host. Packaging runs `scripts/verify-vsix.js`, which must confirm that
+both embedded manifests use the source `publisher`, `name`, and `version`; this prevents a differently
+named extension artifact from being sent to Super CLI's publication path. After the reviewed commit is
+pushed, pushing its matching `v<version>` tag triggers `.github/workflows/release.yml`, which repeats
+the audit and identity-verified package build and publishes the GitHub VSIX together with its SHA-256
+file. Marketplace and Open VSX remain separate, owner-controlled publications of the reviewed version.
+On Windows use the CLI wrapper under VS Code's `bin` directory (`code.cmd`) for isolated install
+checks, and first verify that `--version` prints the editor version: the desktop `Code.exe` is not a
+substitute for the CLI wrapper even when PowerShell resolves it first.
