@@ -389,3 +389,7 @@ first. The packaging command fails when the VSIX filename or either embedded man
 the source manifest, so a differently named extension cannot be sent to Super CLI's publishing path.
 
 The complete maintainer checklist is in [CONTRIBUTING.md](CONTRIBUTING.md#release-checklist-maintainers).
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
