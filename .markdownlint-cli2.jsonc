@@ -1,0 +1,23 @@
+{
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD024": { "siblings_only": true },
+    "MD029": { "style": "ordered" },
+    "MD033": {
+      "allowed_elements": ["br", "details", "summary", "img", "p", "a", "div", "kbd", "sup", "sub", "table", "picture", "source"]
+    },
+    "MD034": false,
+    "MD041": true,
+    "MD060": false,
+    "MD046": { "style": "fenced" },
+    "MD048": { "style": "backtick" }
+  },
+  "ignores": [
+    "node_modules/**", ".git/**", "dist/**", "build/**", "coverage/**", "vendor/**",
+    "target/**", ".expo/**", "third_party/**", "third-party/**", "out/**", "bin/**",
+    "media/**", "assets/**", "CHANGELOG.md", "*.lock", "package-lock.json"
+  ]
+}
+
+
