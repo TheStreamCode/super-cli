@@ -523,7 +523,7 @@
           "items": {
             "type": "string"
           },
-          "markdownDescription": "Ids of your favorite agents, launched by the `Launch Favorite Agent` command (default keybinding `Ctrl+Alt+A`, `Cmd+Alt+A` on macOS; remap it from Keyboard Shortcuts) — directly when there is exactly one, or from a quick pick scoped to your favorites when there are several. Set these with the star (★) button next to an agent in the sidebar rather than editing this list by hand."
+          "markdownDescription": "Ids of your favorite agents, launched by the `Launch Favorite Agent` command (default keybinding `Ctrl+Alt+A`, `Cmd+Alt+A` on macOS; remap it from Keyboard Shortcuts) — directly when there is exactly one, or from a quick pick scoped to your favorites when there are several. Set these with the star button next to an agent in the sidebar rather than editing this list by hand."
         },
         "superCli.favoriteAgent": {
           "type": "string",
@@ -577,3 +577,4 @@
     "typescript": "^7.0.2"
   }
 }
+
