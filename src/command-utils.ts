@@ -209,3 +209,36 @@ export function executableExistsOnPath(
     .filter((dir) => dir.length > 0)
     .some((dir) => existsWithExt(dir.replace(/[\\/]+$/, '') + separator + executable));
 }
+
+/** Minimal UI surface the workspace-trust gate needs; injected so the gate stays unit-testable. */
+export interface WorkspaceTrustPrompt {
+  isTrusted(): boolean;
+  showWarningMessage(message: string, ...actions: string[]): PromiseLike<string | undefined>;
+  executeCommand(command: string): PromiseLike<unknown>;
+  openSettings(): Promise<void>;
+}
+
+/**
+ * Gate for every command that runs terminal commands in the workspace. Returns true when the
+ * workspace is trusted; otherwise shows the standard warning, offers the trust and settings
+ * actions, and returns false so the caller aborts before creating a terminal or running anything.
+ */
+export async function confirmWorkspaceTrust(prompt: WorkspaceTrustPrompt, action: string): Promise<boolean> {
+  if (prompt.isTrusted()) {
+    return true;
+  }
+
+  const selection = await prompt.showWarningMessage(
+    `Super CLI runs terminal commands in the current workspace. Trust this workspace before ${action}.`,
+    'Manage Workspace Trust',
+    'Open Settings',
+  );
+
+  if (selection === 'Manage Workspace Trust') {
+    await prompt.executeCommand('workbench.trust.manage');
+  } else if (selection === 'Open Settings') {
+    await prompt.openSettings();
+  }
+
+  return false;
+}

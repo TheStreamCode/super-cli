@@ -5,6 +5,11 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- **Super CLI: Update All Agents** now enforces workspace trust before it starts, matching the
+  per-agent update and launch paths instead of running update commands in an untrusted workspace.
+
 ## [1.11.1] - 2026-08-08
 
 ### Changed
