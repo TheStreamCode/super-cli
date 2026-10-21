@@ -434,7 +434,7 @@ All notable changes to this project are documented here. The format is based on
 
 ## [0.7.0]
 
-- **Favorite agent.** Mark an agent as your favorite with the star (★) button next to it in the
+- **Favorite agent.** Mark an agent as your favorite with the star button next to it in the
   sidebar, and launch it from anywhere with **`Ctrl+Alt+A`** (`Cmd+Alt+A` on macOS; remappable in
   Keyboard Shortcuts). When no favorite is set, the shortcut opens the picker and offers to remember
   your choice. Stored in the new `superCli.favoriteAgent` setting.
