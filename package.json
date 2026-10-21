@@ -570,14 +570,13 @@
     "check": "node ./node_modules/typescript/bin/tsc -p . --pretty false && node --test test/*.test.js && node ./test/integration/runTest.js && node ./node_modules/@vscode/vsce/vsce ls"
   },
   "allowScripts": {
-    "@vscode/vsce-sign@2.0.9": true,
-    "keytar@7.9.0": true
+    "@vscode/vsce-sign@2.1.0": true
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "1.93.0",
     "@vscode/test-electron": "^3.1.0",
-    "@vscode/vsce": "^3.0.0",
+    "@vscode/vsce": "^4.0.0",
     "typescript": "^7.0.2"
   }
 }
