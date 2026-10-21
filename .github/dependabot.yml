@@ -1,0 +1,43 @@
+# Dependency updates. Grouped to keep pull request noise low.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+      security-fixes:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    ignore:
+      # @types/vscode must stay exactly aligned with engines.vscode.
+      - dependency-name: "@types/vscode"
+      # Compiling against a newer Node API would contradict .nvmrc and CI.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"

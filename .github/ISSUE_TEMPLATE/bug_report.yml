@@ -1,0 +1,65 @@
+name: Bug report
+description: Report a reproducible defect in Super CLI
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a defect.
+        Fill in every field: reports without a version and a reproduction are hard to act on.
+        For security issues use SECURITY.md, never a public issue.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Extension version shown in the Extensions view.
+      placeholder: "Copy the installed version from the Extensions view."
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, editor version, and the affected agent CLI version.
+      placeholder: "Windows 11, VS Code 1.104, Claude Code 2.0"
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Configured command
+      description: The affected agent command from superCli.agents, redacted if it contains private paths.
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Smallest sequence that shows the problem, including whether the workspace is trusted.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error output
+      description: Redact tokens, cookies, and personal data.
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched existing issues and discussions for the same problem.
+          required: true
+        - label: This report does not contain credentials or personal data.
+          required: true

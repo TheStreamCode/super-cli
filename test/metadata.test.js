@@ -87,7 +87,9 @@ test('Marketplace discovery metadata stays concise, relevant, and non-duplicativ
   for (const keyword of requiredKeywords) {
     assert.ok(packageJson.keywords.includes(keyword), keyword);
   }
-  assert.equal(packageJson.homepage, 'https://github.com/TheStreamCode/super-cli#readme');
+  assert.equal(packageJson.repository, 'github:TheStreamCode/super-cli');
+  assert.equal(packageJson.bugs.url, 'https://github.com/TheStreamCode/super-cli/issues');
+  assert.equal(packageJson.homepage, 'https://marketplace.visualstudio.com/items?itemName=mikesoft.vscode-super-cli');
 });
 
 test('release metadata uses one consistent version', () => {
@@ -233,8 +235,7 @@ test('package scripts use deterministic local tooling entry points', () => {
   assert.match(packageJson.scripts.check, /vsce ls$/);
   assert.equal(packageJson.devDependencies['@vscode/test-electron'], '^3.1.0');
   assert.deepEqual(packageJson.allowScripts, {
-    '@vscode/vsce-sign@2.0.9': true,
-    'keytar@7.9.0': true,
+    '@vscode/vsce-sign@2.1.0': true,
   });
 });
 
@@ -316,31 +317,58 @@ test('brand icon theme treatments preserve contrast and the Mistral palette', ()
 test('documentation uses local images and VSIX packaging uses only .vscodeignore', () => {
   const packageJson = readPackageJson();
   const readme = readText('README.md');
+  const usage = readText('docs/USAGE.md');
+  const troubleshooting = readText('docs/TROUBLESHOOTING.md');
   const contributing = readText('CONTRIBUTING.md');
   const notices = readText('TRADEMARKS.md');
   const vscodeIgnore = readText('.vscodeignore');
   const nodeVersion = readText('.nvmrc').trim();
+  const headings = [...readme.matchAll(/^## (.+)$/gm)].map((match) => match[1]);
 
   assert.equal(packageJson.files, undefined);
   assert.match(vscodeIgnore, /^\.vscode-test\/\*\*$/m);
   assert.match(vscodeIgnore, /^src\/\*\*$/m);
   assert.match(vscodeIgnore, /^\.env\.\*$/m);
   assert.match(vscodeIgnore, /^\*\.vsix$/m);
-  assert.doesNotMatch(readme, /!\[[^\]]*\]\(https?:\/\//i);
+  const imageTargets = [...readme.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map((match) => match[1]);
+  for (const target of imageTargets) {
+    if (target.startsWith('https://img.shields.io/') || target.includes('/actions/workflows/')) {
+      continue;
+    }
+    assert.match(target, /^media\//, `README image must be packaged locally: ${target}`);
+  }
   assert.match(readme, /!\[[^\]]*\]\(media\/social-preview\.png\)/);
   assert.match(readme, /!\[[^\]]*\]\(media\/screenshots\/sidebar\.png\)/);
   assert.doesNotMatch(readme, /!\[[^\]]*\]\(media\/screenshots\/settings\.png\)/);
-  assert.match(readme, /<h1 align="center">Super CLI<\/h1>/);
+  assert.match(readme, /^# Super CLI$/m);
+  assert.deepEqual(headings, [
+    'Install',
+    'Quick start',
+    'Features',
+    'Requirements',
+    'Configuration',
+    'Privacy and security',
+    'Troubleshooting',
+    'Development',
+    'Support',
+    'Contributing',
+    'License',
+  ]);
+  assert.match(readme, /actions\/workflows\/ci\.yml\/badge\.svg/);
+  assert.match(readme, /License-MIT/);
+  assert.match(readme, /Maintained by \[Michael Gasperini \(Mikesoft\)\]\(https:\/\/mikesoft\.it\)/);
   assert.match(readme, /One launcher\. Every coding agent\./);
   assert.match(readme, /Install Super CLI in VS Code/);
-  assert.match(readme, /^## Requirements$/m);
-  assert.match(readme, /^## Quick start$/m);
-  assert.match(readme, /^## Development$/m);
-  assert.match(readme, /^## Build and distribution$/m);
-  assert.match(readme, /How do I launch Claude Code in VS Code\?/);
+  assert.match(readme, /npm run package/);
+  assert.match(readme, /docs\/USAGE\.md/);
+  assert.match(readme, /docs\/TROUBLESHOOTING\.md/);
   for (const agent of BUILTIN_AGENTS) {
     assert.ok(readme.includes(agent.label), `README missing built-in label: ${agent.label}`);
   }
+  assert.match(usage, /How do I launch Claude Code in VS Code\?/);
+  assert.match(usage, /superCli\.agents/);
+  assert.match(troubleshooting, /Update All Agents seems stuck/i);
+  assert.match(troubleshooting, /Sessions in another window are not listed/);
   assert.match(contributing, /npm ci/);
   assert.match(contributing, /media\/agents\/ATTRIBUTION\.md/);
   assert.match(notices, /not affiliated with or endorsed\s+by \[Chutes\]\(https:\/\/chutes\.ai\/\)/i);
@@ -404,9 +432,9 @@ test('version tags publish an identity-verified VSIX and checksum to GitHub Rele
 test('Dependabot monitors npm and GitHub Actions without drifting the VS Code or Node API floors', () => {
   const dependabot = readText('.github/dependabot.yml');
 
-  assert.match(dependabot, /package-ecosystem: npm/);
-  assert.match(dependabot, /package-ecosystem: github-actions/);
-  assert.match(dependabot, /interval: weekly/);
+  assert.match(dependabot, /package-ecosystem: "npm"/);
+  assert.match(dependabot, /package-ecosystem: "github-actions"/);
+  assert.match(dependabot, /interval: "weekly"/);
   assert.match(
     dependabot,
     /security-fixes:\s+applies-to: security-updates\s+patterns:\s+- "\*"/,

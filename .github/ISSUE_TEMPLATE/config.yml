@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Questions and workflows
+    url: https://github.com/TheStreamCode/super-cli/discussions
+    about: Ask usage questions and share workflows in GitHub Discussions
   - name: Security report
     url: https://github.com/TheStreamCode/super-cli/security/advisories/new
     about: Privately report a vulnerability to the maintainers.
