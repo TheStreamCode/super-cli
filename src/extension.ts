@@ -18,7 +18,12 @@ import {
   shouldOfferFavoriteAfterLaunch,
   shouldOfferRatingAfterLaunch,
 } from './agent-view.js';
-import { executableExistsOnPath, findAgentByTerminalName, isExecutableFile } from './command-utils.js';
+import {
+  confirmWorkspaceTrust,
+  executableExistsOnPath,
+  findAgentByTerminalName,
+  isExecutableFile,
+} from './command-utils.js';
 import { buildDoctorReport, inspectAgents, type DoctorResult } from './doctor.js';
 import { resolveAgentIcon } from './icons.js';
 import {
@@ -30,6 +35,7 @@ import { AgentTreeDataProvider } from './tree.js';
 import {
   createPendingCommandsDisposable,
   createSharedUpdateTerminal,
+  createWorkspaceTrustPrompt,
   launchAgent,
   openExtensionSettings,
   runAgentUpdate,
@@ -596,6 +602,12 @@ export function activate(context: vscode.ExtensionContext): void {
   // from issuing further commands; it can't kill a command already running in the terminal, which is
   // why the terminal is left open for the user to see and deal with.
   const updateAllAgentsCommand = vscode.commands.registerCommand('superCli.updateAllAgents', async () => {
+    // Every path below runs terminal commands, so the bulk command enforces the same workspace-trust
+    // gate as the per-agent update and launch paths before it touches any agent.
+    if (!(await confirmWorkspaceTrust(createWorkspaceTrustPrompt(context), 'updating agents'))) {
+      return;
+    }
+
     // Paired with its resolved command so the loop below never has to assert it is still defined.
     const withUpdateCommand = getEffectiveAgents()
       .flatMap((agent) => agent.updateCommand ? [{ agent, updateCommand: agent.updateCommand }] : []);

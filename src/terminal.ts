@@ -6,9 +6,11 @@ import {
   appendBoundedText,
   buildExtensionSettingsQuery,
   buildTerminalName,
+  confirmWorkspaceTrust,
   isTerminalCwdAmbiguous,
   resolveTerminalCwd,
   shouldPromptToInstall,
+  type WorkspaceTrustPrompt,
 } from './command-utils.js';
 
 const SETTINGS_NAMESPACE = 'superCli';
@@ -167,6 +169,19 @@ export async function openExtensionSettings(context: vscode.ExtensionContext): P
   await vscode.commands.executeCommand('workbench.action.openSettings', buildExtensionSettingsQuery(context.extension.id));
 }
 
+/**
+ * Builds the trust prompt shared by every command that runs terminal commands. `isTrusted` is read
+ * lazily so a trust change made after activation is always honoured.
+ */
+export function createWorkspaceTrustPrompt(context: vscode.ExtensionContext): WorkspaceTrustPrompt {
+  return {
+    isTrusted: () => vscode.workspace.isTrusted,
+    showWarningMessage: (message, ...actions) => vscode.window.showWarningMessage(message, ...actions),
+    executeCommand: (command) => vscode.commands.executeCommand(command),
+    openSettings: () => openExtensionSettings(context),
+  };
+}
+
 /** Resolves whether launches should use VS Code's WSL terminal. */
 function resolveTerminalEnvironment(): { useWsl: boolean } {
   const useWsl = vscode.workspace.getConfiguration(SETTINGS_NAMESPACE).get<boolean>('useWsl', false)
@@ -239,19 +254,7 @@ export async function launchAgent(
   // picker for ambiguous multi-root cases — is skipped entirely in favor of this exact cwd.
   cwdOverride?: vscode.Uri,
 ): Promise<boolean> {
-  if (!vscode.workspace.isTrusted) {
-    const selection = await vscode.window.showWarningMessage(
-      `Super CLI runs terminal commands in the current workspace. Trust this workspace before launching ${agent.label}.`,
-      'Manage Workspace Trust',
-      'Open Settings',
-    );
-
-    if (selection === 'Manage Workspace Trust') {
-      await vscode.commands.executeCommand('workbench.trust.manage');
-    } else if (selection === 'Open Settings') {
-      await openExtensionSettings(context);
-    }
-
+  if (!(await confirmWorkspaceTrust(createWorkspaceTrustPrompt(context), `launching ${agent.label}`))) {
     return false;
   }
 
@@ -382,16 +385,7 @@ export function runAgentUpdate(
 
 /** Runs the agent's official update command in a dedicated terminal (without launching the agent). */
 export async function updateAgent(agent: Agent, context: vscode.ExtensionContext): Promise<UpdateOutcome> {
-  if (!vscode.workspace.isTrusted) {
-    const selection = await vscode.window.showWarningMessage(
-      `Super CLI runs terminal commands in the current workspace. Trust this workspace before updating ${agent.label}.`,
-      'Manage Workspace Trust',
-    );
-
-    if (selection === 'Manage Workspace Trust') {
-      await vscode.commands.executeCommand('workbench.trust.manage');
-    }
-
+  if (!(await confirmWorkspaceTrust(createWorkspaceTrustPrompt(context), `updating ${agent.label}`))) {
     return 'unsupported';
   }
 

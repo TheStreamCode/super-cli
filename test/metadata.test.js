@@ -465,6 +465,24 @@ test('per-invocation disposables never accumulate in context.subscriptions', () 
   assert.match(readText('src/terminal.ts'), /onDidCloseTerminal\(\(closed\) => \{/);
 });
 
+test('bulk terminal commands stay behind the workspace trust gate', () => {
+  const extensionSource = readText('src/extension.ts');
+  const terminalSource = readText('src/terminal.ts');
+  const commandStart = extensionSource.indexOf("registerCommand('superCli.updateAllAgents'");
+  const commandEnd = extensionSource.indexOf("registerCommand('superCli.openAgentDocumentation'");
+  const bulkCommandBody = extensionSource.slice(commandStart, commandEnd);
+
+  // The trust check must run before the command reads agents or creates any terminal.
+  const trustCheck = bulkCommandBody.indexOf('confirmWorkspaceTrust(');
+  assert.ok(trustCheck >= 0, 'updateAllAgents must check workspace trust');
+  assert.ok(
+    trustCheck < bulkCommandBody.indexOf('getEffectiveAgents()'),
+    'the trust check must run before the agent list is resolved',
+  );
+  assert.match(bulkCommandBody, /createWorkspaceTrustPrompt\(context\)/);
+  assert.match(terminalSource, /isTrusted: \(\) => vscode\.workspace\.isTrusted/);
+});
+
 test('terminal output is captured only for the missing-command detector', () => {
   const terminalSource = readText('src/terminal.ts');
 
