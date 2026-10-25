@@ -1,15 +1,7 @@
-# Default owner for everything in the repo
-* @TheStreamCode
-
-# Source code
-/src/ @TheStreamCode
-
-# Tests
-/test/ @TheStreamCode
-
-# Documentation
+# Ownership of first-party sources and documentation.
+# Dependency manifests, lockfiles and GitHub workflows are intentionally unowned so
+# Dependabot pull requests do not request a maintainer review on every update.
 /docs/ @TheStreamCode
-*.md @TheStreamCode
-
-# CI/CD and GitHub config
-/.github/ @TheStreamCode
+/scripts/ @TheStreamCode
+/src/ @TheStreamCode
+/test/ @TheStreamCode
