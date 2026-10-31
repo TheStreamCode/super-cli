@@ -263,7 +263,9 @@ both embedded manifests use the source `publisher`, `name`, and `version`; this 
 named extension artifact from being sent to Super CLI's publication path. After the reviewed commit is
 pushed, pushing its matching `v<version>` tag triggers `.github/workflows/release.yml`, which repeats
 the audit and identity-verified package build and publishes the GitHub VSIX together with its SHA-256
-file. Marketplace and Open VSX remain separate, owner-controlled publications of the reviewed version.
+file. Marketplace and Open VSX are published from that released VSIX by manually dispatching the same
+workflow with the release tag; it authenticates through OIDC trusted publishing, so no long-lived
+registry token is stored in the repository.
 On Windows use the CLI wrapper under VS Code's `bin` directory (`code.cmd`) for isolated install
 checks, and first verify that `--version` prints the editor version: the desktop `Code.exe` is not a
 substitute for the CLI wrapper even when PowerShell resolves it first.
