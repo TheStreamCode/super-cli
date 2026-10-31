@@ -569,6 +569,11 @@
   "allowScripts": {
     "@vscode/vsce-sign@2.1.0": true
   },
+  "overrides": {
+    "@vscode/vsce": {
+      "minimatch": "^11.0.1"
+    }
+  },
   "devDependencies": {
     "@types/node": "^22.20.5",
     "@types/vscode": "1.93.0",
