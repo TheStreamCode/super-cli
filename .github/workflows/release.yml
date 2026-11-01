@@ -64,7 +64,14 @@ jobs:
       id-token: write
 
     steps:
-      - name: Download the released VSIX
+      - name: Validate release tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+
+      - name: Download and verify the released VSIX
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}
@@ -75,9 +82,15 @@ jobs:
           gh release download "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --pattern "$VSIX" \
-            --pattern "$VSIX.sha256" \
             --dir .release
-          (cd .release && sha256sum -c "$VSIX.sha256")
+          gh release view "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json assets > release-assets.json
+          expected="$(jq -r --arg name "$VSIX" '.assets[] | select(.name == $name) | .digest' release-assets.json)"
+          test -n "$expected"
+          test "$expected" != "null"
+          actual="sha256:$(sha256sum ".release/$VSIX" | awk '{print $1}')"
+          test "$actual" = "$expected"
 
       - name: Publish to Visual Studio Marketplace
         env:
