@@ -91,6 +91,10 @@ jobs:
           test "$expected" != "null"
           actual="sha256:$(sha256sum ".release/$VSIX" | awk '{print $1}')"
           test "$actual" = "$expected"
+          unzip -p ".release/$VSIX" extension/package.json > vsix-package.json
+          test "$(jq -r '.publisher' vsix-package.json)" = "mikesoft"
+          test "$(jq -r '.name' vsix-package.json)" = "vscode-super-cli"
+          test "$(jq -r '.version' vsix-package.json)" = "${RELEASE_TAG#v}"
 
       - name: Publish to Visual Studio Marketplace
         env:
